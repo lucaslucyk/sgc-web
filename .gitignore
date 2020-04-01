@@ -5,9 +5,6 @@ __pycache__/
 *$py.class
 migrations
 
-#logs
-*.log
-
 #db backup
 *.7z
 
@@ -68,6 +65,7 @@ coverage.xml
 local_settings.py
 db.sqlite3
 db.sqlite3-journal
+db.sqlite3.old
 
 # Flask stuff:
 instance/
