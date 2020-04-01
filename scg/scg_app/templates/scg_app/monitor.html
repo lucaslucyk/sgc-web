@@ -1,0 +1,88 @@
+{% extends "base_generic.html" %}
+
+{% block title %}<title>Monitor de Clases</title>{% endblock %}
+
+{% block content %}
+
+	<style type="text/css">
+		td{
+			border-style: solid;
+			border-width: thin;
+			text-align: center;
+			padding-left: 3px;
+			padding-right: 3px;
+		}
+	</style>
+
+	<script type="text/javascript">
+		function sortTable(n) {
+			var table, rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
+			table = document.getElementsByTagName("table")[0];
+			switching = true;
+			dir = "asc";
+
+			while (switching) {
+				switching = false;
+				rows = table.rows;
+
+				for (i = 1; i < (rows.length - 1); i++) {
+					shouldSwitch = false;
+					x = rows[i].getElementsByTagName("td")[n];
+					y = rows[i + 1].getElementsByTagName("td")[n];
+
+					if (dir == "asc") {
+						if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
+							shouldSwitch = true;
+							break;
+						}
+					} else if (dir == "desc") {
+						if (x.innerHTML.toLowerCase() < y.innerHTML.toLowerCase()) {
+							shouldSwitch = true;
+							break;
+						}
+					}
+				}
+				if (shouldSwitch) {
+					rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+					switching = true;
+					switchcount ++;
+				} else {
+					if (switchcount == 0 && dir == "asc") {
+						dir = "desc";
+						switching = true;
+					}
+				}
+			}
+		}
+	</script>
+
+	<table>
+		<tr>
+			<td id="id" onclick="sortTable(0)">ID</td>
+			<td id="estado" onclick="sortTable(1)">Estado</td>
+			<td id="dia_semana" onclick="sortTable(2)">Dia</td>
+			<td id="fecha_desde" onclick="sortTable(3)">Fecha de Inicio</td>
+			<td id="actividad" onclick="sortTable(4)">Actividad</td>
+			<td id="horario" onclick="sortTable(5)">Rango Horario</td>
+			<td id="empleado" onclick="sortTable(6)">Profesor Asignado</td>
+			<td id="empleado" onclick="sortTable(7)">Profesor Realizador</td>
+			<td id="motivo" onclick="sortTable(8)">Motivo Ausencia</td>
+			<td id="motivo" onclick="sortTable(9)">Presencia</td>
+		</tr>
+		{% for clase in clases %}
+		<tr>
+			<td>{% if clase.reemplazo or clase.ausencia %}{{clase.clase.id}}{% else %}{{clase.id}}{% endif %}</td>
+			<td>{% if clase.reemplazo or clase.ausencia %}{{clase.clase.get_estado_display}}{% else %}{{clase.get_estado_display}}{% endif %}</td>
+			<td>{% if clase.reemplazo or clase.ausencia %}{{clase.clase.dia_semana}}{% else %}{{clase.dia_semana}}{% endif %}</td>
+			<td>{% if clase.reemplazo or clase.ausencia %}{{clase.clase.fecha_desde}}{% else %}{{clase.fecha_desde}}{% endif %}</td>
+			<td>{% if clase.reemplazo or clase.ausencia %}{{clase.clase.actividad}}{% else %}{{clase.actividad}}{% endif %}</td>
+			<td>{% if clase.reemplazo or clase.ausencia %}{{clase.clase.horario_desde}} - {{clase.clase.horario_hasta}}{% else %}{{clase.horario_desde}} - {{clase.horario_hasta}}{% endif %}</td>
+			<td>{% if clase.reemplazo or clase.ausencia %}{{clase.clase.empleado}}{% else %}{{clase.empleado}}{% endif %}</td>
+			<td>{% if clase.reemplazo %}{{clase.reemplazo.empleado_reemplazante}}{% elif clase.ausencia %}-{% else %}{{clase.empleado}}{% endif %}</td>
+			<td>{% if clase.ausencia.motivo %}{{clase.ausencia.motivo}}{% else %}-{% endif %}</td>
+			<td>{% if clase.presencia == "Realizada" or clase.clase.presencia == "Realizada" %}<b>{% endif %}{% if clase.reemplazo or clase.ausencia %}{{clase.clase.presencia}}{% else %}{{clase.presencia}}{% endif %}{% if clase.presencia == "Realizada" or clase.clase.presencia == "Realizada" %}<b>{% endif %}</td>
+		</tr>
+		{% endfor %}
+	</table>
+
+{% endblock %}

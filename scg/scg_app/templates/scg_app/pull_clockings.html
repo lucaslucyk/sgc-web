@@ -1,0 +1,58 @@
+{% extends "base_generic.html" %}
+
+{% block title %}<title>Confirmar Clases</title>{% endblock %}
+
+{% block content %}
+
+		<style type="text/css">
+			td{
+				border-style: solid;
+				border-width: thin;
+				text-align: center;
+				padding-left: 3px;
+				padding-right: 3px;
+			}
+		</style>
+
+
+			<table>
+				<tr>
+					<td>AllDay</td>
+					<td>CardNumber</td>
+					<td>ClockingType</td>
+					<td>Datetime</td>
+					<td>IP</td>
+					<td>IdClocking</td>
+					<td>IdEmployer</td>
+					<td>IdReader</td>
+					<td>IdTerminal</td>
+					<td>IdTimeType</td>
+					<td>IdZone</td>
+					<td>Source</td>
+					<td>State</td>
+					<td>User</td>
+				</tr>
+				{% for marcaje in marcajes %}
+				<tr>
+					<td>{{marcaje.AllDay}}</td>
+					<td>{{marcaje.CardNumber}}</td>
+					<td>{{marcaje.ClockingType}}</td>
+					<td>{{marcaje.Datetime}}</td>
+					<td>{{marcaje.IP}}</td>
+					<td>{{marcaje.IdClocking}}</td>
+					<td>{{marcaje.IdEmployer}}</td>
+					<td>{{marcaje.IdReader}}</td>
+					<td>{{marcaje.IdTerminal}}</td>
+					<td>{{marcaje.IdTimeType}}</td>
+					<td>{{marcaje.IdZone}}</td>
+					<td>{{marcaje.Source}}</td>
+					<td>{{marcaje.State}}</td>
+					<td>{{marcaje.User}}</td>
+					{#a#}
+				</tr>
+				{% endfor %}
+			</table>
+
+	</body>
+
+{% endblock %}

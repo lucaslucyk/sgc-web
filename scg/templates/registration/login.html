@@ -1,0 +1,41 @@
+{% extends "base_generic.html" %}
+
+{% block title %}<title>Ingreso - SCG_APP</title>{% endblock %}
+
+{% block content %}
+
+
+<div class="login-form">
+
+	<form method="POST" action="{% url 'login' %}">
+		{% if form.errors %}
+			<p>Tu nombre de usuario y contraseña no coinciden. Por favor, intentalo nuevamente.</p>
+		{% endif %}
+
+		{% if next %}
+			{% if user.is_authenticated %}
+				<p>Tu cuenta no tiene acceso a esta pagina. <br/>Para proceder, ingresa con una cuenta que tenga acceso.</p>
+			{% else %}
+				<h4 class="card-title text-center mb-4 mt-1">Iniciar sesión</h4>
+			{% endif %}
+		{% endif %}
+		{% csrf_token %}
+		<div class="form-group">
+			<label>{{ form.username.label_tag }}</label>
+			{{ form.username }}
+		<div class="form-group">
+			<label>{{ form.password.label_tag }}</label>
+			{{ form.password }}
+		</div>
+		<div class="form-group">
+			<input type="submit" name="login" value="Ingresar" class="btn"/>
+		</div>
+		<input type="hidden" name="next" value="{{ next }}" />
+
+		<div class="form-group">
+			<a href="{% url 'password_reset' %}">Olvide mi contraseña</a>
+		</div>
+	</form>
+
+</div>
+{% endblock %}

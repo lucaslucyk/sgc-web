@@ -1,0 +1,73 @@
+{% extends "base_generic.html" %}
+
+{% block title %}<title>Confirmar Clases</title>{% endblock %}
+
+{% block content %}
+
+		<style type="text/css">
+			td{
+				border-style: solid;
+				border-width: thin;
+				text-align: center;
+				padding-left: 3px;
+				padding-right: 3px;
+			}
+		</style>
+
+		<h1>SOLO confirmar clases realizadas</h1>
+		<form method="POST">
+			{% csrf_token %}
+			{# if form #}
+				{% for field in form %}
+					<p>
+						{{ field.label_tag }}
+						{{ field }}
+						{% if field.help_text %}
+							<br /><small style="color: grey">{{ field.help_text }}</small>
+						{% endif %}
+						{% for error in field.errors %}
+							<div style="color: red">{{ error }}</div>
+						{% endfor %}
+					</p>
+				{% endfor %}
+			<!--<input type="submit" name="filtrar" value="Filtrar"><br />//-->
+			<p></p>
+			{# endif #}
+			{% if status %}
+			<script type="text/javascript">alert('{{ status }}'); document.location.href("{% url 'confirmar_clases' %}");</script>
+			{% endif %}
+		{% if filtros %}
+			<table>
+				<tr>
+					<td>ID</td>
+					<td>Estado de la Clase</td>
+					<td>Asignado</td>
+					<td>Ejecutor</td>
+					<td>Actividad</td>
+					<td>Fecha</td>
+					<td>Dia</td>
+					<td>Inicio</td>
+					<td>Fin</td>
+					<td>Ausencia</td>
+				</tr>
+				{% for filtro in filtros %}
+				<tr>
+					<td>{{filtro.id}}</td>
+					<td>{{filtro.estado}}</td>
+					<td>{{filtro.empleado}}</td>
+					<td>{{filtro.empleado}}</td>
+					<td>{{filtro.actividad|capfirst}}</td>
+					<td>{{filtro.fecha_desde}}</td>
+					<td>{{filtro.dia_semana}}</td>
+					<td>{{filtro.horario_desde}}</td>
+					<td>{{filtro.horario_hasta}}</td>
+					<td>---</td>
+				</tr>
+				{% endfor %}
+			</table>
+			<p></p>
+			<input type="submit" name="confirmar" value="Confirmar"><br />
+		{% endif %}
+		</form>
+
+{% endblock %}

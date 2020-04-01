@@ -1,0 +1,89 @@
+{% extends "base_generic.html" %}
+
+{% block title %}<title>Filtrado/Confirmacion de Clases</title>{% endblock %}
+
+{% block content %}
+
+		<style type="text/css">
+			td{
+				border-style: solid;
+				border-width: thin;
+				text-align: center;
+				padding-left: 3px;
+				padding-right: 3px;
+				width:8.3333%;
+			}
+		</style>
+
+		<form method="POST">
+			{% csrf_token %}
+			{% if form %}
+				{% for field in form %}
+					<p>{{ field.label_tag }}
+						{{ field }}
+						{% if field.help_text %}
+							<br /><small style="color: grey">{{ field.help_text }}</small>
+						{% endif %}
+						{% for error in field.errors %}
+							<div style="color: red">{{ error }}</div>
+						{% endfor %}
+					</p>
+				{% endfor %}
+			<input type="submit" name="filtrar" value="Filtrar" /><br />
+			<small style="color: grey">Si no se selecciona ningun filtro, se devolveran todas las clases</small>
+			<p></p>
+			{% endif %}
+			{% if status %}
+			<script type="text/javascript">alert('{{ status }}'); document.location.href("{% url 'programar_clase' %}");</script>
+			{% endif %}
+			<input type="submit" name="confirmar" value="Confirmar Seleccionadas" /><input type="submit" name="reemplazos" value="Gestionar Reemplazos" /><input type="submit" name="ausencias" value="Gestionar Ausencias" /><input type="submit" name="recurrencias" value="Gestionar Recurrencias" />
+		{% if filtros %}
+			<br /><div><input type="submit" value="Invertir Seleccion" style="padding:10px;" onClick="javascript:a=document.getElementsByClassName('clase_checkbox');for(i=0;i<a.length;i++){if(!a[i].disabled){a[i].click();}};return false;" /></div>
+			<table>
+				<tr>
+					<td>Confirmar</td>
+					<td style="width:12%;">Estado de la Clase</td>
+					<td>Presencia</td>
+					<td>Asignado</td>
+					<td>Ejecutor</td>
+					<td>Actividad</td>
+					<td>Dia</td>
+					<td>Fecha</td>
+					<td>Inicio</td>
+					<td>Fin</td>
+					<td>Motivo Ausencia</td>
+					<td>Marcajes</td>
+				</tr>
+			{% for filtro in filtros %}
+				<tr>
+					<td><input type="checkbox" id="confirm_{{filtro.id}}" name="confirm_{{filtro.id}}"{% for ausencia in ausencias %}{% for reemplazo in reemplazos %}{% if filtro.id == reemplazo.clase.id or filtro.id == ausencia.clase.id %} disabled="disabled"{% endif %}{% endfor %}{% endfor %} class="clase_checkbox" /></td>
+					<td>{{filtro.clase.get_estado_display}}{{filtro.get_estado_display}}</td>
+					<td>{% if filtro.clase.presencia == "Realizada" or filtro.presencia == "Realizada" %}<b>{% endif %}{% if filtro.clase %}{{filtro.clase.presencia}}{% else %}{{filtro.presencia}}{% endif %}{% if filtro.clase.presencia == "Realizada" or filtro.presencia == "Realizada" %}</b>{% endif %}</td>
+					<td>{{filtro.clase.empleado}}{{filtro.empleado}}</td>
+					<td>{#% ifchanged %#}
+						{% for reemplazo in reemplazos_ids %}
+							{% if reemplazo.0 == filtro.id or reemplazo.0 == filtro.clase.id %}
+								<b>{{reemplazo.1}}</b>
+							{% else %}
+								{{filtro.empleado}}
+								{{filtro.clase.empleado}}
+							{% endif %}
+						{% endfor %}{#% else %#}
+						
+						{#% endifchanged %#}
+					</td>
+					<td>{{filtro.clase.actividad|capfirst}}{{filtro.actividad|capfirst}}</td>
+					<td>{{filtro.clase.dia_semana}}{{filtro.dia_semana}}</td>
+					<td>{{filtro.clase.fecha}}{{filtro.fecha}}</td>
+					<td>{{filtro.clase.horario_desde}}{{filtro.horario_desde}}</td>
+					<td>{{filtro.clase.horario_hasta}}{{filtro.horario_hasta}}</td>
+					<td>{% for ausencia in ausencias %}{% if filtro.id == ausencia.clase.id %}{{ausencia.motivo}}{% else %}---{% endif %}{% endfor %}</td>
+					<td>{%now 'Y-m-d' as today%}{% if filtro.clase.fecha|date:'Y-m-d' <= today or filtro.fecha|date:'Y-m-d' <= today %}<input onlick="javascript:document.getElementById('hidden_{{filtro.id}}').value='{{filtro.id}}'" style="padding: 5px 10px; margin: 1px 0px 1px 0px; border-radius: 20px;" type="submit" name="marcaje_{{filtro.id}}" value="Marcajes" /><input type="hidden" id="hidden_{{filtro.id}}" />{% endif %}</td>
+				</tr>
+			{% endfor %}
+			</table>
+			<br /><div><input type="submit" value="Invertir Seleccion" style="padding:10px;" onClick="javascript:a=document.getElementsByClassName('clase_checkbox');for(i=0;i<a.length;i++){if(!a[i].disabled){a[i].click();}};return false;" /></div>
+		{% endif %}
+		</form>
+
+{% endblock %}

@@ -1,0 +1,52 @@
+{% extends "base_generic.html" %}
+
+{% block title %}<title>Gestionar Reemplazos</title>{% endblock %}
+
+{% block content %}
+
+		<style type="text/css">
+			td{
+				border-style: solid;
+				border-width: thin;
+				text-align: center;
+				padding-left: 3px;
+				padding-right: 3px;
+			}
+		</style>
+
+		{% if status %}
+			<script type="text/javascript">{% for statu in status %}alert('{{ statu }}');{% endfor %}document.location.href("{% url 'programar_clase' %}");</script>
+		{% endif %}
+
+		{% if reemplazos %}
+		<ul>
+		{% for reemplazo in reemplazos %}
+			<li>{{ reemplazo }}</li>
+		{% endfor %}
+		</ul>
+		{% endif %}
+		{% if new_reemplazo %}
+			Nuevo reemplazo a gestionar:<br />
+			<p>{{ new_reemplazo }}</p>
+		{% endif %}
+
+		{% if form %}
+		<form method="POST">
+		{% csrf_token %}
+		{% for field in form %}
+			<p>{{ field.label_tag }}
+				{{ field }}
+				{% if field.help_text %}
+					<br /><small style="color: grey">{{ field.help_text }}</small>
+				{% endif %}
+				{% for error in field.errors %}
+					<div style="color: red">{{ error }}</div>
+				{% endfor %}
+			</p>
+		{% endfor %}
+		<input type="submit" style="padding: 15px;" value="Reemplazar Empleado" />
+		</form>
+		<p>Solo se puede gestionar un reemplazo (cuando sea necesario) por sesion. <a href="{% url 'filtro' %}">Volver a los filtros</a></p>
+		{% endif %}
+
+{% endblock %}

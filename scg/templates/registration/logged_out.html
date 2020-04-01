@@ -1,0 +1,8 @@
+{% extends "base_generic.html" %}
+
+{% block title %}<title>Sesion cerrada con exito</title>{% endblock %}
+
+{% block content %}
+	<p>Sesion cerrada con exito!</p>  
+	<a href="{% url 'login'%}">Volver a ingresar</a>
+{% endblock %}

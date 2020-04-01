@@ -1,0 +1,30 @@
+{% extends "base_generic.html" %}
+
+{% block title %}<title>Programacion de Clases</title>{% endblock %}
+
+{% block content %}
+
+	<h1>Programacion de Clases</h1><br />
+	<form method="POST">
+		{% csrf_token %}
+		{% if form %}
+			{% for field in form %}
+				<p>
+					{{ field.label_tag }}<br>
+					{{ field }}
+					{% if field.help_text %}
+						<br /><small style="color: grey">{{ field.help_text }}</small>
+					{% endif %}
+					{% for error in field.errors %}
+						<div style="color: red">{{ error }}</div>
+					{% endfor %}
+				</p>
+			{% endfor %}
+		<button type="submit">Crear Clases</button>
+		{% endif %}
+		{% if status %}
+			<script type="text/javascript">{% for statu in status %}alert('{{ statu }}');{% endfor %}document.location.href("{% url 'programar_clase' %}");</script>
+		{% endif %}
+	</form>
+
+{% endblock %}

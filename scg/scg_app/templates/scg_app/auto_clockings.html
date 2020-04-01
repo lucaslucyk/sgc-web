@@ -1,0 +1,27 @@
+{% extends "base_generic.html" %}
+
+{% block title %}<title>auto_clockings</title>{% endblock %}
+
+{% block content %}
+
+		<style type="text/css">
+			td{
+				border-style: solid;
+				border-width: thin;
+				text-align: center;
+				padding-left: 3px;
+				padding-right: 3px;
+			}
+		</style>
+
+	{% if status %}
+		<h1 style="text-align: center;">{{ status }}</h1><br />
+	{% endif %}
+
+	{% if resultados %}
+	{% for resultado in resultados %}
+		<div>{{ resultado }}</div>
+	{% endfor %}
+	{% endif %}
+
+{% endblock %}
