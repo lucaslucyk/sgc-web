@@ -3,11 +3,16 @@ import re
 from django.conf import settings
 from django.contrib.auth import login, authenticate
 from django.contrib.auth.decorators import login_required, permission_required, user_passes_test
-from django.shortcuts import render, redirect, reverse
+from django.shortcuts import render, redirect, reverse, get_object_or_404
 from requests.exceptions import ConnectionError, HTTPError
 from scg_app.forms import *
 from scg_app.models import *
 from zeep import Client
+from django.contrib import messages
+
+from django.core.paginator import EmptyPage, Paginator
+from django.views.generic.list import ListView
+from collections import defaultdict
 
 # Create your views here.
 def check_admin(user):
@@ -25,6 +30,118 @@ def index(request):
     return render(request, "scg_app/index.html", context)
 
 def about(request): return render(request, "scg_app/about.html", {})
+
+class SafePaginator(Paginator):
+    def validate_number(self, number):
+        try:
+            return super(SafePaginator, self).validate_number(number)
+        except EmptyPage:
+            if number > 1:
+                return self.num_pages
+            else:
+                raise
+
+class ClasesView(ListView):
+    model = Clase
+    template_name = 'scg_app/clases.html'
+    context_object_name = 'clases_list'
+
+    paginator_class = SafePaginator
+    paginate_by = 25
+
+    def post(self, request, *args, **kwargs):
+        #returns get view for process all filters
+        return super().get(request, *args, **kwargs)
+
+    def get_queryset(self):
+
+        qs = Clase.objects.filter(fecha__gte=datetime.date.today()).order_by('fecha')
+
+        if self.request.method == 'POST':
+            
+            form = FiltroForm(self.request.POST)
+            if not form.is_valid():
+                #print("not valid form")
+                return Clase.objects.none()
+
+            ### get form data ###
+            ## searchs
+            data_emple = form.cleaned_data.get('empleado')
+            data_reemplazo = form.cleaned_data.get('reemplazo')
+            data_actividad = form.cleaned_data.get('actividad')
+
+            # select
+            dia_semana = form.cleaned_data.get('dia_semana')
+            estado = form.cleaned_data.get('estado')
+            motivo_ausencia = form.cleaned_data.get('motivo_ausencia')
+            sede = form.cleaned_data.get('sede')
+
+            #times
+            dia_inicio = form.cleaned_data.get('dia_inicio')
+            dia_fin = form.cleaned_data.get('dia_fin')
+            hora_inicio = form.cleaned_data.get('hora_inicio')
+            hora_fin = form.cleaned_data.get('hora_fin')
+
+            ### checks ###
+            solo_ausencia = form.cleaned_data.get('solo_ausencia')
+            solo_reemplazos = form.cleaned_data.get('solo_reemplazos')
+
+            print(dia_semana)
+            
+            querys = defaultdict(Q)
+
+            ### searchs ###
+            if data_emple or data_reemplazo:
+                for field in Empleado._meta.fields:
+                    if data_emple:
+                        querys["empleado"].add(Q(**{f'empleado__{field.name}__icontains': data_emple}), Q.OR)
+                    if data_reemplazo:
+                        querys["reemplazo"].add(Q(**{f'reemplazo__{field.name}__icontains': data_reemplazo}), Q.OR)
+
+            if data_actividad:
+                querys["actividad"].add(Q(**{f'actividad__nombre__icontains': data_actividad}), Q.OR)
+                querys["actividad"].add(Q(**{f'actividad__grupo__nombre__icontains': data_actividad}), Q.OR)
+
+            ### selects ###
+            if dia_semana:
+                querys["dia_semana"] = Q(dia_semana=dia_semana)
+            if estado:
+                querys["estado"] = Q(estado=estado)
+            if motivo_ausencia:
+                querys["motivo_ausencia"] = Q(ausencia=motivo_ausencia)
+            if sede:
+                querys["sede"] = Q(sede=sede)
+
+
+            ### times ###
+            if dia_inicio:
+                querys["dia_inicio"] = Q(fecha__gte=dia_inicio)
+            if dia_fin:
+                querys["dia_fin"] = Q(fecha__lte=dia_fin)
+            if hora_inicio != "00:00":
+                querys["hora_inicio"] = Q(horario_hasta__gte=hora_inicio)
+            if hora_fin != "23:59":
+                querys["hora_fin"] = Q(horario_desde__lt=hora_fin)
+
+            ### checks ###
+            if solo_ausencia:
+                querys["solo_ausencia"] = Q(ausencia__isnull=not solo_ausencia)
+            if solo_reemplazos:
+                querys["solo_reemplazos"] = Q(reemplazo__isnull=not solo_reemplazos)
+
+            #add all the filters with and critery
+            query = Q()
+            [query.add(v, Q.AND) for k, v in querys.items()]
+            qs = Clase.objects.filter(query).order_by('fecha')
+
+        return qs
+
+    def get_context_data(self, *args, **kwargs):
+        
+        context = super().get_context_data(*args, **kwargs)
+        context["form"] = context.get("form") or FiltroForm(self.request.POST if self.request.method == 'POST' else None)
+        return context
+
 
 @user_passes_test(check_admin)
 def pulldbs(request): return render(request, "scg_app/pull_dbs.html", {})
@@ -282,12 +399,29 @@ def monitor_clases(request):
 
 @login_required
 def filtros(request, context=None):
-    form = FiltrosForm()
+    form = FiltrosForm(request.POST if request.method == 'POST' else None)
     context = context or {'form': form}
     clases, reemplazos, ausencias, actividades, empleados, marcajes = Clase.objects.all(), Reemplazo.objects.all(), Ausencia.objects.all(), Actividad.objects.all(), Empleado.objects.all(), Marcaje.objects.all()
+    # if request.method == 'GET':
+    #     print(request.GET)
+    #     #for get name of form 
+    #     #can be get or post
+    #     name = request.GET.get('name')
 
     if request.method == 'POST':
-        form = FiltrosForm(request.POST)
+        #form = FiltrosForm(request.POST)
+        #current_user = User.objects.get(pk=request.session.get('_auth_user_id'))
+
+        if 'gestion_ausencia' in request.POST:
+            #print([item for item in request.POST.keys()])
+
+            ids = [str(_id.split("_")[-1]) for _id in request.POST.keys() if "confirm" in _id]
+            if len(ids) < 1:
+                messages.error(request, "Debe seleccionar uno o más registros para gestionar una ausencia.")
+                return render(request, "scg_app/filtro_monitor_test.html", context)
+            return redirect('gestion_ausencia', ids_clases='-'.join(ids))
+
+
         if 'filtrar' in request.POST: #boton de filtrado
             if form.is_valid():
                 consultas = clases.filter()
@@ -344,7 +478,7 @@ def filtros(request, context=None):
                 if consultas_reemplazos.exists(): context["reemplazos"] = consultas_reemplazos
                 if campos[10][-1]: consultas = consultas_reemplazos
                 context["reemplazos_ids"] = list(zip([rem.clase.id for rem in consultas_reemplazos], [remp.empleado_reemplazante for remp in consultas_reemplazos]))
-                #print(context["reemplazos_ids"])
+                print(context["reemplazos_ids"])
 
                 if consultas: context["filtros"] = consultas
                 else:
@@ -358,15 +492,23 @@ def filtros(request, context=None):
                 context["filtros"] = clases.filter()
                 context["status"] = "Clases confirmadas con exito!"
 
-        elif 'reemplazos' in request.POST: #boton de gestion de reemplazos
-            context["filtros"] = clases.filter()
+        # elif 'reemplazos' in request.POST: #boton de gestion de reemplazos
+        #     context["filtros"] = clases.filter()
+        #     ids = [int(id.split("_")[-1]) for id in list(request.POST.keys()) if "confirm" in id]
+        #     if len(ids) > 1: context["status"] = "Solo se puede registrar 1 reemplazo a la vez!"
+        #     elif len(ids) < 1: context["status"] = "Se debe seleccionar 1 clase para poder gestionar el reemplazo!"
+        #     else:
+        #         request.session['reemplazo_nuevo'] = ids[0]
+        #         return redirect("gestionar_reemplazos")
+        #     return render(request, "scg_app/filtro_monitor_test.html", context)
+
+        ### testing ###
+        elif 'asignar_reemplazo' in request.POST:
             ids = [int(id.split("_")[-1]) for id in list(request.POST.keys()) if "confirm" in id]
-            if len(ids) > 1: context["status"] = "Solo se puede registrar 1 reemplazo a la vez!"
-            elif len(ids) < 1: context["status"] = "Se debe seleccionar 1 clase para poder gestionar el reemplazo!"
-            else:
-                request.session['reemplazo_nuevo'] = ids[0]
-                return redirect("gestionar_reemplazos")
-            return render(request, "scg_app/filtro_monitor_test.html", context)
+            if len(ids) != 1: 
+                context["status"] = "Debe seleccionar -solo- un registro para asignar un reemplazo"
+                return render(request, "scg_app/filtro_monitor_test.html", context)
+            return redirect('asignar_reemplazo', id_clase=ids[0])
 
         elif 'ausencias' in request.POST: #boton de gestion de ausencias
             context["filtros"] = clases.filter()
@@ -564,39 +706,153 @@ def historizar():
     #todo
     return
 
-@login_required
-def gestionar_reemplazos(request, context=None):
-    form = ReemplazoForm()
-    context = context or {'form': form}
-    clases, reemplazos, empleados = Clase.objects.all(), Reemplazo.objects.all(), Empleado.objects.all()
-    new_reemplazo = request.session['reemplazo_nuevo']
-    if new_reemplazo:
-        new_reemplazo = clases.filter(id=new_reemplazo)[0] #se llama reemplazo, pero es una CLASE!!
-        context["new_reemplazo"] = new_reemplazo
+# class GenericEditView(GenericModelView):
+#     def paginate_queryset(self, queryset, page_size):
+#         """
+#         Paginates a queryset, and returns a page object.
+#         """
+#         paginator = self.get_paginator(queryset, page_size)
+#         page_kwarg = self.kwargs.get(self.page_kwarg)
+#         page_query_param = self.request.GET.get(self.page_kwarg)
+#         page_number = page_kwarg or page_query_param or 1
+#         try:
+#             page_number = int(page_number)
+#         except ValueError:
+#             if page_number == 'last':
+#                 page_number = paginator.num_pages
+#             else:
+#                 msg = "Page is not 'last', nor can it be converted to an int."
+#                 raise Http404(_(msg))
 
-        if request.method == 'POST':
-            form = ReemplazoForm(request.POST)
-            if form.is_valid():
-                reemplazante = form.cleaned_data["reemplazo"]
-                if not(reemplazos.filter(clase=new_reemplazo.id, empleado_reemplazante=new_reemplazo.empleado).exists()):
-                    if new_reemplazo.empleado != reemplazante:
-                        if reemplazante:
-                            new_reemplazo.estado = settings.ESTADOS_CHOICES[2][-1]
-                            new_reemplazo.save()
-                            print(f"creando reemplazo, con clase={new_reemplazo.id}, reemplazante={reemplazante}")
-                            reemplazo = Reemplazo(id=None, clase=new_reemplazo, empleado_reemplazante=reemplazante)
-                            reemplazo.save()
-                            context["status"] = ["Reemplazo agregado con exito!"]
-                            request.session['reemplazo_nuevo'] = ""
-                            return render(request, "scg_app/gestionar_reemplazos.html", context)
-                        else: context["status"] = ["Seleccione algun profesor reemplazante!"]
-                    else:
-                        context["status"] = [f"Por favor, seleccione otro profesor que no sea [{reemplazante}], dado que es el profesor asignado!"]
-                else:
-                    context["status"] = [f"Ya se encuentra un reemplazo registrado para la clase {new_reemplazo.id} y profesor {new_reemplazo.empleado}!"] #dificil llegar a este jaja
-            else: context = {'form': form}
-    context["reemplazos"] = reemplazos
+#         try:
+#             return paginator.page(page_number)
+#         except InvalidPage as exc:
+#             msg = 'Invalid page (%s): %s'
+#             raise Http404(_(msg % (page_number, six.text_type(exc))))
+
+# class ListEditView(GenericModelView):
+#     pass
+
+
+@login_required
+def gestion_ausencia(request, ids_clases=None, context=None):
+
+    #in errors only
+    if not ids_clases:
+        return render(request, "scg_app/gestion_ausencia.html", context)
+
+    form = MotivoAusenciaForm(request.POST if request.method == 'POST' else None)
+    context = context or {'form': form}
+
+    clases_to_edit = Clase.objects.filter(pk__in=ids_clases.split('-'))
+    context["clases_to_edit"] = clases_to_edit
+
+    if request.method == 'POST':
+        if form.is_valid():
+            motivo_ausencia = form.cleaned_data["motivo"]
+
+            if not motivo_ausencia:
+                #context["status"] = "Seleccione un reemplazante."
+                messages.error(request, "Seleccione un Motivo de ausencia.")
+                return render(request, "scg_app/gestion_ausencia.html", context)
+
+            for clase in clases_to_edit:
+                clase.ausencia = motivo_ausencia
+                if not clase.reemplazo: 
+                    clase.estado = settings.ESTADOS_CHOICES[3][0]
+                clase.save()
+
+            messages.success(request, "Ausencias cargadas correctamente.")
+
+    return render(request, "scg_app/gestion_ausencia.html", context)
+
+@login_required
+def asignar_reemplazo(request, id_clase=None, context=None):
+
+    form = ReemplazoForm(request.POST if request.method == 'POST' else None)
+    context = context or {'form': form}
+
+    if not id_clase:
+        return render(request, "scg_app/gestionar_reemplazos.html", context)
+
+    clase_to_edit = get_object_or_404(Clase, pk=id_clase)
+    context["clase_to_edit"] = clase_to_edit
+
+    if request.method == 'POST':
+        #form = ReemplazoForm(request.POST)
+        if form.is_valid():
+            reemplazante = form.cleaned_data["reemplazo"]
+
+            if not reemplazante:
+                #context["status"] = "Seleccione un reemplazante."
+                messages.error(request, "Seleccione un reemplazante.")
+                return render(request, "scg_app/gestionar_reemplazos.html", context)
+
+            if clase_to_edit.empleado == reemplazante:
+                messages.error(request, "El reemplazante no puede ser el empleado asignado.")
+                return render(request, "scg_app/gestionar_reemplazos.html", context)
+
+            if reemplazante.is_busy(fecha=clase_to_edit.fecha, inicio=clase_to_edit.horario_desde, fin=clase_to_edit.horario_hasta):
+                messages.error(request, "El reemplazante no está disponible en el rango horario de esta clase.")
+                return render(request, "scg_app/gestionar_reemplazos.html", context)
+
+            clase_to_edit.reemplazo = reemplazante
+            clase_to_edit.estado = settings.ESTADOS_CHOICES[2][0]
+            clase_to_edit.save()
+
+            messages.success(request, "Reemplazo cargado con éxito!")
+
     return render(request, "scg_app/gestionar_reemplazos.html", context)
+
+
+
+# @login_required
+# def gestionar_reemplazos(request, context=None):
+#     form = ReemplazoForm()
+#     context = context or {'form': form}
+
+#     if not (request.session['reemplazo_nuevo']):
+#         return render(request, "scg_app/gestionar_reemplazos.html", context)
+
+#     #reemplazos, empleados = Reemplazo.objects.all(), Empleado.objects.all()
+#     #id_to_modif = request.session['reemplazo_nuevo']
+
+#     #if clase_to_modif:
+#     clase_to_edit = get_object_or_404(Clase, pk=request.session['reemplazo_nuevo'])
+#     context["clase_to_edit"] = clase_to_edit
+
+#     if request.method == 'POST':
+#         form = ReemplazoForm(request.POST)
+
+
+
+#     new_reemplazo = get_object_or_404(Clase, pk=request.session['reemplazo_nuevo']) #Clase.objects.filter(id=new_reemplazo)[0] #se llama reemplazo, pero es una CLASE!!
+#     context["new_reemplazo"] = new_reemplazo
+
+#     if request.method == 'POST':
+#         form = ReemplazoForm(request.POST)
+#         if form.is_valid():
+#             reemplazante = form.cleaned_data["reemplazo"]
+#             if not(reemplazos.filter(clase=new_reemplazo.id, empleado_reemplazante=new_reemplazo.empleado).exists()):
+#                 if new_reemplazo.empleado != reemplazante:
+#                     if reemplazante:
+#                         new_reemplazo.estado = settings.ESTADOS_CHOICES[2][-1]
+#                         new_reemplazo.save()
+#                         print(f"creando reemplazo, con clase={new_reemplazo.id}, reemplazante={reemplazante}")
+#                         reemplazo = Reemplazo(id=None, clase=new_reemplazo, empleado_reemplazante=reemplazante)
+#                         reemplazo.save()
+#                         context["status"] = ["Reemplazo agregado con exito!"]
+#                         request.session['reemplazo_nuevo'] = ""
+#                         return render(request, "scg_app/gestionar_reemplazos.html", context)
+#                     else: context["status"] = ["Seleccione algun profesor reemplazante!"]
+#                 else:
+#                     context["status"] = [f"Por favor, seleccione otro profesor que no sea [{reemplazante}], dado que es el profesor asignado!"]
+#             else:
+#                 context["status"] = [f"Ya se encuentra un reemplazo registrado para la clase {new_reemplazo.id} y profesor {new_reemplazo.empleado}!"] #dificil llegar a este jaja
+#         else: context = {'form': form}
+
+#     #context["reemplazos"] = reemplazos
+#     return render(request, "scg_app/gestionar_reemplazos.html", context)
 
 @login_required
 def gestionar_ausencias(request, context=None): #PLACEHOLDER
@@ -610,7 +866,7 @@ def gestionar_ausencias(request, context=None): #PLACEHOLDER
             pass
         else: context = {'form': form}
     else: context["ausencias"] = ausencias
-    return render(request, "scg_app/gestionar_reemplazos.html", context)
+    #return render(request, "scg_app/gestionar_reemplazos.html", context)
 
 @login_required
 def gestionar_recurrencias(request, context=None):

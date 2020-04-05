@@ -5,13 +5,16 @@ from django.conf import settings
 from . import views
 
 urlpatterns = [
-    path('', views.index, name='index'), 
+    path('', views.index, name='index'),
+    path('clases/', views.ClasesView.as_view(), name='clases_view'), 
     path('about/', views.about, name='about'), 
     path('agregar_marcaje/', views.agregar_marcaje, name='agregar_marcaje'), 
     path('auto_clockings/', views.auto_clockings, name='auto_clockings'), 
-	path('gestionar_ausencias/', views.gestionar_ausencias, name='gestionar_ausencias'), 
+	path('gestionar_ausencias/', views.gestionar_ausencias, name='gestionar_ausencias'),
 	path('gestionar_recurrencias/', views.gestionar_recurrencias, name='gestionar_recurrencias'), 
-    path('gestionar_reemplazos/', views.gestionar_reemplazos, name='gestionar_reemplazos'), 
+    #path('gestionar_reemplazos/', views.gestionar_reemplazos, name='gestionar_reemplazos'),
+    path('gestion_ausencia/<str:ids_clases>', views.gestion_ausencia, name="gestion_ausencia"),
+    path('asignar_reemplazo/<str:id_clase>', views.asignar_reemplazo, name="asignar_reemplazo"),
     path('filtro/', views.filtros, name='filtro'), 
 	path('modificar_estado/', views.modificar_estado, name='modificar_estado'), 
     path('monitor/', views.monitor_clases, name='monitor'), 

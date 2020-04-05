@@ -2,7 +2,7 @@ from django.conf import settings
 from django.db import models
 from django.utils import timezone
 
-#from django.db.models import Q
+from django.db.models import Q
 # Create your models here.
 
 class Rol(models.Model):
@@ -39,7 +39,7 @@ class GrupoActividad(models.Model):
 	nombre = models.CharField(max_length=100)
 
 	def __str__(self):
-		return f'Grupo de actividades para {self.nombre}'
+		return f'{self.nombre}'
 
 	class Meta:
 		verbose_name = "Grupo de Actividad"
@@ -57,6 +57,19 @@ class Actividad(models.Model):
 		verbose_name = "Actividad"
 		verbose_name_plural = "Actividades"
 		get_latest_by = "id"
+
+class MotivoAusencia(models.Model):
+
+	nombre = models.CharField(max_length=50, unique=True, blank=False, null=False)
+	genera_pago = models.BooleanField(blank=True, default=False)
+
+	def __str__(self):
+		return f'{self.nombre}'
+
+	class Meta:
+		verbose_name='Motivo de Ausencia'
+		verbose_name_plural = 'Motivos de Ausencia'
+		get_latest_by = 'nombre'
 
 class Empleado(models.Model):
 
@@ -83,17 +96,22 @@ class Empleado(models.Model):
 	escala = models.ManyToManyField('Escala')
 
 	def is_busy(self, fecha, inicio, fin):
-		""" informs if a person is busy at a certain time range """
+		""" informs if a person is busy at a certain time range 
+			-including *reemplazos* and ignoring cancelled classes- """
+
 		clases = Clase.objects.filter(
-			#classes of the date
-			fecha=fecha
-		).exclude(
-			#excludes classes that end before the start time -including it-
-			horario_hasta__lte=inicio
+			#employee classes or *reemplazos* only
+			Q(empleado=self) | Q(reemplazo=self)	
 		).filter(
+			#classes of the date
+			fecha=fecha,
 			#get the ones that start before the end time
 			horario_desde__lt=fin
-		).count()	#count of elements
+		).exclude(
+			#excludes classes that end before the start time -including it-
+			horario_hasta__lte=inicio,
+			estado='5'	#canceled
+		).count()
 
 		return clases
 
@@ -110,7 +128,7 @@ class Sede(models.Model):
 	tipo = models.CharField(max_length=30, blank=True)
 
 	def __str__(self):
-		return f'{self.nombre}, {self.tipo}' if self.tipo else f'{self.nombre}'
+		return f'{self.nombre}'
 
 	class Meta:
 		verbose_name = "Sede"
@@ -177,7 +195,11 @@ class Clase(models.Model):
 	horario_hasta = models.TimeField(blank=True, default=timezone.now)
 	actividad = models.ForeignKey('Actividad', on_delete=models.SET(''))
 	sede = models.ForeignKey('Sede', on_delete=models.SET(''))
-	empleado = models.ForeignKey('Empleado', on_delete=models.SET(''))
+
+	empleado = models.ForeignKey('Empleado', on_delete=models.SET(''), related_name='empleado')
+	reemplazo = models.ForeignKey('Empleado', blank=True, null=True, on_delete=models.SET(''), related_name='reemplazo')
+	ausencia = models.ForeignKey('MotivoAusencia', blank=True, null=True, on_delete=models.SET(''), related_name='ausencia')
+
 	modificada = models.BooleanField(blank=True, default=False)
 	estado = models.CharField(max_length=1, choices=settings.ESTADOS_CHOICES, null=True, blank=True, default=settings.ESTADOS_CHOICES[0][-1])
 	presencia = models.CharField(max_length=12, choices=settings.PRESENCIA_CHOICES, null=True, blank=True, default=settings.PRESENCIA_CHOICES[0][-1])
@@ -193,7 +215,7 @@ class Clase(models.Model):
 		ordering = ["-id"]
 
 class Ausencia(models.Model):
-	clase = models.ForeignKey('Clase', on_delete=models.SET(''))
+	clase = models.ForeignKey('Clase', on_delete=models.SET(''), related_name='related_clase')
 	motivo = models.CharField(max_length=200)
 
 	def __str__(self):
@@ -205,8 +227,8 @@ class Ausencia(models.Model):
 		get_latest_by = "id"
 
 class Reemplazo(models.Model):
-	clase = models.ForeignKey('Clase', on_delete=models.SET(''))
-	empleado_reemplazante = models.ForeignKey('Empleado', on_delete=models.SET(''))
+	clase = models.ForeignKey('Clase', on_delete=models.SET(''), related_name="clase_relat")
+	empleado_reemplazante = models.ForeignKey('Empleado', on_delete=models.SET(''), related_name='emple_relat')
 
 	def __str__(self):
 		return f'La -{self.clase}- fue dictada por [{self.empleado_reemplazante}]'

@@ -23,53 +23,49 @@
 		    {% endfor %}
 		{% endif %}
 
-		<h3>Filtro de clases</h3>
-      	<form method="POST" action="." name="filtros">
+		
+      	<form method="POST" name="filtros">
       		{% csrf_token %}
 	        <div class="form-row">
 	            <div class="form-group col-12">
 	                <div class="input-group">
-	                    <input class="form-control py-2 border-right-0 border" type="search" name="title_contains" placeholder="Algún dato del empleado asignado..." value="{{form.empleado}}" />
+	                    {{form.empleado}}
 	                    <span class="input-group-append">
 	                        <div class="input-group-text bg-transparent">
 	                            <i class="fa fa-search"></i>
 	                        </div>
 	                    </span>
 	                </div>
-	            </div>        
-	        </div>
-	        <div class="form-row">
+	            </div>
 	            <div class="form-group col-12">
 	                <div class="input-group">
-	                    <input class="form-control py-2 border-right-0 border" type="search" name="id_exact" placeholder="Algún dato del reemplazo..." />
+	                    {{form.reemplazo}}
 	                    <span class="input-group-append">
 	                        <div class="input-group-text bg-transparent">
 	                            <i class="fa fa-search"></i>
 	                        </div>
 	                    </span>
 	                </div>
-	            </div>        
-	        </div>
-	        <div class="form-row">
+	            </div>
 	            <div class="form-group col-12">
 	                <div class="input-group">
-	                    <input class="form-control py-2 border-right-0 border" type="search" name="title_or_author" placeholder="Algún dato de la actividad/grupo..." />
+	                    {{form.actividad}}
 	                    <span class="input-group-append">
 	                        <div class="input-group-text bg-transparent">
 	                            <i class="fa fa-search"></i>
 	                        </div>
 	                    </span>
 	                </div>
-	            </div>        
+	            </div>          
 	        </div>
 	        
 	        <div class="form-row">
 	          <div class="form-group col-md-3 col-lg-3">
-	            <label for="dia-semana">Día de semana</label>
-	            <select id="dia-semana" class="form-control" name="dia-semana">
-	              <option selected>Elegir...</option>
-	              {% for dias in form.filtro_dias %}
-	              	<option value="{{ dias.0 }}">{{ dias.1 }}</option>
+	            <label for="dia_semana">Día de semana</label>
+	            <select id="dia_semana" class="form-control" name="dia_semana">
+	              
+	              {% for dia in form.dia_semana %}
+	              	{{ dia }}
 	              {% endfor %}
 	            </select>
 	          </div>
@@ -78,27 +74,25 @@
 
 	            <label for="estado">Estado</label>
 	            <select id="estado" class="form-control" name="estado">
-	              <option selected>Elegir...</option>
-	              {% for estado in form.filtro_estados %}
-	              	<option value="{{ estado.0 }}">{{ estado.1 }}</option>
+	              
+	              {% for estado in form.estado %}
+	              	{{ estado }}
 	              {% endfor %}
 	            </select>
 	          </div>
 	          <div class="form-group col-md-3 col-lg-3">
 	            <label for="motivo_ausencia">Motivo de ausencia</label>
 	            <select id="motivo_ausencia" class="form-control" name="motivo_ausencia">
-	              <option selected>Elegir...</option>
-	              {% for motivo in form.filtro_mot_aus %}
-	              	<option value="{{ motivo.pk }}">{{ motivo.nombre }}</option>
+	              {% for motivo in form.motivo_ausencia %}
+	              	{{motivo}}
 	              {% endfor %}
 	            </select>
 	          </div>
 	          <div class="form-group col-md-3 col-lg-3">
 	            <label for="category">Sede</label>
 	            <select id="category" class="form-control" name="category">
-	              <option selected>Elegir...</option>
-	              {% for sede in form.filtro_sedes %}
-	              	<option value="{{ sede.pk }}">{{ sede.nombre }}</option>
+	              {% for sede in form.sede %}
+	              	{{ sede }}
 	              {% endfor %}
 	            </select>
 	          </div>
@@ -106,37 +100,41 @@
 
 	        <div class="form-row">
 	          <div class="form-group col-md-3 col-lg-3">
-	            <label for="publishDateMin">Día inicio</label>
-	            <input type="date" class="form-control" id="publishDateMin" name="date_min">
+	            <label for="dia_inicio">Día inicio</label>
+	            {{form.dia_inicio}}
+	            <!-- <input type="date" class="form-control" id="publishDateMin" name="date_min"> -->
 	          </div>
 	          <div class="form-group col-md-3 col-lg-3">
-	            <label for="publishDateMax">Día fin</label>
-	            <input type="date" class="form-control" id="publishDateMax" name="date_max">
+	          	
+	            <label for="dia_fin">Día Fin</label>
+				{{form.dia_fin}}
+	           	
 	          </div>
 	          <div class="form-group col-md-3 col-lg-3">
-	            <label for="publishDateMin">Hora inicio</label>
-	            <input type="time" class="form-control" id="hourIni" name="date_min">
+	            <label for="hora_inicio">Hora inicio</label>
+	            {{form.hora_inicio}}
 	          </div>
 	          <div class="form-group col-md-3 col-lg-3">
-	            <label for="publishDateMax">Hora fin</label>
-	            <input type="time" class="form-control" id="hourEnd" name="date_max">
+	            <label for="hora_fin">Hora fin</label>
+	            {{form.hora_fin}}
 	          </div>
 	        </div>
 			<div class="form-row">
 	          <div class="form-group col-md-12 col-lg-12 text-center">
 		        <div class="form-group">
 		          <div class="form-check-inline">
-		            <input class="form-check-input" type="checkbox" id="reviewed" name="reviewed">
-		            <label class="form-check-label" for="reviewed">
-		              Solo ausencias
+		          	{{ form.solo_ausencia }}
+		            <label class="form-check-label" for="solo_ausencia">
+		              {{ form.solo_ausencia.label }}
 		            </label>
+		            
 		          </div>
-
 		          <div class="form-check-inline">
-		            <input class="form-check-input" type="checkbox" id="notReviewed" name="notReviewed">
-		            <label class="form-check-label" for="notReviewed">
-		              Solo reemplazos
+		          	{{ form.solo_reemplazos }}
+		            <label class="form-check-label" for="solo_reemplazos">
+		              {{ form.solo_reemplazos.label }}
 		            </label>
+		            
 		          </div>
 		        </div>
 		    </div>
@@ -144,43 +142,29 @@
 	        <div class="form-row">
 	          <div class="form-group col-md-12 col-lg-12 text-center">
 	        	<input type="submit" value="Buscar">
-	        	{# <input type="submit" class="btn btn-primary" value="Buscar"> #}
 			  </div>
 	        </div>
       	</form>
 		
 		<br />
 
-		<form method="POST" name="result_actions">
+		<div class="row">
+	        <div class="col-md-1 col-xs-1 col-sm-1"></div>
+	        <div class="col-md-10 col-xs-10 col-sm-10">
+	            <h3 class="round3" style="text-align:center;">Clases</h3>
+	        </div>
+	        <div class="col-md-1 col-xs-1 col-sm-1"></div>
+	    </div>
+		
+		<br>
+
+	    <form method="POST" action="{% url 'filtro' %}" name="result_actions">
 			{% csrf_token %}
-
-			<div id="filtros" style="display:none;">
-			{% if form %}
-				{% for field in form %}
-					<p>{{ field.label_tag }}
-						{{ field }}
-						{% if field.help_text %}
-							<br /><small style="color: grey">{{ field.help_text }}</small>
-						{% endif %}
-						{% for error in field.errors %}
-							<div style="color: red">{{ error }}</div>
-						{% endfor %}
-					</p>
-				{% endfor %}
-			
-			<small style="color: grey">Si no se selecciona ningun filtro, se devolveran todas las clases</small>
-			<p></p>
-			{% endif %}
-			</div>
-			
-
-			{% if status %}
-			<script type="text/javascript">alert('{{ status }}'); document.location.href("{% url 'programar_clase' %}");</script>
-			{% endif %}
 
 			<section id="acciones">
 				<input type="submit" name="confirmar" value="Confirmar Seleccionadas" />
 				{# <input type="submit" name="reemplazos" value="Gestionar Reemplazos" /> #}
+				
 				<input type="submit" name="asignar_reemplazo" value="Asignar Reemplazo" />
 				<input type="submit" name="gestion_ausencia" value="Gestionar Ausencias" />
 				<input type="submit" name="recurrencias" value="Gestionar Recurrencias" />
@@ -190,18 +174,14 @@
 			</section>
 
 			<br />
-
-		{% if filtros %}
-			
+				
 			<table class="table .table-bordered">
 				<thead>
 					<tr>
-						
 						<th class="align-middle" scope="col">
 							<div class="form-check-inline"> 
 								<input type="checkbox" id="check_head">
 							</div>
-
 						</th>
 						<th class="align-middle" scope="col">Estado</th>
 						<th class="align-middle" scope="col">Presencia</th>
@@ -217,46 +197,62 @@
 					</tr>
 				</thead>
 				<tbody>
-					{% for filtro in filtros %}
+					{% for clase in clases_list %}
+						
 						<tr>
 							<td class="align-middle " >
 								<div class="form-check-inline"> 
-								<input type="checkbox" id="confirm_{{filtro.id}}" 
-									name="confirm_{{filtro.id}}"
-										{% for ausencia in ausencias %} {% for reemplazo in reemplazos %}{% if filtro.id == reemplazo.clase.id or filtro.id == ausencia.clase.id %} disabled="disabled"{% endif %}{% endfor %}{% endfor %} 
+								<input type="checkbox" id="confirm_{{clase.id}}" 
+									name="confirm_{{clase.id}}"
 									class="form-check-input check_clases" />
 								</div>
 							</td>
-							<td class="align-middle">{{filtro.clase.get_estado_display}}{{filtro.get_estado_display}}</td>
-							<td class="align-middle">{% if filtro.clase.presencia == "Realizada" or filtro.presencia == "Realizada" %}<b>{% endif %}{% if filtro.clase %}{{filtro.clase.presencia}}{% else %}{{filtro.presencia}}{% endif %}{% if filtro.clase.presencia == "Realizada" or filtro.presencia == "Realizada" %}</b>{% endif %}</td>
-							<td class="align-middle">{{filtro.clase.empleado}}{{filtro.empleado}}</td>
+							<td class="align-middle">{{clase.get_estado_display}}</td>
+							<td class="align-middle">{{filtro.presencia}}</td>
+							<td class="align-middle">{{clase.empleado}}</td>
 							<td class="align-middle">
-								{% if filtro.reemplazo %}
-									<strong>{{ filtro.reemplazo }}</strong>
+								{% if clase.reemplazo %}
+									<strong>{{ clase.reemplazo }}</strong>
 								{% else %}
-									{{filtro.empleado}}
+									{{clase.empleado}}
 								{% endif %}	
 							</td>
-							<td class="align-middle">{{filtro.clase.actividad|capfirst}}{{filtro.actividad|capfirst}}</td>
-							<td class="align-middle">{{filtro.clase.dia_semana}}{{filtro.dia_semana}}</td>
-							<td class="align-middle">{{filtro.clase.fecha}}{{filtro.fecha}}</td>
-							<td class="align-middle">{{filtro.clase.horario_desde}}{{filtro.horario_desde}}</td>
-							<td class="align-middle">{{filtro.clase.horario_hasta}}{{filtro.horario_hasta}}</td>
+							<td class="align-middle">{{clase.actividad|capfirst}}</td>
+							<td class="align-middle">{{clase.dia_semana}}{{filtro.dia_semana}}</td>
+							<td class="align-middle">{{clase.fecha}}</td>
+							<td class="align-middle">{{clase.horario_desde}}</td>
+							<td class="align-middle">{{clase.horario_hasta}}</td>
 							<td class="align-middle">
-								{% if filtro.ausencia %}
-									{{filtro.ausencia}}
+								{% if clase.ausencia %}
+									{{clase.ausencia}}
 								{% else %}
 									&nbsp;
 								{% endif %}
 							</td>
-							<td class="align-middle">{%now 'Y-m-d' as today%}{% if filtro.clase.fecha|date:'Y-m-d' <= today or filtro.fecha|date:'Y-m-d' <= today %}<input onlick="javascript:document.getElementById('hidden_{{filtro.id}}').value='{{filtro.id}}'" style="padding: 5px 10px; margin: 1px 0px 1px 0px; border-radius: 20px;" type="submit" name="marcaje_{{filtro.id}}" value="Marcajes" /><input type="hidden" id="hidden_{{filtro.id}}" />{% endif %}</td>
+							<td class="align-middle">&nbsp;</td>
 						</tr>
 
 					{% endfor %}
 				</tbody>
 			</table>
-			<br /><div><input type="submit" value="Invertir Seleccion" style="padding:10px;" onClick="javascript:a=document.getElementsByClassName('clase_checkbox');for(i=0;i<a.length;i++){if(!a[i].disabled){a[i].click();}};return false;" /></div>
-		{% endif %}
-		</form>
+			
+			<nav>
+			    {% if is_paginated %}
+			        <ul class="pagination">
+			            {% if page_obj.has_previous %}
+			                <li><a href="?page={{ page_obj.previous_page_number }}">&laquo;</a></li>
+			            {% endif %}
 
+			            {% for i in paginator.page_range %}
+			                <li {% if page_obj.number == i %} class="active" {% endif %}>
+			                    <a href="?page={{i}}">{{ i }}</a>
+			                </li>
+			            {% endfor %}
+
+			            {% if page_obj.has_next %}
+			                <li><a href="?page={{ page_obj.next_page_number }}">&raquo;</a></li>
+			            {% endif %}
+			        </ul>
+			    {% endif %}
+			</nav>
 {% endblock %}

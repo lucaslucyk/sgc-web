@@ -6,33 +6,40 @@
 
 
 <div class="login-form">
+	
+	{% if form.errors %}
+		<div class="alert alert-danger alert-dismissible" >
+			<a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+	  		<p>Los datos ingresados no coinciden. Intente nuevamente.</p>
+		</div>
+	{% endif %}
 
 	<form method="POST" action="{% url 'login' %}">
-		{% if form.errors %}
-			<p>Tu nombre de usuario y contraseña no coinciden. Por favor, intentalo nuevamente.</p>
-		{% endif %}
+
 
 		{% if next %}
 			{% if user.is_authenticated %}
-				<p>Tu cuenta no tiene acceso a esta pagina. <br/>Para proceder, ingresa con una cuenta que tenga acceso.</p>
+				<p>Tu cuenta no tiene acceso a esta pagina.</p>
+				<p>Para proceder, ingresa con una cuenta que tenga acceso.</p>
 			{% else %}
 				<h4 class="card-title text-center mb-4 mt-1">Iniciar sesión</h4>
 			{% endif %}
 		{% endif %}
 		{% csrf_token %}
-		<div class="form-group">
-			<label>{{ form.username.label_tag }}</label>
+		<div class="form-group" style="text-align: center;">
+			{{ form.username.label_tag }}
 			{{ form.username }}
-		<div class="form-group">
-			<label>{{ form.password.label_tag }}</label>
+		</div>
+		<div class="form-group" style="text-align: center;">
+			{{ form.password.label_tag }}
 			{{ form.password }}
 		</div>
-		<div class="form-group">
+		<div class="form-group" style="text-align: center;">
 			<input type="submit" name="login" value="Ingresar" class="btn"/>
 		</div>
-		<input type="hidden" name="next" value="{{ next }}" />
+		<input type="hidden" name="next" value="{{ next }}" style="display:none;" />
 
-		<div class="form-group">
+		<div class="form-group" style="text-align: center;">
 			<a href="{% url 'password_reset' %}">Olvide mi contraseña</a>
 		</div>
 	</form>
