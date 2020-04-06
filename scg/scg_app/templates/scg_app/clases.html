@@ -14,138 +14,150 @@
 				width:8.3333%;
 			}*/
 		</style>
+		
 		{% if messages %}
-			{% for message in messages %}
-				<div class="alert alert-{% if message.tags %}{{ message.tags }}{% endif %} alert-dismissible" >
-					<a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
-			  		{{ message }}
-				</div>
-		    {% endfor %}
+			<section id="mensajes">
+				{% for message in messages %}
+					<div class="alert alert-{% if message.tags %}{{ message.tags }}{% endif %} alert-dismissible" >
+						<a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+				  		{{ message }}
+					</div>
+			    {% endfor %}
+		    </section>
 		{% endif %}
 
-		
-      	<form method="POST" name="filtros">
-      		{% csrf_token %}
-	        <div class="form-row">
-	            <div class="form-group col-12">
-	                <div class="input-group">
-	                    {{form.empleado}}
-	                    <span class="input-group-append">
-	                        <div class="input-group-text bg-transparent">
-	                            <i class="fa fa-search"></i>
-	                        </div>
-	                    </span>
-	                </div>
-	            </div>
-	            <div class="form-group col-12">
-	                <div class="input-group">
-	                    {{form.reemplazo}}
-	                    <span class="input-group-append">
-	                        <div class="input-group-text bg-transparent">
-	                            <i class="fa fa-search"></i>
-	                        </div>
-	                    </span>
-	                </div>
-	            </div>
-	            <div class="form-group col-12">
-	                <div class="input-group">
-	                    {{form.actividad}}
-	                    <span class="input-group-append">
-	                        <div class="input-group-text bg-transparent">
-	                            <i class="fa fa-search"></i>
-	                        </div>
-	                    </span>
-	                </div>
-	            </div>          
-	        </div>
-	        
-	        <div class="form-row">
-	          <div class="form-group col-md-3 col-lg-3">
-	            <label for="dia_semana">Día de semana</label>
-	            <select id="dia_semana" class="form-control" name="dia_semana">
-	              
-	              {% for dia in form.dia_semana %}
-	              	{{ dia }}
-	              {% endfor %}
-	            </select>
-	          </div>
-	          <div class="form-group col-md-3 col-lg-3">
-				
-
-	            <label for="estado">Estado</label>
-	            <select id="estado" class="form-control" name="estado">
-	              
-	              {% for estado in form.estado %}
-	              	{{ estado }}
-	              {% endfor %}
-	            </select>
-	          </div>
-	          <div class="form-group col-md-3 col-lg-3">
-	            <label for="motivo_ausencia">Motivo de ausencia</label>
-	            <select id="motivo_ausencia" class="form-control" name="motivo_ausencia">
-	              {% for motivo in form.motivo_ausencia %}
-	              	{{motivo}}
-	              {% endfor %}
-	            </select>
-	          </div>
-	          <div class="form-group col-md-3 col-lg-3">
-	            <label for="category">Sede</label>
-	            <select id="category" class="form-control" name="category">
-	              {% for sede in form.sede %}
-	              	{{ sede }}
-	              {% endfor %}
-	            </select>
-	          </div>
-	        </div>
-
-	        <div class="form-row">
-	          <div class="form-group col-md-3 col-lg-3">
-	            <label for="dia_inicio">Día inicio</label>
-	            {{form.dia_inicio}}
-	            <!-- <input type="date" class="form-control" id="publishDateMin" name="date_min"> -->
-	          </div>
-	          <div class="form-group col-md-3 col-lg-3">
-	          	
-	            <label for="dia_fin">Día Fin</label>
-				{{form.dia_fin}}
-	           	
-	          </div>
-	          <div class="form-group col-md-3 col-lg-3">
-	            <label for="hora_inicio">Hora inicio</label>
-	            {{form.hora_inicio}}
-	          </div>
-	          <div class="form-group col-md-3 col-lg-3">
-	            <label for="hora_fin">Hora fin</label>
-	            {{form.hora_fin}}
-	          </div>
-	        </div>
-			<div class="form-row">
-	          <div class="form-group col-md-12 col-lg-12 text-center">
-		        <div class="form-group">
-		          <div class="form-check-inline">
-		          	{{ form.solo_ausencia }}
-		            <label class="form-check-label" for="solo_ausencia">
-		              {{ form.solo_ausencia.label }}
-		            </label>
-		            
+		<section id="filtros">
+	      	<form method="POST" name="filtros">
+	      		{% csrf_token %}
+		        <div class="form-row">
+		            <div class="form-group col-12">
+		                <div class="input-group">
+		                    {{form.empleado}}
+		                    <span class="input-group-append">
+		                        <div class="input-group-text bg-transparent">
+		                            <i class="fa fa-search"></i>
+		                        </div>
+		                    </span>
+		                </div>
+		            </div>
+		            <div class="form-group col-12">
+		                <div class="input-group">
+		                    {{form.reemplazo}}
+		                    <span class="input-group-append">
+		                        <div class="input-group-text bg-transparent">
+		                            <i class="fa fa-search"></i>
+		                        </div>
+		                    </span>
+		                </div>
+		            </div>
+		            <div class="form-group col-12">
+		                <div class="input-group">
+		                    {{form.actividad}}
+		                    <span class="input-group-append">
+		                        <div class="input-group-text bg-transparent">
+		                            <i class="fa fa-search"></i>
+		                        </div>
+		                    </span>
+		                </div>
+		            </div>          
+		        </div>
+		        
+		        <div class="form-row">
+		          <div class="form-group col-md-3 col-lg-3">
+		            <label for="dia_semana">Día de semana</label>
+		            <select id="dia_semana" class="form-control" name="dia_semana">
+		              
+		              {% for dia in form.dia_semana %}
+		              	{{ dia }}
+		              {% endfor %}
+		            </select>
 		          </div>
-		          <div class="form-check-inline">
-		          	{{ form.solo_reemplazos }}
-		            <label class="form-check-label" for="solo_reemplazos">
-		              {{ form.solo_reemplazos.label }}
-		            </label>
-		            
+		          <div class="form-group col-md-3 col-lg-3">
+					
+
+		            <label for="estado">Estado</label>
+		            <select id="estado" class="form-control" name="estado">
+		              
+		              {% for estado in form.estado %}
+		              	{{ estado }}
+		              {% endfor %}
+		            </select>
+		          </div>
+		          <div class="form-group col-md-3 col-lg-3">
+		            <label for="motivo_ausencia">Motivo de ausencia</label>
+		            <select id="motivo_ausencia" class="form-control" name="motivo_ausencia">
+		              {% for motivo in form.motivo_ausencia %}
+		              	{{motivo}}
+		              {% endfor %}
+		            </select>
+		          </div>
+		          <div class="form-group col-md-3 col-lg-3">
+		            <label for="category">Sede</label>
+		            <select id="category" class="form-control" name="category">
+		              {% for sede in form.sede %}
+		              	{{ sede }}
+		              {% endfor %}
+		            </select>
 		          </div>
 		        </div>
-		    </div>
-	        </div>
-	        <div class="form-row">
-	          <div class="form-group col-md-12 col-lg-12 text-center">
-	        	<input type="submit" value="Buscar">
-			  </div>
-	        </div>
-      	</form>
-		
+
+		        <div class="form-row">
+		          <div class="form-group col-md-3 col-lg-3">
+		            <label for="dia_inicio">Día inicio</label>
+		            {{form.dia_inicio}}
+		            <!-- <input type="date" class="form-control" id="publishDateMin" name="date_min"> -->
+		          </div>
+		          <div class="form-group col-md-3 col-lg-3">
+		          	
+		            <label for="dia_fin">Día Fin</label>
+					{{form.dia_fin}}
+		           	
+		          </div>
+		          <div class="form-group col-md-3 col-lg-3">
+		            <label for="hora_inicio">Hora inicio</label>
+		            {{form.hora_inicio}}
+		          </div>
+		          <div class="form-group col-md-3 col-lg-3">
+		            <label for="hora_fin">Hora fin</label>
+		            {{form.hora_fin}}
+		          </div>
+		        </div>
+				<div class="form-row">
+		          <div class="form-group col-md-12 col-lg-12 text-center">
+			        <div class="form-group">
+
+			          <div class="form-check-inline">
+			          	{{ form.solo_ausencia }}
+			            <label class="form-check-label" for="solo_ausencia">
+			              {{ form.solo_ausencia.label }}
+			            </label>
+			          </div>
+
+			          <div class="form-check-inline">
+			          	{{ form.solo_reemplazos }}
+			            <label class="form-check-label" for="solo_reemplazos">
+			              {{ form.solo_reemplazos.label }}
+			            </label>
+			          </div>
+
+			          <div class="form-check-inline">
+			          	{{ form.solo_confirmadas }}
+			            <label class="form-check-label" for="solo_confirmadas">
+			              {{ form.solo_confirmadas.label }}
+			            </label>
+			          </div>
+
+			        </div>
+			    </div>
+		        </div>
+		        <div class="form-row">
+		          <div class="form-group col-md-12 col-lg-12 text-center">
+		        	<input type="submit" value="Buscar">
+				  </div>
+		        </div>
+	      	</form>
+		</section>
+
 		<br />
 
 		<div class="row">
@@ -158,101 +170,117 @@
 		
 		<br>
 
-	    <form method="POST" action="{% url 'filtro' %}" name="result_actions">
-			{% csrf_token %}
+		<section id="actions_results">
 
-			<section id="acciones">
-				<input type="submit" name="confirmar" value="Confirmar Seleccionadas" />
-				{# <input type="submit" name="reemplazos" value="Gestionar Reemplazos" /> #}
+		    <form method="POST" action="{% url 'action_process' %}" name="result_actions">
+				{% csrf_token %}
+
+				<section id="acciones" style="text-align:center;>
+					<input type="submit" name="confirmar_clases" value="Confirmar Clases" />
+					<input type="submit" name="asignar_reemplazo" value="Asignar Reemplazo" />
+					<input type="submit" name="gestion_ausencia" value="Gestionar Ausencias" />
+					<input type="submit" name="gestion_recurrencia" value="Gestionar Programación" />
+					<input type="submit" name="gestion_marcajes" value="Ver Marcajes" />
+				</section>
+
+				<br />
 				
-				<input type="submit" name="asignar_reemplazo" value="Asignar Reemplazo" />
-				<input type="submit" name="gestion_ausencia" value="Gestionar Ausencias" />
-				<input type="submit" name="recurrencias" value="Gestionar Recurrencias" />
-				
-				<input type="submit" value="Invertir Seleccion" onClick="javascript:a=document.getElementsByClassName('check_clases');for(i=0;i<a.length;i++){if(!a[i].disabled){a[i].click();}};return false;" />
-				<input type="submit" name="filtrar" value="Filtrar" />
-			</section>
+				<section id="clases">
+					<table class="table .table-responsive">
+						<thead>
+							<tr>
+								<th class="align-middle" scope="col">
+									<div class="form-check-inline"> 
+										<input type="checkbox" id="results_selectAll">
+									</div>
+								</th>
+								<th class="align-middle" scope="col">Estado</th>
+								<th class="align-middle" scope="col">Presencia</th>
+								<th class="align-middle" scope="col">Asignado</th>
+								<th class="align-middle" scope="col">Ejecutor</th>
+								<th class="align-middle" scope="col">Actividad</th>
+								<th class="align-middle" scope="col">Dia</th>
+								<th class="align-middle" scope="col">Fecha</th>
+								<th class="align-middle" scope="col">Inicio</th>
+								<th class="align-middle" scope="col">Fin</th>
+								<th class="align-middle" scope="col">Motivo de Ausencia</th>
+								<th class="align-middle" scope="col">Confirmada</th>
+							</tr>
+						</thead>
+						<tbody>
+							{% for clase in clases_list %}
+								
+								<tr>
+									<td class="align-middle " >
+										<div class="form-check-inline"> 
+										<input type="checkbox" id="toProcess_{{clase.id}}" 
+											name="toProcess_{{clase.id}}"
+											class="form-check-input check_clases" />
+										</div>
+									</td>
+									<td class="align-middle">{{clase.get_estado_display}}</td>
+									<td class="align-middle">
+										{% if clase.was_made %}
+											<i class="fas fa-check-circle" style="color: green !important;"></i>
+										{% else %}
+											<i class="fas fa-times-circle" style="color: red !important;"></i>
+										{% endif %}
+									</td>
+									<td class="align-middle">{{clase.empleado}}</td>
+									<td class="align-middle">
+										{% if clase.reemplazo %}
+											<strong>{{ clase.reemplazo }}</strong>
+										{% else %}
+											{{clase.empleado}}
+										{% endif %}	
+									</td>
+									<td class="align-middle">{{clase.actividad|capfirst}}</td>
+									<td class="align-middle">{{clase.dia_semana}}{{filtro.dia_semana}}</td>
+									<td class="align-middle">{{clase.fecha}}</td>
+									<td class="align-middle">{{clase.horario_desde}}</td>
+									<td class="align-middle">{{clase.horario_hasta}}</td>
+									<td class="align-middle">
+										{% if clase.ausencia %}
+											{{clase.ausencia}}
+										{% else %}
+											&nbsp;
+										{% endif %}
+									</td>
+									<td class="align-middle">
+										{% if clase.confirmada %}
+											<i class="fas fa-check-circle" style="color: green !important;"></i>
+										{% else %}
+											<i class="fas fa-times-circle" style="color: red !important;"></i>
+										{% endif %}
+									</td>
+								</tr>
 
-			<br />
-				
-			<table class="table .table-bordered">
-				<thead>
-					<tr>
-						<th class="align-middle" scope="col">
-							<div class="form-check-inline"> 
-								<input type="checkbox" id="check_head">
-							</div>
-						</th>
-						<th class="align-middle" scope="col">Estado</th>
-						<th class="align-middle" scope="col">Presencia</th>
-						<th class="align-middle" scope="col">Asignado</th>
-						<th class="align-middle" scope="col">Ejecutor</th>
-						<th class="align-middle" scope="col">Actividad</th>
-						<th class="align-middle" scope="col">Dia</th>
-						<th class="align-middle" scope="col">Fecha</th>
-						<th class="align-middle" scope="col">Inicio</th>
-						<th class="align-middle" scope="col">Fin</th>
-						<th class="align-middle" scope="col">Motivo de Ausencia</th>
-						<th class="align-middle" scope="col">Marcajes</th>
-					</tr>
-				</thead>
-				<tbody>
-					{% for clase in clases_list %}
-						
-						<tr>
-							<td class="align-middle " >
-								<div class="form-check-inline"> 
-								<input type="checkbox" id="confirm_{{clase.id}}" 
-									name="confirm_{{clase.id}}"
-									class="form-check-input check_clases" />
-								</div>
-							</td>
-							<td class="align-middle">{{clase.get_estado_display}}</td>
-							<td class="align-middle">{{filtro.presencia}}</td>
-							<td class="align-middle">{{clase.empleado}}</td>
-							<td class="align-middle">
-								{% if clase.reemplazo %}
-									<strong>{{ clase.reemplazo }}</strong>
-								{% else %}
-									{{clase.empleado}}
-								{% endif %}	
-							</td>
-							<td class="align-middle">{{clase.actividad|capfirst}}</td>
-							<td class="align-middle">{{clase.dia_semana}}{{filtro.dia_semana}}</td>
-							<td class="align-middle">{{clase.fecha}}</td>
-							<td class="align-middle">{{clase.horario_desde}}</td>
-							<td class="align-middle">{{clase.horario_hasta}}</td>
-							<td class="align-middle">
-								{% if clase.ausencia %}
-									{{clase.ausencia}}
-								{% else %}
-									&nbsp;
-								{% endif %}
-							</td>
-							<td class="align-middle">&nbsp;</td>
-						</tr>
+							{% endfor %}
+						</tbody>
+					</table>
+				</section>
 
-					{% endfor %}
-				</tbody>
-			</table>
-			
-			<nav>
-			    {% if is_paginated %}
-			        <ul class="pagination">
-			            {% if page_obj.has_previous %}
-			                <li><a href="?page={{ page_obj.previous_page_number }}">&laquo;</a></li>
-			            {% endif %}
+				<section id="pagination">
+					<nav>
+					    {% if is_paginated %}
+					        <ul class="pagination">
+					            {% if page_obj.has_previous %}
+					                <li><a href="?page={{ page_obj.previous_page_number }}">&laquo;</a></li>
+					            {% endif %}
 
-			            {% for i in paginator.page_range %}
-			                <li {% if page_obj.number == i %} class="active" {% endif %}>
-			                    <a href="?page={{i}}">{{ i }}</a>
-			                </li>
-			            {% endfor %}
+					            {% for i in paginator.page_range %}
+					                <li {% if page_obj.number == i %} class="active" {% endif %}>
+					                    <a href="?page={{i}}">{{ i }}</a>
+					                </li>
+					            {% endfor %}
 
-			            {% if page_obj.has_next %}
-			                <li><a href="?page={{ page_obj.next_page_number }}">&raquo;</a></li>
-			            {% endif %}
-			        </ul>
-			    {% endif %}
-			</nav>
+					            {% if page_obj.has_next %}
+					                <li><a href="?page={{ page_obj.next_page_number }}">&raquo;</a></li>
+					            {% endif %}
+					        </ul>
+					    {% endif %}
+					</nav>
+				</section>
+			</form>
+		</section>
 {% endblock %}

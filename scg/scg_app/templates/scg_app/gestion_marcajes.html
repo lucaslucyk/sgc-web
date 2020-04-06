@@ -1,0 +1,128 @@
+{% extends "base_generic.html" %}
+
+{% block title %}<title>Gesti&oacute;n de marcajes</title>{% endblock %}
+{% block extra_css %}
+	<style type="text/css">
+		.btn{
+			margin: 0 !important;
+			padding: .75em 3em !important;
+		}
+	</style>		
+{% endblock %}
+
+{% block content %}
+
+	{% if messages %}
+		<section id="mensajes">
+			{% for message in messages %}
+				<div class="alert alert-{% if message.tags %}{{ message.tags }}{% endif %} alert-dismissible" >
+					<a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+			  		{{ message }}
+				</div>
+		    {% endfor %}
+	    </section>
+	{% endif %}
+
+	<div class="row">
+        <div class="col-md-1 col-xs-1 col-sm-1"></div>
+        <div class="col-md-10 col-xs-10 col-sm-10">
+            <h1 class="round3" style="text-align:center;">Gesti&oacute;n de marcajes</h1>
+        </div>
+        <div class="col-md-1 col-xs-1 col-sm-1"></div>
+    </div>
+	<br/>
+	{% if form %}
+		<form method="POST">
+			{% csrf_token %}
+			
+			<div class="form-row">
+				<div class="form-group-inline col-md-7 col-lg-7">
+				<div class="input-group mb-3">
+				  <div class="input-group-prepend">
+				    <span class="input-group-text" id="basic-addon1">Hora del marcaje</span>
+				  </div>
+				  <!--
+				  <input type="text" class="form-control" placeholder="Username" aria-label="Username" aria-describedby="basic-addon1">
+					-->
+					{{form.hora_marcaje}}
+				</div>
+				</div>
+				<!--
+				
+					<label for="hora_marcaje">Hora Marcaje</label>
+					{{form.hora_marcaje}}
+				
+				-->
+				<div class="form-group-inline col-md-5 col-lg-5 text-center">
+	            	<input class="btn btn-info" type="submit"  name="add_marcaje" value="Agregar y recalcular">
+	            	<input class="btn btn-danger" type="submit"  name="delete_marcaje" value="Eliminar">
+	          	</div>
+	         </div>
+		</form>
+	{% endif %}
+
+	<hr /><br/>
+
+	<div class="row">
+		
+		
+		<div class="col-md-7">
+			<section id="clases ">
+				<h3>Clases del d&iacute;a</h3>
+				<table class="table .table-responsive .table-bordered">
+					<thead>
+						<tr>
+							<th class="align-middle" scope="col">Sede</th>
+							<th class="align-middle" scope="col">Actividad</th>
+							<th class="align-middle" scope="col">Inicio</th>
+							<th class="align-middle" scope="col">Fin</th>
+						</tr>
+					</thead>
+					<tbody>
+						{% for clase in day_classes %}
+							<tr>
+								<td class="align-middle">{{clase.sede}}</td>
+								<td class="align-middle">{{clase.actividad}}</td>
+								<td class="align-middle">{{clase.horario_desde}}</td>
+								<td class="align-middle">{{clase.horario_hasta}}</td>
+							</tr>
+						{% endfor %}
+					</tbody>
+				</table>
+			</section>
+		</div>
+	
+		
+		<div class="col-md-5">
+			<section id="marcajes ">
+				<h3>Bloques de presencia</h3>
+				<table class="table .table-responsive .table-bordered">
+					<thead>
+						<tr>
+							<th class="align-middle" scope="col">Entrada</th>
+							<th class="align-middle" scope="col">Salida</th>
+						</tr>
+					</thead>
+					<tbody>
+						{% for bloque in day_blocks %}
+							<tr>
+								<td class="align-middle">{{bloque.inicio.hora}}</td>
+								<td class="align-middle">
+									{% if bloque.fin %}
+										{{bloque.fin.hora}}
+									{% else %}
+										<i class="fas fa-exclamation-circle" style="color: red !important;"></i>
+									{% endif %}
+								</td>
+							</tr>
+						{% endfor %}
+					</tbody>
+				</table>
+			</section>
+		</div>
+		
+	</div>
+
+	<br /> <p><a href="{% url 'clases_view' %}">&lt;&lt; Volver al monitor de clases</a></p>
+
+{% endblock %}

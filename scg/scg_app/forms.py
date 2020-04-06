@@ -28,29 +28,6 @@ class ProgRecurrenciaForm(forms.Form):
 		model = Clase
 		fields = ("dia_semana", "fecha_desde", "fecha_hasta", "horario_desde", "horario_hasta", "actividad", "empleado", "sede")
 
-class FiltrosForm(forms.Form):
-	estado = forms.MultipleChoiceField(widget=forms.CheckboxSelectMultiple, choices=settings.ESTADOS_CHOICES, required=False, label="Estado de la Clase", initial=None)
-	
-	filtro_dias = settings.DIA_SEMANA_CHOICES
-	filtro_estados = settings.ESTADOS_CHOICES
-	filtro_mot_aus = MotivoAusencia.objects.all()
-	filtro_sedes = Sede.objects.all()
-
-	empleado_asignado = forms.ModelChoiceField(queryset=Empleado.objects.all(), required=False, label="Asignado", empty_label="---")
-	empleado_ejecutor = forms.ModelChoiceField(queryset=Empleado.objects.all(), required=False, label="Realizador", empty_label="---")
-	actividad = forms.ModelChoiceField(queryset=Actividad.objects.all(), required=False, empty_label="---")
-	fecha_desde = forms.DateField(widget=forms.SelectDateWidget(years=range(2010, 2040)), label="Desde", initial=None, required=False)
-	fecha_hasta = forms.DateField(widget=forms.SelectDateWidget(years=range(2010, 2040)), label="Hasta", initial=None, required=False)
-	dias = forms.MultipleChoiceField(widget=forms.CheckboxSelectMultiple, choices=settings.DIA_SEMANA_CHOICES, required=False,)
-	horario_desde = forms.TimeField(widget=forms.TimeInput(format="%H:%M"), help_text="Horario de inicio de clase", initial=dt.time(0, 0), required=False)
-	horario_hasta = forms.TimeField(widget=forms.TimeInput(format="%H:%M"), help_text="Horario de finalizacion de clase", initial=dt.time(0, 0), required=False)
-	clases_ausentes = forms.BooleanField(required=False, label="Mostrar solo Ausencias", initial=False)
-	clases_reemplazos = forms.BooleanField(required=False, label="Mostrar solo Reemplazos", initial=False)
-
-	class Meta:
-		model = Clase
-		fields = ("fecha_desde", "fecha_hasta", "horario_desde", "horario_hasta", "actividad", "empleado", )
-
 class FiltroForm(forms.Form):
 	widget_search = forms.TextInput(attrs={
 		'type': 'search',
@@ -85,9 +62,6 @@ class FiltroForm(forms.Form):
 		help_text="Horario de fin de clase", initial="23:59")
 	hora_fin.widget.attrs.update({'class': 'form-control'})
 
-
-	#hora_fin = forms.CharField(max_length=50, help_text="", required=False, widget=widget_time)
-
 	dia_semana = forms.ChoiceField(
 		widget=forms.Select, 
 		choices=(('', 'Todos'), *settings.DIA_SEMANA_CHOICES), 
@@ -115,12 +89,18 @@ class FiltroForm(forms.Form):
 	solo_reemplazos = forms.BooleanField(required=False, label="Solo reemplazos", initial=False)
 	solo_reemplazos.widget.attrs.update({'class': 'form-check-input'})
 
-class MarcajeForm(forms.Form):
-	nuevo_marcaje = forms.TimeField(widget=forms.TimeInput(format="%H:%M"), help_text="Horario del marcaje a agregar", initial=dt.time(0, 0), required=True)
+	solo_confirmadas = forms.BooleanField(required=False, label="Solo confirmadas", initial=False)
+	solo_confirmadas.widget.attrs.update({'class': 'form-check-input'})
 
-	class Meta:
-		model = Marcaje
-		fields = ("nuevo_marcaje")
+class MarcajeForm(forms.Form):
+	hora_marcaje = forms.TimeField(widget=forms.TimeInput(format="%H:%M"), 
+		help_text="", initial="00:00")
+	hora_marcaje.widget.attrs.update({
+		'class': 'form-control',
+		'placeholder': "00:00",
+		'aria-label': 'hora_marcaje',
+		'aria-describedby': 'basic-addon1',
+		})
 
 class ReemplazoForm(forms.Form):
 	reemplazo = forms.ModelChoiceField(
@@ -147,10 +127,3 @@ class MotivoAusenciaForm(forms.Form):
 	class Meta:
 		model = MotivoAusencia
 		fields = ("id", "nombre")
-
-class AusenciaForm(forms.Form):
-	motivo = forms.CharField(widget=forms.Textarea, required=True, label="Motivo, Razon o Circunstancia de la Ausencia")
-
-	class Meta:
-		model = Clase
-		fields = ()

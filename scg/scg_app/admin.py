@@ -53,9 +53,17 @@ class Clase(admin.ModelAdmin):
     fields = (('parent_recurrencia', 'parent'), ('fecha', 'dia_semana'), 
         ('horario_desde', 'horario_hasta'), 'actividad', 'sede', 'empleado', 
         'modificada', 'estado', 'presencia', 'ausencia', 'reemplazo',
+        'confirmada',
     )
-    list_display = ('parent_recurrencia', 'dia_semana', 'fecha', 'horario_desde', 'horario_hasta', 'creacion', 'actividad', 'sede', 'empleado', 'modificada', 'estado', )
-    readonly_fields = ('parent_recurrencia', 'creacion', 'dia_semana', 'fecha', 'horario_desde', 'horario_hasta', 'actividad', 'sede', 'empleado', 'parent', 'modificada', 'estado', 'presencia', )
+    list_display = ('dia_semana', 'fecha', 'horario_desde', 'horario_hasta', 
+        'creacion', 'actividad', 'sede', 'empleado', 'modificada', 'estado',
+        'confirmada', 
+    )
+    readonly_fields = ('parent_recurrencia', 'creacion', 'dia_semana', 'fecha',
+        'horario_desde', 'horario_hasta', 'actividad', 'sede', 'empleado', 
+        'parent', 'modificada', 'presencia',
+        #'estado',
+    )
 
     #def has_delete_permission(self, request, obj=None):
     #   return False
@@ -83,3 +91,5 @@ class Escala(admin.ModelAdmin):
 @admin.register(GrupoActividad)
 class GrupoActividad(admin.ModelAdmin):
     list_display = ('nombre', )
+
+admin.site.register(BloqueDePresencia)

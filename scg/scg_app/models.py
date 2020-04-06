@@ -3,6 +3,7 @@ from django.db import models
 from django.utils import timezone
 
 from django.db.models import Q
+from . import utils
 # Create your models here.
 
 class Rol(models.Model):
@@ -161,7 +162,7 @@ class Recurrencia(models.Model):
 	actividad = models.ForeignKey('Actividad', on_delete=models.SET(''), null=True)
 
 	@classmethod
-	def is_busy(cls, employee, week_day, date_ini, date_end, hour_ini, hour_end):
+	def in_use(cls, employee, week_day, date_ini, date_end, hour_ini, hour_end):
 		""" informs if the range of days and hours is busy by other *Recurrencia* """
 
 		recs = cls.objects.filter(
@@ -178,7 +179,9 @@ class Recurrencia(models.Model):
 		return recs
 
 	def __str__(self):
-		return f'Recurrencia {self.id}: para {self.empleado}, los {self.dia_semana}, del {self.fecha_desde}, al {self.fecha_hasta} (de {self.horario_desde} a {self.horario_hasta})'
+		return f'Los {self.dia_semana} desde el {self.fecha_desde} hasta el \
+			{self.fecha_hasta}, \
+			de {self.horario_desde} a {self.horario_hasta}'.replace("\t", "")
 
 	class Meta:
 		verbose_name = "Recurrencia"
@@ -187,6 +190,7 @@ class Recurrencia(models.Model):
 
 class Clase(models.Model):
 	parent_recurrencia = models.ForeignKey('Recurrencia', on_delete=models.CASCADE, null=True)
+
 	parent = models.CharField(max_length=200, blank=True)
 	creacion = models.DateTimeField(default=timezone.now)
 	dia_semana = models.CharField(max_length=9, choices=settings.DIA_SEMANA_CHOICES, blank=True)
@@ -199,14 +203,37 @@ class Clase(models.Model):
 	empleado = models.ForeignKey('Empleado', on_delete=models.SET(''), related_name='empleado')
 	reemplazo = models.ForeignKey('Empleado', blank=True, null=True, on_delete=models.SET(''), related_name='reemplazo')
 	ausencia = models.ForeignKey('MotivoAusencia', blank=True, null=True, on_delete=models.SET(''), related_name='ausencia')
+	confirmada = models.BooleanField(blank=True, default=False)
 
 	modificada = models.BooleanField(blank=True, default=False)
 	estado = models.CharField(max_length=1, choices=settings.ESTADOS_CHOICES, null=True, blank=True, default=settings.ESTADOS_CHOICES[0][-1])
 	presencia = models.CharField(max_length=12, choices=settings.PRESENCIA_CHOICES, null=True, blank=True, default=settings.PRESENCIA_CHOICES[0][-1])
 	comentario = models.CharField(max_length=1000, blank=True, help_text="Aclaraciones para feriados/no laborables con o sin ausencias")
 
+	@property
+	def is_cancelled(self):
+		return self.estado == settings.ESTADOS_CHOICES[-1][0]
+
+	@property
+	def is_present(self):
+		return self.presencia == settings.PRESENCIA_CHOICES[-1][0]
+
+	@property
+	def was_made(self):
+		blocks = BloqueDePresencia.objects.filter(
+			empleado=self.empleado,
+			fecha=self.fecha,
+			inicio__hora__lte=self.horario_desde,
+			fin__hora__gte=self.horario_hasta,
+		)
+
+		return True if blocks else False
+	
 	def __str__(self):
-		return f'Clase de {self.actividad} [{self.id}]: el {self.dia_semana} {self.fecha}, de {self.horario_desde} a {self.horario_hasta}, dictada por {self.empleado}' if self.parent_recurrencia else f'[Recurrencia original eliminada ({self.parent}), id: {self.id}]'
+		if self.parent_recurrencia:
+			return f'{self.actividad}: el {self.dia_semana} {self.fecha} \
+				de {self.horario_desde} a {self.horario_hasta}, \
+				dictada por {self.empleado}'.replace("\t", "")
 
 	class Meta:
 		verbose_name = "Clase"
@@ -244,10 +271,64 @@ class Marcaje(models.Model):
 	entrada = models.TimeField(null=True, blank=True)
 	salida = models.TimeField(null=True, blank=True)
 
-	def __str__(self):
-		return f'El empleado {self.empleado} estuvo presente el {self.fecha}, entre las {self.entrada} y {self.salida}.' if self.salida else f'El empleado {self.empleado} ingreso el {self.fecha} a las {self.entrada}.'
+	hora = models.TimeField(null=True, blank=True)
 
+	def __str__(self):
+		return f'{self.empleado} el {self.fecha} a las {self.hora}'
+		
 	class Meta:
 		verbose_name = "Marcaje"
 		verbose_name_plural = "Marcajes"
 		get_latest_by = "id"
+
+
+class BloqueDePresencia(models.Model):
+	empleado = models.ForeignKey('Empleado', blank=True, null=True,
+		on_delete=models.CASCADE,
+	)
+
+	fecha = models.DateField(blank=True, default=timezone.now)
+
+	inicio = models.ForeignKey('Marcaje', 
+		blank=True, null=True, on_delete=models.SET(''),
+		related_name='inicio',
+	)
+	fin = models.ForeignKey('Marcaje', 
+		blank=True, null=True, on_delete=models.SET(''),
+		related_name='fin',
+	)
+	
+	@classmethod
+	def recalcular_bloques(cls, empleado, fecha):
+		#cls.objects.filter(empleado=empleado, inicio__fecha=fecha).delete()
+		cls.objects.filter(empleado=empleado, fecha=fecha).delete()
+
+		#grouped
+		_day_clockings = Marcaje.objects.filter(empleado=empleado, fecha=fecha).order_by('hora')
+		if not _day_clockings:
+			return True
+
+		if len(_day_clockings) != 1:
+			for e, s in utils.grouped(_day_clockings, 2):
+				bloque = cls()
+				bloque.empleado = empleado 
+				bloque.inicio = e
+				bloque.fin = s
+				bloque.fecha = fecha
+				bloque.save()
+
+		if len(_day_clockings) % 2:
+			last_bloque = cls()
+			last_bloque.empleado = empleado
+			last_bloque.fecha = fecha
+			last_bloque.inicio = _day_clockings.last()
+			last_bloque.save()
+
+		return True
+
+
+	def __repr__(self):
+		return f'Presencia({self.inicio}, {self.fin})'
+
+	def __str__(self):
+		return f'Presencia de {self.inicio} a {self.fin}'

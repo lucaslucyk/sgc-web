@@ -152,8 +152,9 @@ ESTADOS_CHOICES = (
         ("1", "Realizada Normalmente"), 
         ("2", "Realizada Con Reemplazo"), 
         ("3", "No Realizada por Ausencia"), 
-        ("4", "No Realizada por Feriado"), 
-        ("5", "Cancelada"), 
+        ("4", "No Realizada por Feriado"),
+         
+        ("5", "Cancelada"), # keep last
     )
 
 PERIODOS_CHOICES = (
@@ -173,7 +174,8 @@ PERIODOS_CHOICES = (
 
 PRESENCIA_CHOICES = (
         ("No Realizada", "No Realizada"),
-        ("Realizada", "Realizada"),
+
+        ("Realizada", "Realizada"), #keep last
     )
 
 ANOS_CHOICES = tuple(zip([str(a) for a in range(2020, 2041)], [str(b) for b in range(2020, 2041)]))
