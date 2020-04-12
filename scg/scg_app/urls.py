@@ -2,7 +2,7 @@ from django.urls import path, include
 from django.conf.urls.static import static
 from django.conf import settings
 
-from . import views
+from scg_app import views
 
 urlpatterns = [
     path('', views.index, name='index'),
@@ -12,12 +12,12 @@ urlpatterns = [
     path('asignar_reemplazo/<str:id_clase>', views.asignar_reemplazo, name="asignar_reemplazo"),
     path('gestion_marcajes/<str:id_empleado>/<str:fecha>', views.gestion_marcajes, name="gestion_marcajes"),
 
-    
-	 
-    #path('gestionar_reemplazos/', views.gestionar_reemplazos, name='gestionar_reemplazos'),
-    #path('agregar_marcaje/', views.agregar_marcaje, name='agregar_marcaje'), 
-    #path('filtro/', views.filtros, name='filtro'), 
-    #path('monitor/', views.monitor_clases, name='monitor'), 
+    path('programar/', views.programar, name='programar'),
+
+
+    ### api gets ###
+
+    #path('get_empleados/<str:_filter>', views.get_empleados, name='get_empleados'),
 
     path('about/', views.about, name='about'), 
     path('auto_clockings/', views.auto_clockings, name='auto_clockings'), 
@@ -28,5 +28,7 @@ urlpatterns = [
     path('pulls/pull_empleados/', views.pull_empleados, name='pull_empleados'), 
     path('pulls/pull_sedes/', views.pull_sedes, name='pull_sedes'), 
     path('register/', views.register, name='register'), 
-    path('programar_clase/', views.programar_clase, name='programar_clase'), 
+    #path('programar_clase/', views.programar_clase, name='programar_clase'), 
+
+    #path('get_data/<str:model>/<str:filter>', views.programar_clase, name='programar_clase'), 
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT) #remover para produccion!

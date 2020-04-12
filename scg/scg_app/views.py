@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import datetime
 import re
 from django.conf import settings
@@ -9,10 +11,182 @@ from scg_app.forms import *
 from scg_app.models import *
 from zeep import Client
 from django.contrib import messages
+from django.apps import apps
 
 from django.core.paginator import EmptyPage, Paginator
 from django.views.generic.list import ListView
 from collections import defaultdict
+
+from dal import autocomplete
+
+try:
+    from django.urls import reverse_lazy
+except ImportError:
+    from django.core.urlresolvers import reverse_lazy
+from django.forms import inlineformset_factory
+from django.views import generic
+from django.http import JsonResponse
+
+def confirm_delete(request, model, pk, context=None):
+    pass
+
+def programar(request, context=None):
+
+    form = RecurrenciaForm(request.POST if request.method == 'POST' else None)
+    context = context or {'form': form, 'search_data': {}}
+
+    if request.method == 'POST':
+
+        search_data = {
+            "empleado": request.POST.get('empleados-search'),
+            "actividad": request.POST.get('actividades-search'),
+            "sede": request.POST.get('sedes-search'),
+        }
+        context["search_data"] = search_data
+
+        if "empleados-results" and "actividades-results" and "sedes-results" not in request.POST.keys():
+                messages.warning(request, "Busque y seleccione los datos en desplegables.")
+                return render(request, "scg_app/programar_clase.html", context)
+
+        try:    #process data geted by API
+            fields = {
+                "empleado" : get_object_or_404(Empleado, pk=request.POST.get("empleados-results")),
+                "actividad" : get_object_or_404(Actividad, pk=request.POST.get("actividades-results")),
+                "sede" : get_object_or_404(Sede, pk=request.POST.get("sedes-results")),
+            }
+        except:
+            messages.error(request, "Error en campos de búsqueda.")
+            return render(request, "scg_app/programar_clase.html", context)
+
+        ###validate info and process more data
+        if not form.is_valid():
+            messages.error(request, "Error en datos del formulario.")
+            return render(request, "scg_app/programar_clase.html", context)
+
+        fields.update({
+            "dia_semana": form.cleaned_data["dia_semana"], 
+            "fecha_desde": datetime.date.fromisoformat(form.cleaned_data["fecha_desde"]), 
+            "fecha_hasta": datetime.date.fromisoformat(form.cleaned_data["fecha_hasta"]), 
+            "horario_desde": form.cleaned_data["horario_desde"].replace(second=0, microsecond=0),  #limpiando segundos innecesarios
+            "horario_hasta": form.cleaned_data["horario_hasta"].replace(second=0, microsecond=0),  #limpiando segundos innecesarios
+        })
+
+        #context["form"] = form        
+
+        if fields["fecha_hasta"] < datetime.date.today() and not settings.DEBUG:
+            messages.error(request, "No se pueden programar clases para fechas pasadas.")
+            return render(request, "scg_app/programar_clase.html", context)
+
+        if fields["fecha_desde"] >= fields["fecha_hasta"]:
+            messages.error(request, "La fecha de fin debe ser mayor a la de inicio.")
+            return render(request, "scg_app/programar_clase.html", context)
+
+        if fields["horario_desde"] >= fields["horario_hasta"]:
+            messages.error(request, "La hora de fin debe ser mayor a la de inicio.")
+            return render(request, "scg_app/programar_clase.html", context)
+
+        if not Saldo.objects.filter(
+            actividad=fields["actividad"], 
+            sede=fields["sede"], 
+            desde__lte=fields["fecha_desde"],
+            hasta__gte=fields["fecha_hasta"]
+        ).exists():
+            messages.error(request, f'No hay saldos para la actividad en la sede seleccionada.')
+            return render(request, "scg_app/programar_clase.html", context)
+
+        _to_delete = []
+        for dia in fields["dia_semana"]:
+            _used = Recurrencia.in_use(
+                employee=fields["empleado"],
+                week_day=dia,
+                date_ini=fields["fecha_desde"],
+                date_end=fields["fecha_hasta"],
+                hour_ini=fields["horario_desde"],
+                hour_end=fields["horario_hasta"])
+            
+            _to_delete.append(dia) if _used else None 
+        
+        [fields["dia_semana"].remove(dia) for dia in _to_delete]
+
+        if not fields["dia_semana"]:
+            messages.error(request, f'Todos los días estan cubiertos por otras programaciones.')
+            return render(request, "scg_app/programar_clase.html", context)
+
+        _not_success, _rejecteds, _creadas = False, False, 0
+
+        for dia in fields["dia_semana"]:
+            rec = Recurrencia.objects.create(
+                dia_semana=dia, 
+                fecha_desde=fields["fecha_desde"], 
+                fecha_hasta=fields["fecha_hasta"], 
+                horario_desde=fields["horario_desde"], 
+                horario_hasta=fields["horario_hasta"], 
+                empleado=fields["empleado"], 
+                actividad=fields["actividad"], 
+            )
+            success, rejected, cant_creadas = generar_clases(fields, dia, rec)
+
+            #update status vars
+            _not_success = True if not success else _not_success
+            _rejecteds = True if rejected != 0 else _rejecteds
+
+        #checks saldos
+        if not Saldo.check_saldos(
+            fields["sede"], fields["actividad"], 
+            fields["fecha_desde"], fields["fecha_hasta"]
+        ):
+            messages.warning(request, 'Ya no dispone de saldo en periodos puntuales.')
+
+        if _not_success:
+            messages.warning(request, 'Programación creada pero no se crearon clases puntuales.')
+        elif _rejecteds:
+            messages.warning(request, 'No se crearon algunas clases porque el empleado no estaba disponible ciertos días y horarios.')
+        
+        if _to_delete:
+            messages.warning(request, "No se crearon todas las programaciones por falta de disponibilidad.")
+        else:
+            messages.success(request, "Programación generada!")
+
+    return render(request, "scg_app/programar_clase.html", context)
+
+def generar_clases(_fields, _dia, _recurrencia):
+
+    #print(_dia)
+    #dias = dict(settings.DIA_SEMANA_CHOICES) #get from settings
+    success, rejected, cant_creadas = True, 0, 0 
+
+    try:
+        #+1 for process all days
+        num_dias = (_fields["fecha_hasta"] - _fields["fecha_desde"]).days + 1
+
+        for i in range(num_dias):
+            dia_actual = _fields["fecha_desde"] + datetime.timedelta(days=i)
+
+            #print(str(dia_actual.weekday()), str(_dia))
+
+            if str(dia_actual.weekday()) == str(_dia):
+                if not _fields["empleado"].is_busy(
+                                            dia_actual, 
+                                            _fields["horario_desde"], 
+                                            _fields["horario_hasta"]):
+                    Clase.objects.create(
+                        parent_recurrencia = _recurrencia,
+                        parent = _recurrencia.__str__(),
+                        dia_semana = _dia,
+                        fecha = dia_actual,
+                        horario_desde = _fields["horario_desde"],
+                        horario_hasta = _fields["horario_hasta"],
+                        actividad = _fields["actividad"],
+                        sede = _fields["sede"],
+                        empleado = _fields["empleado"],
+                    )
+                    cant_creadas += 1
+                else:
+                    rejected += 1
+    except:
+        success = False
+
+    return success, rejected, cant_creadas
 
 # Create your views here.
 def check_admin(user):
@@ -255,18 +429,16 @@ def gestion_ausencia(request, ids_clases=None, context=None):
         if form.is_valid():
             motivo_ausencia = form.cleaned_data["motivo"]
 
-            if not motivo_ausencia:
-                #context["status"] = "Seleccione un reemplazante."
-                messages.error(request, "Seleccione un Motivo de ausencia.")
-                return render(request, "scg_app/gestion_ausencia.html", context)
+            # if not motivo_ausencia:
+            #     messages.error(request, "Seleccione un Motivo de ausencia.")
+            #     return render(request, "scg_app/gestion_ausencia.html", context)
 
             for clase in clases_to_edit:
                 clase.ausencia = motivo_ausencia
-                if not clase.reemplazo: 
-                    clase.estado = settings.ESTADOS_CHOICES[3][0]
                 clase.save()
+                clase.update_status()
 
-            messages.success(request, "Ausencias cargadas correctamente.")
+            messages.success(request, "Acción finalizada.")
 
     return render(request, "scg_app/gestion_ausencia.html", context)
 
@@ -288,8 +460,10 @@ def asignar_reemplazo(request, id_clase=None, context=None):
             reemplazante = form.cleaned_data["reemplazo"]
 
             if not reemplazante:
-                #context["status"] = "Seleccione un reemplazante."
-                messages.error(request, "Seleccione un reemplazante.")
+                clase_to_edit.reemplazo = None
+                clase_to_edit.save()
+                clase_to_edit.update_status()
+                messages.success(request, "Se ha borrado el reemplazo.")
                 return render(request, "scg_app/gestionar_reemplazos.html", context)
 
             if clase_to_edit.empleado == reemplazante:
@@ -301,8 +475,8 @@ def asignar_reemplazo(request, id_clase=None, context=None):
                 return render(request, "scg_app/gestionar_reemplazos.html", context)
 
             clase_to_edit.reemplazo = reemplazante
-            clase_to_edit.estado = settings.ESTADOS_CHOICES[2][0]
             clase_to_edit.save()
+            clase_to_edit.update_status()
 
             messages.success(request, "Reemplazo cargado con éxito!")
 
@@ -329,8 +503,8 @@ def gestion_marcajes(request, id_empleado=None, fecha=None, context=None):
 
     empleado = empleado[0] #checked what exists
     day_classes = Clase.objects.filter(empleado__pk=id_empleado, fecha=fecha).order_by('horario_desde')
-    day_blocks = BloqueDePresencia.objects.filter(empleado__pk=id_empleado, fecha=fecha).order_by('inicio')
-    day_clockings = Marcaje.objects.filter(empleado__pk=id_empleado, fecha=fecha).order_by('entrada')
+    day_blocks = BloqueDePresencia.objects.filter(empleado__pk=id_empleado, fecha=fecha).order_by('inicio__hora')
+    #day_clockings = Marcaje.objects.filter(empleado__pk=id_empleado, fecha=fecha).order_by('entrada')
 
     context["day_classes"] = day_classes
     context["day_blocks"] = day_blocks
@@ -349,7 +523,7 @@ def gestion_marcajes(request, id_empleado=None, fecha=None, context=None):
         hora_marcaje = form.cleaned_data["hora_marcaje"].replace(second=0)
 
         #marc_exists = Marcaje.objects.filter(hora=hora_marcaje)
-        if Marcaje.objects.filter(hora=hora_marcaje):   #clocking exists
+        if Marcaje.objects.filter(fecha=fecha, hora=hora_marcaje, empleado=empleado):   #clocking exists
             messages.error(request, "Ya existe un marcaje en este horario.")
             return render(request, "scg_app/gestion_marcajes.html", context)
 
@@ -441,180 +615,6 @@ def register(request):
             return redirect('/')
         else: context = {'form': form}
     return render(request, "scg_app/register.html", context)
-
-@login_required
-def programar_clase(request, context=None):
-    form = ProgRecurrenciaForm()
-    context = context or {'form': form}
-    saldos = Saldo.objects
-    if request.method == 'POST':
-        form = ProgRecurrenciaForm(request.POST)
-        if form.is_valid():
-            fields = {
-            "dia_semana": form.cleaned_data["dia_semana"], 
-            "fecha_desde": form.cleaned_data["fecha_desde"], 
-            "fecha_hasta": form.cleaned_data["fecha_hasta"], 
-            "horario_desde": form.cleaned_data["horario_desde"].replace(second=0, microsecond=0),  #limpiando segundos innecesarios
-            "horario_hasta": form.cleaned_data["horario_hasta"].replace(second=0, microsecond=0),  #limpiando segundos innecesarios
-            "actividad": form.cleaned_data["actividad"], 
-            "sede": form.cleaned_data["sede"], 
-            "empleado": form.cleaned_data["empleado"], 
-            }
-
-            context["form"] = form
-            
-            if fields["fecha_hasta"] >= datetime.datetime.now().date() and not settings.DEBUG:
-                context["status"] = ["No se pueden crear recurrencias para fechas pasadas."]
-                return render(request, "scg_app/programar_clase.html", context)
-
-            if fields["horario_desde"] >= fields["horario_hasta"]:
-                context["status"] = ["La hora de fin debe ser mayor a la de inicio."]
-                return render(request, "scg_app/programar_clase.html", context)
-
-            if fields["fecha_desde"] >= fields["fecha_hasta"]:
-                context["status"] = ["La fecha de fin debe ser mayor a la de inicio."]
-                return render(request, "scg_app/programar_clase.html", context)
-
-            
-
-            #recurrencia objects
-            new_recurrencia = Recurrencia.objects
-            if not check_recs_unique(fields, new_recurrencia):
-                context["status"] = ["No se creo la recurrencia, por encontrarse una recurrencia igual previamente creada!"]
-                return render(request, "scg_app/programar_clase.html", context)
-
-            if saldos.filter(actividad=fields["actividad"], sede=fields["sede"], year=fields["fecha_desde"].year).exists():
-
-                for dia in fields["dia_semana"]:
-                    if Recurrencia.in_use(
-                        employee=fields["empleado"],
-                        week_day=dia,
-                        date_ini=fields["fecha_desde"],
-                        date_end=fields["fecha_hasta"],
-                        hour_ini=fields["horario_desde"],
-                        hour_end=fields["horario_hasta"]
-                    ):
-                        fields["dia_semana"].remove(dia)
-                
-                if not fields["dia_semana"]:
-                    context["status"] = ["Todos los días estan cubiertos por otras recurrencias."]
-                    return render(request, "scg_app/programar_clase.html", context)
-
-                for dia in fields["dia_semana"]:
-
-                    new_recurrencia.update_or_create(
-                        id=None, 
-                        dia_semana=dia, 
-                        fecha_desde=fields["fecha_desde"], 
-                        fecha_hasta=fields["fecha_hasta"], 
-                        horario_desde=fields["horario_desde"], 
-                        horario_hasta=fields["horario_hasta"], 
-                        empleado=fields["empleado"], 
-                        actividad=fields["actividad"], 
-                    )
-                    test = generar_clases(fields, dia)
-
-                if test[0]:
-                    if len(test[1]) == 0: context["status"] = ["Recurrencia creada junto con sus clases!"]
-                    else: context["status"] = [f"Recurrencia creada! Algunas clases no se crearon ({str(len(test[1]))}) por estar previamente creadas"] #no esta entrando aca abajo, pero si funciona como deberia, a debuguear
-                    saldo_restante = recalcular_saldo(fields)
-                    if saldo_restante and saldo_restante < 0: context["status"].append(["Atencion! Saldo de clases negativo!"])
-                    return render(request, "scg_app/programar_clase.html", context)
-                else:
-                    context["status"] = ["Recurrencia creada, pero no se crearon clases puntuales!"]
-                    return render(request, "scg_app/programar_clase.html", context)
-            else:
-                context["status"] = [f'No se pueden crear clases de {fields["actividad"]} hasta no agregar saldos validos en la sede {fields["sede"]}!']
-                return render(request, "scg_app/programar_clase.html", context)
-
-        else: context['form'] = form
-    return render(request, "scg_app/programar_clase.html", context)
-
-def recalcular_saldo(f):
-    saldos, clases, recurrencia = Saldo.objects, Clase.objects, Recurrencia.objects
-    sub_saldo = saldos.filter(actividad=f["actividad"], sede=f["sede"], year=f["fecha_desde"].year)
-    if len(sub_saldo) == 1: #trabajado sobre la CERTEZA que, para cada saldo, solo hay 1 combinacion de 1) actividad, 2) sede y 3) año
-        target_saldo = sub_saldo[0]
-        if 0 == target_saldo.saldo_actual or target_saldo.saldo_actual > target_saldo.saldo_inicial: target_saldo.saldo_actual = target_saldo.saldo_inicial
-        periodos = target_saldo.get_periodo_display() #hackazo con "{model}.get_{atribute}_display()!!
-        periodos = [datetime.datetime.strptime(p, '%d/%m').replace(year=datetime.datetime.now().year).date() for p in periodos.split(' al ')]
-        sub_clases = clases.filter(fecha__gt=periodos[0], actividad=f["actividad"], sede=f["sede"])
-        target_saldo.saldo_actual = target_saldo.saldo_inicial - sub_clases.count()
-        target_saldo.save()
-    return target_saldo.saldo_actual if len(sub_saldo) == 1 else None
-
-def generar_clases(f, dia):
-    success = False
-    clases, parent = Clase.objects, Recurrencia.objects
-    clase_record_list = clases.count()
-    dias = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sabado", "Domingo"]
-    dias_delta = f["fecha_hasta"] - f["fecha_desde"]
-    cant_creadas, clases_list, rejected, clase_temp = 0, [], [], []
-    
-    #emple = Empleado.objects.get(id=f["empleado"])
-
-    for i in range(dias_delta.days):
-        dia_target = f["fecha_desde"] + datetime.timedelta(days=i)
-        if dias[dia_target.weekday()] == dia:
-            if check_clases_unique(f, clases, i) and not f["empleado"].is_busy(dia_target, f["horario_desde"], f["horario_hasta"]):
-                clase_temp = Clase(
-                    id=None,
-                    parent_recurrencia=parent.latest(), 
-                    parent=parent.latest(), 
-                    dia_semana=dia, 
-                    fecha=dia_target, 
-                    horario_desde=f["horario_desde"], 
-                    horario_hasta=f["horario_hasta"], 
-                    actividad=f["actividad"], 
-                    sede=f["sede"], 
-                    empleado=f["empleado"], 
-                    estado=settings.ESTADOS_CHOICES[0][-1], 
-                    presencia=None, 
-                )
-                clases_list.append(clase_temp) if type(clase_temp) != list else None
-            else: rejected.append(clase_temp) if type(clase_temp) != list else None
-        clase_temp = []
-
-    cant_creadas = len(clases_list)
-    clases.bulk_create(clases_list)
-    if clase_record_list < clases.count(): success = True
-    return [success, rejected, cant_creadas]
-
-def check_recs_unique(f, recurrencia):
-    success = False
-    for dia in f["dia_semana"]:
-        rec_filter_results = recurrencia.filter(
-            dia_semana=dia, 
-            fecha_desde=f["fecha_desde"], 
-            fecha_hasta=f["fecha_hasta"], 
-            horario_desde=f["horario_desde"], 
-            horario_hasta=f["horario_hasta"], 
-            empleado=f["empleado"], 
-            actividad=f["actividad"], 
-        )
-        if len(rec_filter_results) == 0: success = True
-        else:
-            success = False
-            break
-    return success
-
-def check_clases_unique(f, clase, i):
-    success = False
-    for dia in f["dia_semana"]:
-        rec_filter_results = clase.filter(
-            dia_semana=dia, 
-            fecha=f["fecha_desde"] + datetime.timedelta(days=i), 
-            horario_desde=f["horario_desde"], 
-            horario_hasta=f["horario_hasta"],
-            actividad=f["actividad"], 
-            sede=f["sede"], 
-            empleado=f["empleado"], 
-        )
-        if len(rec_filter_results) == 0: success = True
-        else:
-            success = False
-            break
-    return success
 
 @user_passes_test(check_admin)
 def pull_clockings(request):

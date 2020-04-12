@@ -16,11 +16,19 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 
+#from scg_app.views import EmployeeAutocomplete
+
 admin.site.site_title = 'SCG'
 admin.site.site_header = 'SCG APP'
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    # path('select2/', include('django_select2.urls')),
+
+    #for custom api functions
+    path('api/', include('api.urls')),
+
     path('', include('scg_app.urls')),
+    
     path('accounts/', include('django.contrib.auth.urls'))
 ]

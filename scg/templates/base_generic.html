@@ -9,6 +9,12 @@
 
 	<link rel="stylesheet" href="{%  static 'css/custom.css' %}">
 	
+	<!--
+	<link href="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/css/select2.min.css" rel="stylesheet" />
+
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/selectize.js/0.12.6/css/selectize.bootstrap3.min.css" integrity="sha256-ze/OEYGcFbPRmvCnrSeKbRTtjG4vGLHXgOqsyLFTRjg=" crossorigin="anonymous" />
+	-->
+	
 	<!-- bootstrap alternative -->
 	{% if 1 == 1 %}
 		<!-- Font Awesome -->
@@ -26,6 +32,8 @@
 	{% block extra_css %}
 		
 	{% endblock %}
+
+	
 </head>
 <body>
 	<nav class="navbar navbar-expand-md navbar-dark bg-dark mb-3">
@@ -52,8 +60,11 @@
 <div class="container-fluid">
     <div class="jumbotron">
         <div class="col-sm-12 " style="max-width: 100%;">
+	        
 	        {% block content %}
+
 	    	{% endblock %}
+    	
     	</div>
     </div>
     <hr>
@@ -84,16 +95,26 @@
 	    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
 	{% endif %}
 	
+	<!--
+	<script src="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/js/select2.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/selectize.js/0.12.6/js/standalone/selectize.min.js" integrity="sha256-+C0A5Ilqmu4QcSPxrlGpaZxJ04VjsRjKu+G82kl5UJk=" crossorigin="anonymous"></script> -->
+	
+
 	<script src="{%  static 'js/main.js' %}"></script>
 
-	{% block extra_js %}
-		<!-- <script type="text/javascript">
-			// Material Select Initialization
-			// $(document).ready(function() {
-			// $('.mdb-select').materialSelect();
-			// });
-		</script> -->
-	{% endblock %}
+	
 {% endblock %}
+
+{% block extra_js %}
+	<!-- <script type="text/javascript">
+		// Material Select Initialization
+		// $(document).ready(function() {
+		// $('.mdb-select').materialSelect();
+		// });
+	</script> -->
+{% endblock %}
+
+
+
 </body>
 </html>

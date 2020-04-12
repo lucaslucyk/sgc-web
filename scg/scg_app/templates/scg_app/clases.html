@@ -158,7 +158,7 @@
 	      	</form>
 		</section>
 
-		<br />
+		<hr><br />
 
 		<div class="row">
 	        <div class="col-md-1 col-xs-1 col-sm-1"></div>
@@ -175,7 +175,7 @@
 		    <form method="POST" action="{% url 'action_process' %}" name="result_actions">
 				{% csrf_token %}
 
-				<section id="acciones" style="text-align:center;>
+				<section id="acciones" style="text-align:center;">
 					<input type="submit" name="confirmar_clases" value="Confirmar Clases" />
 					<input type="submit" name="asignar_reemplazo" value="Asignar Reemplazo" />
 					<input type="submit" name="gestion_ausencia" value="Gestionar Ausencias" />
@@ -198,6 +198,7 @@
 								<th class="align-middle" scope="col">Presencia</th>
 								<th class="align-middle" scope="col">Asignado</th>
 								<th class="align-middle" scope="col">Ejecutor</th>
+								<th class="align-middle" scope="col">Sede</th>
 								<th class="align-middle" scope="col">Actividad</th>
 								<th class="align-middle" scope="col">Dia</th>
 								<th class="align-middle" scope="col">Fecha</th>
@@ -234,6 +235,7 @@
 											{{clase.empleado}}
 										{% endif %}	
 									</td>
+									<td class="align-middle">{{clase.sede|capfirst}}</td>
 									<td class="align-middle">{{clase.actividad|capfirst}}</td>
 									<td class="align-middle">{{clase.dia_semana}}{{filtro.dia_semana}}</td>
 									<td class="align-middle">{{clase.fecha}}</td>

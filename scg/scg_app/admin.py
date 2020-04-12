@@ -41,7 +41,7 @@ class MotivoAusenciaAdmin(admin.ModelAdmin):
 
 @admin.register(Saldo)
 class SaldoAdmin(admin.ModelAdmin):
-    list_display = ('actividad', 'year', 'periodo', 'saldo_inicial', 'saldo_actual', 'sede', )
+    list_display = ('actividad', 'year', 'periodo', 'saldo_inicial', 'saldo_actual', 'sede', 'saldo_disponible')
 
 @admin.register(Recurrencia)
 class RecurrenciaAdmin(admin.ModelAdmin):
@@ -71,13 +71,13 @@ class Clase(admin.ModelAdmin):
     def has_add_permission(self, request, obj=None):
         return False
 
-@admin.register(Ausencia)
-class AusenciaAdmin(admin.ModelAdmin):
-    list_display = ('clase', 'motivo', )
+# @admin.register(Ausencia)
+# class AusenciaAdmin(admin.ModelAdmin):
+#     list_display = ('clase', 'motivo', )
 
-@admin.register(Reemplazo)
-class ReemplazoAdmin(admin.ModelAdmin):
-    list_display = ('clase', 'empleado_reemplazante', )
+# @admin.register(Reemplazo)
+# class ReemplazoAdmin(admin.ModelAdmin):
+#     list_display = ('clase', 'empleado_reemplazante', )
 
 @admin.register(Marcaje)
 class MarcajeAdmin(admin.ModelAdmin):

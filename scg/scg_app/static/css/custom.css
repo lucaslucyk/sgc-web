@@ -27,6 +27,9 @@ h2 {
   color: #cccccc;
 }
 
+.select2-container{
+  width: 100% !important;
+}
 
 .box{
   background:white;
@@ -301,3 +304,11 @@ input[type=text]:placeholder {
   width:250px;
   font-size:1em;
 }
+
+
+
+/* for custom*/
+
+
+
+
