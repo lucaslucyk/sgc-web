@@ -110,7 +110,7 @@ class FiltroForm(forms.Form):
     solo_confirmadas.widget.attrs.update({'class': 'form-check-input'})
 
 class MarcajeForm(forms.Form):
-    hora_marcaje = forms.TimeField(widget=forms.TimeInput(format="%H:%M"), help_text="")
+    hora_marcaje = forms.TimeField(widget=forms.TimeInput(format="%H:%M"), required=False, help_text="")
     hora_marcaje.widget.attrs.update({
         'class': 'form-control hour-input',
         'placeholder': "00:00",

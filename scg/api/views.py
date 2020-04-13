@@ -1,9 +1,10 @@
 from django.shortcuts import render
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required, permission_required, user_passes_test
-
 from django.db.models import Q
 from scg_app.models import *
+import datetime
+from collections import defaultdict
 
 
 # class EmployeeAutocomplete(autocomplete.Select2QuerySetView):
@@ -18,6 +19,19 @@ from scg_app.models import *
 #             qs = qs.filter(nombre__icontains=self.q)
 
 #         return qs
+
+
+@login_required
+def get_day_classes(request, context=None):
+    clases = Clase.objects.filter(fecha__gte=datetime.date.today())
+
+    data = defaultdict(int)
+    for clase in clases:
+        data[clase.actividad.nombre] += 1
+
+    data_serialize = [{"label": k, "cantidad": v} for k,v in data.items()]
+    return JsonResponse({"results": data_serialize})
+
 
 #@login_required
 def get_model_data(_model, _filter, _fields='__all__', _order='id'):#, context=None):

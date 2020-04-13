@@ -1,0 +1,53 @@
+{% extends "base_generic.html" %}
+
+{% block title %}<title>Confirmar eliminaci&oacute;n</title>{% endblock %}
+{% block extra_css %}
+	<style type="text/css">
+		.btn{
+			margin: 0 !important;
+			padding: .75em 3em !important;
+		}
+	</style>		
+{% endblock %}
+
+{% block content %}
+	{% if messages %}
+		<section id="mensajes">
+			{% for message in messages %}
+				<div class="alert alert-{% if message.tags %}{{ message.tags }}{% endif %} alert-dismissible" >
+					<a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+			  		{{ message }}
+				</div>
+		    {% endfor %}
+	    </section>
+	{% endif %}
+
+	{% if object %}
+		
+		<div class="row">
+	        <div class="col-md-1 col-xs-1 col-sm-1"></div>
+	        <div class="col-md-10 col-xs-10 col-sm-10">
+	            <h3 class="round3" style="text-align:center;">¿Seguro que desea eliminar {{ pronoun }} {{ model }}</h3> 
+	            <h3 class="round3" style="text-align:center;">{{ object.get_str }}?</h3>
+	        </div>
+	        <div class="col-md-1 col-xs-1 col-sm-1"></div>
+	    </div>
+		<br/>
+
+		<form method="POST">
+			{% csrf_token %}
+			
+			<div class="form-row">
+
+				<div class="form-group-inline col-md-12 col-lg-12 text-center">
+					<button class="btn btn-danger" type="submit">Eliminar</button>
+					<a class="btn btn-info" href="javascript: window.history.back();" role="button">Cancelar</a>
+	          	</div>
+
+	         </div>
+		</form>
+	{% endif %}
+
+	<hr /><br/>
+
+{% endblock %}

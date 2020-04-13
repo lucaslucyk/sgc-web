@@ -25,10 +25,36 @@ except ImportError:
     from django.core.urlresolvers import reverse_lazy
 from django.forms import inlineformset_factory
 from django.views import generic
-from django.http import JsonResponse
+from django.http import JsonResponse, Http404
 
 def confirm_delete(request, model, pk, context=None):
-    pass
+
+    try:
+        _model = apps.get_model('scg_app', model)
+    except:
+        raise Http404(f'No existe el modelo {model}')
+
+    obj = get_object_or_404(_model, pk=pk)
+
+    context = {
+        "pronoun": obj.pronombre,
+        "model": re.sub(r'([A-Z])', r' \1', obj.__class__.__name__
+                ).replace(' ', '', 1).capitalize(),
+        "object": obj
+    }
+
+    if request.method == "POST":
+        messages.success(request, f'Se ha eliminado {context["pronoun"]} {context["model"]}.')
+        try:
+            success_url = obj.pos_delete_url()
+        except:
+            success_url = 'index'
+        
+        obj.delete()
+        return redirect(success_url)
+
+    return render(request, "scg_app/confirm_delete.html", context)
+
 
 def programar(request, context=None):
 
@@ -501,7 +527,7 @@ def gestion_marcajes(request, id_empleado=None, fecha=None, context=None):
         messages.error(request, "El empleado no existe")
         return render(request, "scg_app/gestion_marcajes.html", context)
 
-    empleado = empleado[0] #checked what exists
+    empleado = empleado.first() #checked what exists
     day_classes = Clase.objects.filter(empleado__pk=id_empleado, fecha=fecha).order_by('horario_desde')
     day_blocks = BloqueDePresencia.objects.filter(empleado__pk=id_empleado, fecha=fecha).order_by('inicio__hora')
     #day_clockings = Marcaje.objects.filter(empleado__pk=id_empleado, fecha=fecha).order_by('entrada')
@@ -512,12 +538,27 @@ def gestion_marcajes(request, id_empleado=None, fecha=None, context=None):
 
     if request.method == 'POST':
 
-        if 'delete_marcaje' in request.POST:
-            messages.warning(request, "Acción aún no soportada..")
+        if 'recalcular' in request.POST:
+            # recalculate blocks
+            if not BloqueDePresencia.recalcular_bloques(empleado, fecha):
+                messages.error(request, "Hubo un error recalculando el día.")
+                return render(request, "scg_app/gestion_marcajes.html", context)
+
+            #update status
+            [clase.update_status() for clase in day_classes]
+
+            day_blocks = BloqueDePresencia.objects.filter(empleado__pk=id_empleado, fecha=fecha).order_by('inicio')
+            context["day_blocks"] = day_blocks
+            messages.success(request, "Se recalcularon las clases y bloques del día.")
             return render(request, "scg_app/gestion_marcajes.html", context)
 
+        #check valid form
         if not form.is_valid():
             messages.error(request, "Error de formulario.")
+            return render(request, "scg_app/gestion_marcajes.html", context)
+
+        if not form.cleaned_data["hora_marcaje"]:
+            messages.error(request, "Ingrese un horario para agregar el marcaje.")
             return render(request, "scg_app/gestion_marcajes.html", context)
 
         hora_marcaje = form.cleaned_data["hora_marcaje"].replace(second=0)
@@ -543,9 +584,13 @@ def gestion_marcajes(request, id_empleado=None, fecha=None, context=None):
             messages.error(request, "Hubo un error recalculando el día.")
             return render(request, "scg_app/gestion_marcajes.html", context)
 
-        messages.success(request, "El marcaje se ha agregado y el día se ha recalculado correctamente.")
+        #update status
+        [clase.update_status() for clase in day_classes]
+
+        #refresh context
         day_blocks = BloqueDePresencia.objects.filter(empleado__pk=id_empleado, fecha=fecha).order_by('inicio')
         context["day_blocks"] = day_blocks
+        messages.success(request, "El marcaje se ha agregado y el día se ha recalculado correctamente.")
 
     return render(request, "scg_app/gestion_marcajes.html", context)
 

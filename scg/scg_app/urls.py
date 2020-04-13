@@ -6,6 +6,9 @@ from scg_app import views
 
 urlpatterns = [
     path('', views.index, name='index'),
+
+    path('delete/<str:model>/<int:pk>', views.confirm_delete, name="confirm_delete"),
+
     path('clases/', views.ClasesView.as_view(), name='clases_view'),
     path('action_process/', views.action_process, name='action_process'),
     path('gestion_ausencia/<str:ids_clases>', views.gestion_ausencia, name="gestion_ausencia"),

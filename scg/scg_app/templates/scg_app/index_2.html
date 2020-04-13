@@ -1,0 +1,47 @@
+{% extends "base_generic.html" %}
+
+{% block title %}<title>Hello world!</title>{% endblock %}
+
+{% block content %}
+
+	<style type="text/css">
+		td{
+			border-style: solid;
+			border-width: thin;
+		}
+	</style>
+
+	{% if user.is_authenticated %}
+	<a href="/admin/"><h5>Admin panel quick access</h5></a>
+	<p><a href="{% url 'pull_dbs' %}">Operaciones DB</a></p>
+	<p><a href="{% url 'programar' %}">Programar Clases</a></p>
+	<p><a href="{% url 'clases_view' %}">Monitor de Clases</a></p>
+	{% endif %}
+
+	<div>Ejemplo tabla empleados</div>
+	<table>
+		<tr>
+			<td>ID</td>
+			<td>Apellido</td>
+			<td>Nombre</td>
+			<td>DNI</td>
+			<td>Legajo</td>
+			<td>Empresa</td>
+		</tr>
+	{% for e in empleados %}
+		<tr>
+			<td>{{e.pk}}</td>
+			<td><b>{{e.apellido.upper}}</b></td>
+			<td>{{e.nombre}}</td>
+			<td>{{e.dni}}</td>
+			<td>{{e.legajo}}</td>
+			<td>{{e.empresa}}</td>
+		</tr>
+	{% endfor %}
+	</table>
+
+	<p></p>
+	<div><a href="{% url 'about' %}"><h5>about</h5></a></div>
+	<br />
+
+{% endblock %}

@@ -2,7 +2,7 @@
 /* BASIC */
 
 html {
-  background-color: #56baed;
+  /*background-color: #56baed;*/
 }
 
 body {
@@ -27,6 +27,16 @@ h2 {
   color: #cccccc;
 }
 
+footer {
+  margin-bottom: 1em;
+}
+.jumbotron {
+  margin-top: 1em;
+}
+
+.navbar-dark .navbar-nav .nav-link {
+    color: rgba(255,255,255,.5);
+}
 .select2-container{
   width: 100% !important;
 }
@@ -113,6 +123,10 @@ h2.active {
 
 
 /* FORM TYPOGRAPHY*/
+
+.btn-light {
+  color: #000 !important
+}
 
 input[type=button], input[type=submit], input[type=reset]  {
   background-color: #56baed;

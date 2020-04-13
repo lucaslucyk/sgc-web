@@ -2,6 +2,8 @@ from django.conf import settings
 from django.db import models
 from django.utils import timezone
 from django.core.validators import MaxValueValidator, MinValueValidator
+from django.shortcuts import reverse
+
 import datetime
 
 from django.db.models import Q
@@ -16,7 +18,15 @@ class Rol(models.Model):
     )
 
     tipo_rol = models.CharField(max_length=1, choices=ROLES, blank=False , help_text="Roles placeholder de los users.")
-    
+
+    @property
+    def pronombre(self):
+        return "el"
+
+    @property
+    def get_str(self):
+        return self.__str__()
+
     def __str__(self):
         return f'{self.tipo_rol}'
 
@@ -30,6 +40,14 @@ class Escala(models.Model):
     grupo = models.ForeignKey('GrupoActividad', on_delete=models.SET(''), null=True, blank=True)
     monto_hora = models.CharField(max_length=10)
 
+    @property
+    def pronombre(self):
+        return "el"
+
+    @property
+    def get_str(self):
+        return self.__str__()
+
     def __str__(self):
         return f'Escala (Monto/Hora) para {self.nombre}: {self.monto_hora}'
 
@@ -40,6 +58,14 @@ class Escala(models.Model):
 
 class GrupoActividad(models.Model):
     nombre = models.CharField(max_length=100)
+
+    @property
+    def pronombre(self):
+        return "el"
+
+    @property
+    def get_str(self):
+        return self.__str__()
 
     def __str__(self):
         return f'{self.nombre}'
@@ -53,6 +79,14 @@ class Actividad(models.Model):
     nombre = models.CharField(max_length=100)
     grupo = models.ForeignKey('GrupoActividad', on_delete=models.SET(''), null=True, blank=True)
 
+    @property
+    def pronombre(self):
+        return "la"
+
+    @property
+    def get_str(self):
+        return self.__str__()
+
     def __str__(self):
         return f'{self.nombre} | {self.grupo}'
 
@@ -65,6 +99,14 @@ class MotivoAusencia(models.Model):
 
     nombre = models.CharField(max_length=50, unique=True, blank=False, null=False)
     genera_pago = models.BooleanField(blank=True, default=False)
+
+    @property
+    def pronombre(self):
+        return "el"
+
+    @property
+    def get_str(self):
+        return self.__str__()
 
     def __str__(self):
         return f'{self.nombre}'
@@ -118,6 +160,14 @@ class Empleado(models.Model):
 
         return clases
 
+    @property
+    def pronombre(self):
+        return "el"
+
+    @property
+    def get_str(self):
+        return self.__str__()
+
     def __str__(self):
         return f'{self.apellido}, {self.nombre}' if {self.nombre} else f'{self.apellido}'
 
@@ -129,6 +179,14 @@ class Empleado(models.Model):
 class Sede(models.Model):
     nombre = models.CharField(max_length=40)
     tipo = models.CharField(max_length=30, blank=True)
+
+    @property
+    def pronombre(self):
+        return "la"
+
+    @property
+    def get_str(self):
+        return self.__str__()
 
     def __str__(self):
         return f'{self.nombre}'
@@ -188,6 +246,13 @@ class Saldo(models.Model):
 
         return saldo_a_favor
 
+    @property
+    def pronombre(self):
+        return "el"
+
+    @property
+    def get_str(self):
+        return self.__str__()
 
     def __str__(self):
         return f'{self.saldo_inicial} para {self.actividad.nombre} en {self.sede.nombre}'
@@ -227,6 +292,14 @@ class Recurrencia(models.Model):
         #   print(recs.first().dia_semana, "vs", week_day)
         
         return recs
+
+    @property
+    def pronombre(self):
+        return "la"
+
+    @property
+    def get_str(self):
+        return self.__str__()
 
     def __str__(self):
         return f'Los {self.dia_semana} desde el {self.fecha_desde} hasta el \
@@ -303,43 +376,35 @@ class Clase(models.Model):
 
         self.save()
         return self.estado
-    
+
+    @property
+    def pronombre(self):
+        return "la"
+
+    @property
+    def get_str(self):
+        return self.__str__()
+
+    def get_delete_url(self):
+        """ construct delete url from current object """
+        return reverse('confirm_delete', 
+            kwargs={"model":self.__class__.__name__, "pk":self.id}
+        )
+
+    def pos_delete_url(self):
+        """ construct pos delete url from current object """
+        return reverse('clases_view')
+
     def __str__(self):
-        if self.parent_recurrencia:
-            return f'{self.actividad}: el {self.dia_semana} {self.fecha} \
-                de {self.horario_desde} a {self.horario_hasta}, \
-                dictada por {self.empleado}'.replace("\t", "")
+        return f'{self.actividad.nombre}: el {self.get_dia_semana_display()} {self.fecha} \
+            de {self.horario_desde.strftime("%H:%M")} a {self.horario_hasta.strftime("%H:%M")} \
+            para {self.empleado}'.replace("\t", "")
 
     class Meta:
         verbose_name = "Clase"
         verbose_name_plural = "Clases"
         get_latest_by = "id"
         ordering = ["-id"]
-
-# class Ausencia(models.Model):
-#   clase = models.ForeignKey('Clase', on_delete=models.SET(''), related_name='related_clase')
-#   motivo = models.CharField(max_length=200)
-
-#   def __str__(self):
-#       return f'{self.clase} no dictada. Motivo: {self.motivo}'
-
-#   class Meta:
-#       verbose_name = "Ausencia"
-#       verbose_name_plural = "Ausencias"
-#       get_latest_by = "id"
-
-# class Reemplazo(models.Model):
-#   clase = models.ForeignKey('Clase', on_delete=models.SET(''), related_name="clase_relat")
-#   empleado_reemplazante = models.ForeignKey('Empleado', on_delete=models.SET(''), related_name='emple_relat')
-
-#   def __str__(self):
-#       return f'La -{self.clase}- fue dictada por [{self.empleado_reemplazante}]'
-
-#   class Meta:
-#       verbose_name = "Reemplazo"
-#       verbose_name_plural = "Reemplazos"
-#       get_latest_by = "id"
-
 
 class Marcaje(models.Model):
     empleado = models.ForeignKey('Empleado', on_delete=models.SET(''))
@@ -348,6 +413,26 @@ class Marcaje(models.Model):
     salida = models.TimeField(null=True, blank=True)
 
     hora = models.TimeField(null=True, blank=True)
+    
+    @property
+    def pronombre(self):
+        return "el"
+
+    @property
+    def get_str(self):
+        return self.__str__()
+    
+    def get_delete_url(self):
+        """ construct delete url from current object """
+        return reverse('confirm_delete', 
+            kwargs={"model":self.__class__.__name__, "pk":self.id}
+        )
+
+    def pos_delete_url(self):
+        """ construct pos delete url from current object """
+        return reverse('gestion_marcajes', 
+            kwargs={"id_empleado":self.empleado.id, "fecha":self.fecha}
+        )
 
     def __str__(self):
         return f'{self.empleado} el {self.fecha} a las {self.hora}'
@@ -402,9 +487,18 @@ class BloqueDePresencia(models.Model):
 
         return True
 
+    @property
+    def pronombre(self):
+        return "el"
+
+    @property
+    def get_str(self):
+        return self.__str__()
 
     def __repr__(self):
         return f'Presencia({self.inicio}, {self.fin})'
 
     def __str__(self):
-        return f'Presencia de {self.inicio} a {self.fin}'
+        return f'Presencia de {self.empleado} el {self.fecha} de \
+            {self.inicio.hora.strftime("%H:%M")} a \
+            {self.fin.hora.strftime("%H:%M")}'.replace('\t','')

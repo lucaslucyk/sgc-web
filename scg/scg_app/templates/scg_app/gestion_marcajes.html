@@ -38,24 +38,16 @@
 			<div class="form-row">
 				<div class="form-group-inline col-md-7 col-lg-7">
 				<div class="input-group mb-3">
-				  <div class="input-group-prepend">
-				    <span class="input-group-text" id="basic-addon1">Hora del marcaje</span>
-				  </div>
-				  <!--
-				  <input type="text" class="form-control" placeholder="Username" aria-label="Username" aria-describedby="basic-addon1">
-					-->
+					<div class="input-group-prepend">
+						<span class="input-group-text" id="basic-addon1">Hora del marcaje</span>
+					</div>
 					{{form.hora_marcaje}}
 				</div>
 				</div>
-				<!--
-				
-					<label for="hora_marcaje">Hora Marcaje</label>
-					{{form.hora_marcaje}}
-				
-				-->
+
 				<div class="form-group-inline col-md-5 col-lg-5 text-center">
 	            	<input class="btn btn-info" type="submit"  name="add_marcaje" value="Agregar y recalcular">
-	            	<input class="btn btn-danger" type="submit"  name="delete_marcaje" value="Eliminar">
+	            	<input class="btn btn-light" type="submit"  name="recalcular" value="Solo recalcular">
 	          	</div>
 	         </div>
 		</form>
@@ -114,12 +106,25 @@
 					<tbody>
 						{% for bloque in day_blocks %}
 							<tr>
-								<td class="align-middle">{{bloque.inicio.hora}}</td>
+								<td class="align-middle">
+									{% if bloque.inicio %}
+										{{bloque.inicio.hora}} &nbsp;
+										<a class="btn-link" href="{{ bloque.inicio.get_delete_url|safe }}" role="button">
+											<i class="fas fa-minus-circle" style="color: red !important;"></i>
+										</a>
+									{% else %}
+										<i class="fas fa-exclamation-circle" style="color: orange !important;"></i>
+									{% endif %}
+								</td>
+								
 								<td class="align-middle">
 									{% if bloque.fin %}
-										{{bloque.fin.hora}}
+										{{bloque.fin.hora}} &nbsp;
+										<a class="btn-link" href="{{ bloque.fin.get_delete_url|safe }}" role="button">
+											<i class="fas fa-minus-circle" style="color: red !important;"></i>
+										</a>
 									{% else %}
-										<i class="fas fa-exclamation-circle" style="color: red !important;"></i>
+										<i class="fas fa-exclamation-circle" style="color: orange !important;"></i>
 									{% endif %}
 								</td>
 							</tr>
