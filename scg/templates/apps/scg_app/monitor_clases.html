@@ -1,0 +1,352 @@
+{% extends "base_template.html" %}
+
+{% block title %}<title>Filtrado/Confirmacion de Clases</title>{% endblock %}
+{% block open_ver %}menu-open{% endblock %}
+{% block active_monitor %}active{% endblock %}
+
+{% block content %}
+
+  <div class="row">
+    <div class="col-md-12">
+    
+  {% if messages %}
+    <section id="mensajes">
+      {% for message in messages %}
+        <div class="alert alert-{% if message.tags %}{{ message.tags }}{% endif %} alert-dismissible" >
+          <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+            {{ message }}
+        </div>
+        {% endfor %}
+      </section>
+  {% endif %}
+
+  <section id="filtros">
+        <form method="POST" name="filtros" id="formFiltros">
+          {% csrf_token %}
+          <div class="form-row">
+              <div class="form-group col-12">
+                  <div class="input-group">
+                      {{form.empleado}}
+                      <span class="input-group-append">
+                          <div class="input-group-text bg-transparent">
+                              <i class="fa fa-search"></i>
+                          </div>
+                      </span>
+                  </div>
+              </div>
+              <div class="form-group col-12">
+                  <div class="input-group">
+                      {{form.reemplazo}}
+                      <span class="input-group-append">
+                          <div class="input-group-text bg-transparent">
+                              <i class="fa fa-search"></i>
+                          </div>
+                      </span>
+                  </div>
+              </div>
+              <div class="form-group col-12">
+                  <div class="input-group">
+                      {{form.actividad}}
+                      <span class="input-group-append">
+                          <div class="input-group-text bg-transparent">
+                              <i class="fa fa-search"></i>
+                          </div>
+                      </span>
+                  </div>
+              </div>          
+          </div>
+          
+          <div class="form-row">
+            <div class="form-group col-md-3 col-lg-3">
+              <label for="dia_semana">Día de semana</label>
+              <select id="dia_semana" class="form-control" name="dia_semana">
+                
+                {% for dia in form.dia_semana %}
+                  {{ dia }}
+                {% endfor %}
+              </select>
+            </div>
+            <div class="form-group col-md-3 col-lg-3">
+        
+
+              <label for="estado">Estado</label>
+              <select id="estado" class="form-control" name="estado">
+                
+                {% for estado in form.estado %}
+                  {{ estado }}
+                {% endfor %}
+              </select>
+            </div>
+            <div class="form-group col-md-3 col-lg-3">
+              <label for="motivo_ausencia">Motivo de ausencia</label>
+              <select id="motivo_ausencia" class="form-control" name="motivo_ausencia">
+                {% for motivo in form.motivo_ausencia %}
+                  {{motivo}}
+                {% endfor %}
+              </select>
+            </div>
+            <div class="form-group col-md-3 col-lg-3">
+              <label for="category">Sede</label>
+              <select id="category" class="form-control" name="category">
+                {% for sede in form.sede %}
+                  {{ sede }}
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group col-md-3 col-lg-3">
+              <label for="dia_inicio">Día inicio</label>
+              {{form.dia_inicio}}
+              <!-- <input type="date" class="form-control" id="publishDateMin" name="date_min"> -->
+            </div>
+            <div class="form-group col-md-3 col-lg-3">
+              
+              <label for="dia_fin">Día Fin</label>
+        {{form.dia_fin}}
+              
+            </div>
+            <div class="form-group col-md-3 col-lg-3">
+              <label for="hora_inicio">Hora inicio</label>
+              {{form.hora_inicio}}
+            </div>
+            <div class="form-group col-md-3 col-lg-3">
+              <label for="hora_fin">Hora fin</label>
+              {{form.hora_fin}}
+            </div>
+          </div>
+      <div class="form-row">
+            <div class="form-group col-md-12 col-lg-12 text-center">
+            <div class="form-group">
+
+              <div class="form-check-inline">
+                {{ form.solo_ausencia }}
+                <label class="form-check-label" for="solo_ausencia">
+                  {{ form.solo_ausencia.label }}
+                </label>
+              </div>
+
+              <div class="form-check-inline">
+                {{ form.solo_reemplazos }}
+                <label class="form-check-label" for="solo_reemplazos">
+                  {{ form.solo_reemplazos.label }}
+                </label>
+              </div>
+
+              <div class="form-check-inline">
+                {{ form.solo_confirmadas }}
+                <label class="form-check-label" for="solo_confirmadas">
+                  {{ form.solo_confirmadas.label }}
+                </label>
+              </div>
+
+            </div>
+        </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group col-md-12 col-lg-12 text-center">
+            <input class="btn btn-primary" type="submit" value="Buscar">
+        </div>
+          </div>
+        </form>
+  </section>
+
+  <hr><br />
+
+  <div class="row">
+        <div class="col-md-1 col-xs-1 col-sm-1"></div>
+        <div class="col-md-10 col-xs-10 col-sm-10">
+            <h3 class="round3" style="text-align:center;">Clases</h3>
+        </div>
+        <div class="col-md-1 col-xs-1 col-sm-1"></div>
+    </div>
+  
+  <br>
+
+  <section id="actions_results">
+
+      <form method="POST" action="{% url 'action_process' %}" name="result_actions">
+      {% csrf_token %}
+
+      <section id="acciones" style="text-align:center;">
+        <input type="submit" class="btn btn-outline-secondary" name="confirmar_clases" value="Confirmar Clases" />
+        <input type="submit" class="btn btn-outline-secondary" name="asignar_reemplazo" value="Asignar Reemplazo" />
+        <input type="submit" class="btn btn-outline-secondary" name="gestion_ausencia" value="Gestionar Ausencias" />
+        <input type="submit" class="btn btn-outline-secondary" name="gestion_recurrencia" value="Gestionar Programación" />
+        <input type="submit" class="btn btn-outline-secondary" name="gestion_marcajes" value="Ver Marcajes" />
+      </section>
+
+      <br />
+      
+      <section id="clases">
+        <table class="table .table-responsive">
+          <thead>
+            <tr>
+              <th class="align-middle" scope="col">
+                <div class="form-check-inline"> 
+                  <input type="checkbox" id="results_selectAll" class="results_selectAll">
+                </div>
+              </th>
+              <th class="align-middle" scope="col" view-model-order="true" data-order="order_estado">
+                <span>Estado </span> 
+                <i class="fas fa-sort-down flipper" style="display:none;"></i>
+              </th>
+              <th class="align-middle" scope="col" view-model-order="true" data-order="order_presencia">
+                <span>Presencia </span>
+                <i class="fas fa-sort-down flipper" style="display:none;"></i>
+              </th>
+              <th class="align-middle" scope="col" view-model-order="true" data-order="order_empleado__apellido">
+                <span>Asignado </span>
+                <i class="fas fa-sort-down flipper" style="display:none;"></i>
+              </th>
+              <th class="align-middle" scope="col" view-model-order="true" data-order="order_reemplazo__apellido">
+                <span>Ejecutor </span>
+                <i class="fas fa-sort-down flipper" style="display:none;"></i>
+              </th>
+              <th class="align-middle" scope="col" view-model-order="true" data-order="order_sede__nombre">
+                <span>Sede </span>
+                <i class="fas fa-sort-down flipper" style="display:none;"></i>
+              </th>
+              <th class="align-middle" scope="col" view-model-order="true" data-order="order_actividad__nombre">
+                <span>Actividad </span>
+                <i class="fas fa-sort-down flipper" style="display:none;"></i>
+              </th>
+              <th class="align-middle" scope="col" view-model-order="true" data-order="order_dia_semana">
+                <span>Dia </span>
+                <i class="fas fa-sort-down flipper" style="display:none;"></i>
+              </th>
+              <th class="align-middle" scope="col" view-model-order="true" data-order="order_fecha">
+                <span>Fecha </span>
+                <i class="fas fa-sort-down flipper" style="display:none;"></i>
+              </th>
+              <th class="align-middle" scope="col" view-model-order="true" data-order="order_horario_desde">
+                <span>Inicio </span>
+                <i class="fas fa-sort-down flipper" style="display:none;"></i>
+              </th>
+              <th class="align-middle" scope="col" view-model-order="true" data-order="order_horario_hasta">
+                <span>Fin </span>
+                <i class="fas fa-sort-down flipper" style="display:none;"></i>
+              </th>
+              <th class="align-middle" scope="col" view-model-order="true" data-order="order_ausencia">
+                <span>Ausencia </span>
+                <i class="fas fa-sort-down flipper" style="display:none;"></i>
+              </th>
+              <th class="align-middle" scope="col" view-model-order="true" data-order="order_confirmada">
+                <span>Confirmada </span>
+                <i class="fas fa-sort-down flipper" style="display:none;"></i>
+              </th>
+            </tr>
+          </thead>
+          <tbody id="clasesResults">
+            {% for clase in clases_list %}
+              
+              <tr>
+                <td class="align-middle " >
+                  <div class="form-check-inline"> 
+                  <input type="checkbox" id="toProcess_{{clase.id}}" 
+                    name="toProcess_{{clase.id}}"
+                    class="form-check-input check_clases" />
+                  </div>
+                </td>
+                <!--<td class="align-middle"><a class="btn-link" href="{{ clase.get_delete_url|safe }}" role="button">Eliminar</a></td>-->
+                <td class="align-middle">{{clase.get_estado_display}}</td>
+                <td class="align-middle">
+                  {% if clase.was_made %}
+                    <i class="fas fa-check-circle" style="color: green !important;"></i>
+                  {% else %}
+                    <i class="fas fa-times-circle" style="color: red !important;"></i>
+                  {% endif %}
+                </td>
+                <td class="align-middle">{{clase.empleado}}</td>
+                <td class="align-middle">
+                  {% if clase.reemplazo %}
+                    <strong>{{ clase.reemplazo }}</strong>
+                  {% else %}
+                    {{clase.empleado}}
+                  {% endif %} 
+                </td>
+                <td class="align-middle">{{clase.sede|capfirst}}</td>
+                <td class="align-middle">{{clase.actividad.nombre|capfirst}}</td>
+                <td class="align-middle">{{clase.get_dia_semana_display}}</td>
+                <td class="align-middle">{{clase.fecha}}</td>
+                <td class="align-middle">{{clase.horario_desde}}</td>
+                <td class="align-middle">{{clase.horario_hasta}}</td>
+                <td class="align-middle">
+                  {% if clase.ausencia %}
+                    {{clase.ausencia}}
+                  {% else %}
+                    &nbsp;
+                  {% endif %}
+                </td>
+                <td class="align-middle">
+                  {% if clase.confirmada %}
+                    <i class="fas fa-check-circle" style="color: green !important;"></i>
+                  {% else %}
+                    <i class="fas fa-times-circle" style="color: red !important;"></i>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </section>
+    </form>
+  </section>
+
+  <section id="pagination">
+        
+    {% if is_paginated %}
+
+      <nav aria-label="Page navigation" id="paginatorNav">
+        <ul class="pagination justify-content-center">
+
+            <li class="page-item disabled">
+              <a class="page-link" href="#" tabindex="-1">Anterior</a>
+            </li>
+
+            {% for i in paginator.page_range %}
+                <li class="page-item {% if page_obj.number == i %} active {% endif %}">
+                  <a class="page-link" href="?page={{i}}">{{ i }}</a>
+                </li>
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+                <li class="page-item">
+                  <a class="page-link" href="?page={{ page_obj.next_page_number }} " tabindex="1">Siguiente</a>
+                </li>
+            {% endif %}
+        </ul>
+      </nav>  
+
+    {% else %}
+
+      <nav aria-label="Page navigation example">
+        <ul class="pagination justify-content-center">
+          <li class="page-item disabled">
+            <a class="page-link" href="#" tabindex="-1">Previous</a>
+          </li>
+          <li class="page-item"><a class="page-link" href="#">1</a></li>
+          <li class="page-item"><a class="page-link" href="#">2</a></li>
+          <li class="page-item"><a class="page-link" href="#">3</a></li>
+          <li class="page-item">
+            <a class="page-link" href="#">Next</a>
+          </li>
+        </ul>
+      </nav>
+
+    {% endif %}
+    
+  </section>
+
+  </div> <!-- principal col -->
+</div> <!-- principal row -->
+
+{% endblock %}
+
+{% block extra_js %}
+<!-- for dont charge home js -->
+{% load static %}
+<script src="{%  static 'js/monitor.js' %}"></script>
+
+{% endblock %}

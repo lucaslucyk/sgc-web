@@ -27,6 +27,21 @@ from django.views import generic
 from django.http import JsonResponse, Http404
 from django.core import serializers
 
+
+# Create your views here.
+def check_admin(user):
+   return user.is_superuser
+
+@login_required
+def index(request):
+    return render(request, "base_template.html", {})
+
+def about(request): return render(request, "scg_app/about.html", {})
+
+@login_required
+def wiki(request): 
+    return render(request, "apps/scg_app/wiki.html", {})
+
 class SafePaginator(Paginator):
     def validate_number(self, number):
         try:
@@ -39,7 +54,7 @@ class SafePaginator(Paginator):
 
 class EmpleadosList(ListView):
     model = Empleado
-    template_name = 'scg_app/empleados_list.html'
+    template_name = 'apps/scg_app/empleados_list.html'
     context_object_name = 'empleados_list'
 
     paginator_class = SafePaginator
@@ -83,7 +98,7 @@ def confirm_delete(request, model, pk, context=None):
         obj.delete()
         return redirect(success_url)
 
-    return render(request, "scg_app/confirm_delete.html", context)
+    return render(request, "apps/scg_app/confirm_delete.html", context)
 
 
 def programar(request, context=None):
@@ -102,7 +117,7 @@ def programar(request, context=None):
 
         if "empleados-results" and "actividades-results" and "sedes-results" not in request.POST.keys():
                 messages.warning(request, "Busque y seleccione los datos en desplegables.")
-                return render(request, "scg_app/programar_clase.html", context)
+                return render(request, "apps/scg_app/programar_clase.html", context)
 
         try:    #process data geted by API
             fields = {
@@ -112,12 +127,12 @@ def programar(request, context=None):
             }
         except:
             messages.error(request, "Error en campos de búsqueda.")
-            return render(request, "scg_app/programar_clase.html", context)
+            return render(request, "apps/scg_app/programar_clase.html", context)
 
         ###validate info and process more data
         if not form.is_valid():
             messages.error(request, "Error en datos del formulario.")
-            return render(request, "scg_app/programar_clase.html", context)
+            return render(request, "apps/scg_app/programar_clase.html", context)
 
         fields.update({
             "dia_semana": form.cleaned_data["dia_semana"], 
@@ -131,15 +146,15 @@ def programar(request, context=None):
 
         if fields["fecha_hasta"] < datetime.date.today() and not settings.DEBUG:
             messages.error(request, "No se pueden programar clases para fechas pasadas.")
-            return render(request, "scg_app/programar_clase.html", context)
+            return render(request, "apps/scg_app/programar_clase.html", context)
 
         if fields["fecha_desde"] >= fields["fecha_hasta"]:
             messages.error(request, "La fecha de fin debe ser mayor a la de inicio.")
-            return render(request, "scg_app/programar_clase.html", context)
+            return render(request, "apps/scg_app/programar_clase.html", context)
 
         if fields["horario_desde"] >= fields["horario_hasta"]:
             messages.error(request, "La hora de fin debe ser mayor a la de inicio.")
-            return render(request, "scg_app/programar_clase.html", context)
+            return render(request, "apps/scg_app/programar_clase.html", context)
 
         if not Saldo.objects.filter(
             actividad=fields["actividad"], 
@@ -148,7 +163,7 @@ def programar(request, context=None):
             hasta__gte=fields["fecha_hasta"]
         ).exists():
             messages.error(request, f'No hay saldos para la actividad en la sede seleccionada.')
-            return render(request, "scg_app/programar_clase.html", context)
+            return render(request, "apps/scg_app/programar_clase.html", context)
 
         _to_delete = []
         for dia in fields["dia_semana"]:
@@ -166,7 +181,7 @@ def programar(request, context=None):
 
         if not fields["dia_semana"]:
             messages.error(request, f'Todos los días estan cubiertos por otras programaciones.')
-            return render(request, "scg_app/programar_clase.html", context)
+            return render(request, "apps/scg_app/programar_clase.html", context)
 
         _not_success, _rejecteds, _creadas = False, False, 0
 
@@ -203,7 +218,7 @@ def programar(request, context=None):
         else:
             messages.success(request, "Programación generada!")
 
-    return render(request, "scg_app/programar_clase.html", context)
+    return render(request, "apps/scg_app/programar_clase.html", context)
 
 def generar_clases(_fields, _dia, _recurrencia):
 
@@ -244,23 +259,12 @@ def generar_clases(_fields, _dia, _recurrencia):
 
     return success, rejected, cant_creadas
 
-# Create your views here.
-def check_admin(user):
-   return user.is_superuser
-
-@login_required
-def index(request):
-
-    return render(request, "scg_app/index.html", {})
-
-def about(request): return render(request, "scg_app/about.html", {})
 
 # def clases_list(request, context):
 
-
 class ClasesView(ListView):
     model = Clase
-    template_name = 'scg_app/clases.html'
+    template_name = 'apps/scg_app/monitor_clases.html'
     context_object_name = 'clases_list'
 
     paginator_class = SafePaginator
@@ -575,12 +579,12 @@ def gestion_marcajes(request, id_empleado=None, fecha=None, context=None):
         fecha = datetime.date.fromisoformat(fecha)
     except:
         messages.error(request, "Error en parámetros recibidos")
-        return render(request, "scg_app/gestion_marcajes.html", context)
+        return render(request, "apps/scg_app/gestion_marcajes.html", context)
 
     empleado = Empleado.objects.filter(pk=id_empleado)
     if not empleado:
         messages.error(request, "El empleado no existe")
-        return render(request, "scg_app/gestion_marcajes.html", context)
+        return render(request, "apps/scg_app/gestion_marcajes.html", context)
 
     empleado = empleado.first() #checked what exists
     day_classes = Clase.objects.filter(empleado__pk=id_empleado, fecha=fecha).order_by('horario_desde')
@@ -597,7 +601,7 @@ def gestion_marcajes(request, id_empleado=None, fecha=None, context=None):
             # recalculate blocks
             if not BloqueDePresencia.recalcular_bloques(empleado, fecha):
                 messages.error(request, "Hubo un error recalculando el día.")
-                return render(request, "scg_app/gestion_marcajes.html", context)
+                return render(request, "apps/scg_app/gestion_marcajes.html", context)
 
             #update status
             [clase.update_status() for clase in day_classes]
@@ -605,23 +609,23 @@ def gestion_marcajes(request, id_empleado=None, fecha=None, context=None):
             day_blocks = BloqueDePresencia.objects.filter(empleado__pk=id_empleado, fecha=fecha).order_by('inicio')
             context["day_blocks"] = day_blocks
             messages.success(request, "Se recalcularon las clases y bloques del día.")
-            return render(request, "scg_app/gestion_marcajes.html", context)
+            return render(request, "apps/scg_app/gestion_marcajes.html", context)
 
         #check valid form
         if not form.is_valid():
             messages.error(request, "Error de formulario.")
-            return render(request, "scg_app/gestion_marcajes.html", context)
+            return render(request, "apps/scg_app/gestion_marcajes.html", context)
 
         if not form.cleaned_data["hora_marcaje"]:
             messages.error(request, "Ingrese un horario para agregar el marcaje.")
-            return render(request, "scg_app/gestion_marcajes.html", context)
+            return render(request, "apps/scg_app/gestion_marcajes.html", context)
 
         hora_marcaje = form.cleaned_data["hora_marcaje"].replace(second=0)
 
         #marc_exists = Marcaje.objects.filter(hora=hora_marcaje)
         if Marcaje.objects.filter(fecha=fecha, hora=hora_marcaje, empleado=empleado):   #clocking exists
             messages.error(request, "Ya existe un marcaje en este horario.")
-            return render(request, "scg_app/gestion_marcajes.html", context)
+            return render(request, "apps/scg_app/gestion_marcajes.html", context)
 
         
         try:    #trying save cloocking
@@ -632,12 +636,12 @@ def gestion_marcajes(request, id_empleado=None, fecha=None, context=None):
             nuevo_marcaje.save()
         except:
             messages.error(request, "Hubo un error agregando el marcaje.")
-            return render(request, "scg_app/gestion_marcajes.html", context)
+            return render(request, "apps/scg_app/gestion_marcajes.html", context)
 
         # recalculate blocks
         if not BloqueDePresencia.recalcular_bloques(empleado, fecha):
             messages.error(request, "Hubo un error recalculando el día.")
-            return render(request, "scg_app/gestion_marcajes.html", context)
+            return render(request, "apps/scg_app/gestion_marcajes.html", context)
 
         #update status
         [clase.update_status() for clase in day_classes]
@@ -647,7 +651,7 @@ def gestion_marcajes(request, id_empleado=None, fecha=None, context=None):
         context["day_blocks"] = day_blocks
         messages.success(request, "El marcaje se ha agregado y el día se ha recalculado correctamente.")
 
-    return render(request, "scg_app/gestion_marcajes.html", context)
+    return render(request, "apps/scg_app/gestion_marcajes.html", context)
 
 
 ### from tbs ###
@@ -667,6 +671,7 @@ def pulldb_generic(tabla, filtros):
             campos = db_records["Value"]["Data"]["KeyValueOfstringanyType"]
             [content.append([data["Value"]]) for data in campos]
             contents.append(content)
+
     except ConnectionError: contents = "VPN desconectada o red caida!"
     except HTTPError: contents = "404!, la url no es valida"
     return contents
@@ -682,9 +687,15 @@ def pull_empleados(request):
             user = empleados.filter(id=empleado[0][0])
             if user.exists(): user.update(dni=empleado[1][0], nombre=empleado[2][0], apellido=empleado[3][0], empresa=empleado[4][0], legajo=empleado[5][0])
             else: user = empleados.update_or_create(id=empleado[0][0], dni=empleado[1][0], nombre=empleado[2][0], apellido=empleado[3][0], empresa=empleado[4][0], legajo=empleado[5][0])
-        context['status'] = "Tabla de empleados importada correctamente!" if emp_records_init < Empleado.objects.count() else "Datos de empleados actualizados correctamente!"
-    else: context['status'] = empleados_db
-    return render(request, "scg_app/pull_empleados.html", context)
+        
+        if emp_records_init < Empleado.objects.count():
+            messages.success(request, "Tabla de empleados importada correctamente!")
+        else:
+            messages.success(request, "Datos de empleados actualizados correctamente!")
+    else: 
+        messages.error(request, empleados_db)
+        #context['status'] = empleados_db
+    return render(request, "apps/scg_app/pull_empleados.html", context)
 
 @user_passes_test(check_admin)
 def pull_sedes(request):
@@ -698,8 +709,10 @@ def pull_sedes(request):
             if location.exists(): location.update(nombre=sede[1][0])
             else: sedes.update_or_create(id=sede[0][0], nombre=sede[1][0])
         context['status'] = "Tabla de sedes importada correctamente!" if sedes_records_init < Sede.objects.count() else "Datos de sedes actualizados correctamente!"
-    else: context['status'] = sedes_db
-    return render(request, "scg_app/pull_sedes.html", context)
+    else: 
+        messages.error(request, sedes_db)
+        #context['status'] = sedes_db
+    return render(request, "apps/scg_app/pull_sedes.html", context)
 
 def register(request):
     form = SignUpForm()

@@ -1,0 +1,48 @@
+footer{
+  font-size: .9rem;
+  
+}
+
+table td {
+    font-size: .95rem;
+    font-weight: 300;
+}
+table th {
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+th[view-model-order="true"]{
+  cursor: pointer;
+}
+th[view-model-order="true"]:hover{
+    text-decoration: underline;
+    text-underline-position: under;
+    background-color: rgba(190,190,190,0.15);
+    border-radius: 0.2em;
+}
+/*fontawesome*/
+.fa-check-circle{
+  color: green !important;
+}
+.fa-times-circle{
+  color: red !important;
+}
+.flipper{
+
+  -webkit-transform: rotateX(180deg);
+  transform: rotateX(180deg);
+  vertical-align: bottom !important;
+}
+.flipp{
+  vertical-align: top !important;
+}
+
+/*for paginator fix*/
+li.active.page-item a.page-link{
+  background-color: #4285f4 !important;
+}
+
+label:not(.form-check-label):not(.custom-file-label) {
+    font-weight: 400 !important;
+}

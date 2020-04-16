@@ -25,6 +25,8 @@ urlpatterns = [
 
     #path('get_empleados/<str:_filter>', views.get_empleados, name='get_empleados'),
 
+    path('wiki/', views.wiki, name='wiki'), 
+
     path('about/', views.about, name='about'), 
     path('auto_clockings/', views.auto_clockings, name='auto_clockings'), 
 	path('modificar_estado/', views.modificar_estado, name='modificar_estado'), 

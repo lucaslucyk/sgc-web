@@ -1,0 +1,137 @@
+{% extends "base_template.html" %}
+
+{% block namepage %}Programacion de Clases{% endblock %}
+{% block open_crear %}menu-open{% endblock %}
+{% block active_programar %}active{% endblock %}
+
+{% block content %}
+ <div class="row">
+    <div class="col-md-12">
+
+	{% if messages %}
+		<section id="mensajes">
+			{% for message in messages %}
+				<div class="alert alert-{% if message.tags %}{{ message.tags }}{% endif %} alert-dismissible" >
+					<a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+			  		{{ message }}
+				</div>
+		    {% endfor %}
+	    </section>
+	{% endif %}
+
+	{% if form %}
+		<form method="POST">
+			{% csrf_token %}
+			<div class="form-row">
+				<div class="form-group col-4">
+			        <div class="input-group mb-3">
+						<div class="input-group-prepend">
+						<span class="input-group-text" id="basic-addon1">@</span>
+						</div>
+						<input id="empleados-search" type="text" name="empleados-search" value="{{search_data.empleado}}" 
+							api-model-search="true" model-search="empleados" put-in="empleados-results"
+							class="form-control" placeholder="Algún dato del empleado" 
+							aria-label="Algún dato del empleado" aria-describedby="basic-addon1">
+					</div>
+				</div>
+				<div class="form-group col-8">
+			        <div class="input-group mb-3">
+						<select id="empleados-results" class="custom-select" name="empleados-results" required>
+							<option selected="">Busque y selecione un empleado</option>
+						</select>
+					</div>
+				</div>
+			</div>
+
+			<div class="form-row">
+				<div class="form-group col-4">
+			        <div class="input-group mb-3">
+						<div class="input-group-prepend">
+						<span class="input-group-text" id="basic-addon2">@</span>
+						</div>
+						<input id="actividades-search" type="text" name="actividades-search" value="{{search_data.actividad}}" 
+							api-model-search="true" model-search="actividades" put-in="actividades-results"
+							class="form-control" placeholder="Algún dato de la actividad" 
+							aria-label="Algún dato de la actividad" aria-describedby="basic-addon2">
+					</div>
+				</div>
+				<div class="form-group col-8">
+			        <div class="input-group mb-3">
+						<select id="actividades-results" name="actividades-results" class="custom-select" required>
+							<option selected="">Busque y selecione una actividad</option>
+						</select>
+					</div>
+				</div>
+			</div>
+			
+			<div class="form-row">
+				<div class="form-group col-4">
+			        <div class="input-group mb-3">
+						<div class="input-group-prepend">
+						<span class="input-group-text" id="basic-addon3">@</span>
+						</div>
+						<input id="sedes-search" type="text" name="sedes-search" value="{{search_data.sede}}" 
+							api-model-search="true" model-search="sedes" put-in="sedes-results"
+							class="form-control" placeholder="Algún dato de la sede" 
+							aria-label="Algún dato de la sede" aria-describedby="basic-addon23">
+					</div>
+				</div>
+				<div class="form-group col-8">
+			        <div class="input-group mb-3">
+						<select id="sedes-results" name="sedes-results" class="custom-select" required>
+							<option selected="">Busque y selecione una sede</option>
+						</select>
+					</div>
+				</div>
+			</div>
+
+			<div class="form-row text-center">
+				<div class="form-group col-md-3 col-lg-3">
+					<label for="dia_inicio">Día inicio</label>
+					{{form.fecha_desde}}
+				</div>
+				<div class="form-group col-md-3 col-lg-3">
+					<label for="dia_fin">Día Fin</label>
+					{{form.fecha_hasta}}
+				</div>
+				<div class="form-group col-md-3 col-lg-3">
+					<label for="hora_inicio">Hora inicio</label>
+					{{form.horario_desde}}
+				</div>
+				<div class="form-group col-md-3 col-lg-3">
+					<label for="hora_fin">Hora fin</label>
+					{{form.horario_hasta}}
+				</div>
+			</div>
+
+			<div class="form-row text-center">
+				<div class="form-group col-md-12 col-lg-12">	
+					<!--<label for="">Día de la semana: &nbsp;&nbsp;</label>-->
+					{% for dia in form.dia_semana %}
+						<div class="form-check form-check-inline">
+							{{ dia }}
+						</div>
+					{% endfor %}
+				</div>
+			</div>
+
+			<div class="form-row">
+	          <div class="form-group col-md-12 col-lg-12 text-center">
+	        	<input class="btn btn-primary" type="submit" value="Generar programación">
+	        	<!--<button type="submit" class="btn btn-primary text-center"></button>-->
+			  </div>
+	        </div>
+
+			
+			
+		</form>
+	{% endif %}
+  </div> <!-- principal col -->
+</div> <!-- principal row -->
+
+{% endblock %}
+
+{% block extra_js %}
+	
+{% endblock %}
+
