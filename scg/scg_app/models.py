@@ -205,17 +205,17 @@ class Saldo(models.Model):
 
     saldo_asignado = models.PositiveIntegerField(default=0,
         validators=[MinValueValidator(1)], 
-        help_text="Mes para el que desea sumar el saldo"
+        help_text="Cantidad de clases que desea disponibilizar"
     )
     
 
     #delete from
-    year = models.CharField(max_length=4, choices=settings.ANOS_CHOICES, 
-        blank=False, default=settings.ANOS_CHOICES[0][0], help_text="Año"
-    )
-    saldo_inicial = models.DecimalField(decimal_places=0, max_digits=5, default=0, help_text="Mes para el que desea sumar el saldo")
-    saldo_actual = models.DecimalField(decimal_places=0, max_digits=5, default=0)
-    periodo = models.CharField(max_length=14, choices=settings.PERIODOS_CHOICES, blank=False, help_text="Periodos de liquidacion")
+    # year = models.CharField(max_length=4, choices=settings.ANOS_CHOICES, 
+    #     blank=False, default=settings.ANOS_CHOICES[0][0], help_text="Año"
+    # )
+    # saldo_inicial = models.DecimalField(decimal_places=0, max_digits=5, default=0, help_text="Mes para el que desea sumar el saldo")
+    # saldo_actual = models.DecimalField(decimal_places=0, max_digits=5, default=0)
+    # periodo = models.CharField(max_length=14, choices=settings.PERIODOS_CHOICES, blank=False, help_text="Periodos de liquidacion")
     #delete to
 
     @property

@@ -51,7 +51,6 @@ $('[api-model-search=true]').keypress(function(e){
 
     //get input value
     var cv = $(this).val();
-    console.log(cv);
 
     //get all coincident employees
     if (cv.length >= 4) {
@@ -74,29 +73,30 @@ async function get_from_api(model, filter, put_in){
     filter: string for send in api request
     put_in: string of select id where put the results
   */
-  var url = window.location.origin + '/api/get/' + model + '/' + filter + '/';
+  var _url = window.location.origin + '/api/get/' + model + '/' + filter + '/';
 
   //get model filter from internal api
-  const res = await fetch(url);
-  const json = await res.json();
+  //const res = await fetch(url);
+  //const json = await res.json();
 
   //remove all current options
   $("#"+ put_in +" option").remove();
 
-  //add options with results
-  $.each(json.results, function(i, item){
-    $("#" + put_in).append("<option value='" + item.id + "'>" + item.text + "</option>");
+  $.getJSON(_url, function(json){
+    //add options with results
+    $.each(json.results, function(i, item){
+      $("#" + put_in).append("<option value='" + item.id + "'>" + item.text + "</option>");
+    });
   });
 
   $("#"+ put_in).focus();
 }
 
 async function get_day_classes(put_in){
+
   var randomColorGenerator = function () {
     return '#' + (Math.random().toString(16) + '0000000').slice(2, 8);
   };
-
-  
 
   var url = window.location.origin + '/api/get/day_classes/';
   const res = await fetch(url);
@@ -111,8 +111,6 @@ async function get_day_classes(put_in){
     values.push(item.cantidad);
     colors.push(randomColorGenerator());
   });
-
-  //console.log(values);
 
   var ctx = document.getElementById(put_in).getContext('2d');
   var myChart = new Chart(ctx, {
@@ -152,6 +150,11 @@ async function get_day_classes(put_in){
 
 }
 
+function get_storageData(){
+  console.log(localStorage.getItem("testing"));
+}
+/* storage management */
+
 $(document).ready(function() {
   if ($('#myChart').length) {
     const graph = get_day_classes("myChart");
@@ -159,6 +162,7 @@ $(document).ready(function() {
   if ($('#graph-sedes').length) {
     const graph = get_day_classes("graph-sedes");
   }
+
 });
 
 

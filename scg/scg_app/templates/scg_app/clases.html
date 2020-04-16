@@ -1,6 +1,7 @@
 {% extends "base_generic.html" %}
 
 {% block title %}<title>Filtrado/Confirmacion de Clases</title>{% endblock %}
+{% block active_drop_listar%} active {% endblock %}
 {% block active_monitor %} active {% endblock %}
 
 {% block content %}
@@ -17,7 +18,7 @@
   {% endif %}
 
   <section id="filtros">
-        <form method="POST" name="filtros">
+        <form method="POST" name="filtros" id="formFiltros">
           {% csrf_token %}
           <div class="form-row">
               <div class="form-group col-12">
@@ -184,21 +185,21 @@
                   <input type="checkbox" id="results_selectAll">
                 </div>
               </th>
-              <th class="align-middle" scope="col">Estado</th>
-              <th class="align-middle" scope="col">Presencia</th>
-              <th class="align-middle" scope="col">Asignado</th>
-              <th class="align-middle" scope="col">Ejecutor</th>
-              <th class="align-middle" scope="col">Sede</th>
-              <th class="align-middle" scope="col">Actividad</th>
-              <th class="align-middle" scope="col">Dia</th>
-              <th class="align-middle" scope="col">Fecha</th>
-              <th class="align-middle" scope="col">Inicio</th>
-              <th class="align-middle" scope="col">Fin</th>
-              <th class="align-middle" scope="col">Motivo de Ausencia</th>
-              <th class="align-middle" scope="col">Confirmada</th>
+              <th class="align-middle" scope="col" view-model-order="true" data-order="order_estado">Estado</th>
+              <th class="align-middle" scope="col" view-model-order="true" data-order="order_presencia">Presencia</th>
+              <th class="align-middle" scope="col" view-model-order="true" data-order="order_empleado__apellido">Asignado</th>
+              <th class="align-middle" scope="col" view-model-order="true" data-order="order_reemplazo__apellido">Ejecutor</th>
+              <th class="align-middle" scope="col" view-model-order="true" data-order="order_sede__nombre">Sede</th>
+              <th class="align-middle" scope="col" view-model-order="true" data-order="order_actividad__nombre">Actividad</th>
+              <th class="align-middle" scope="col" view-model-order="true" data-order="order_dia_semana">Dia</th>
+              <th class="align-middle" scope="col" view-model-order="true" data-order="order_fecha">Fecha</th>
+              <th class="align-middle" scope="col" view-model-order="true" data-order="order_horario_desde">Inicio</th>
+              <th class="align-middle" scope="col" view-model-order="true" data-order="order_horario_hasta">Fin</th>
+              <th class="align-middle" scope="col" view-model-order="true" data-order="order_ausencia__nombre">Motivo de Ausencia</th>
+              <th class="align-middle" scope="col" view-model-order="true" data-order="order_confirmada">Confirmada</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody id="clasesResults">
             {% for clase in clases_list %}
               
               <tr>
@@ -251,28 +252,52 @@
           </tbody>
         </table>
       </section>
-
-      <section id="pagination">
-        <nav>
-            {% if is_paginated %}
-                <ul class="pagination">
-                    {% if page_obj.has_previous %}
-                        <li><a href="?page={{ page_obj.previous_page_number }}">&laquo;</a></li>
-                    {% endif %}
-
-                    {% for i in paginator.page_range %}
-                        <li {% if page_obj.number == i %} class="active" {% endif %}>
-                            <a href="?page={{i}}">{{ i }}</a>
-                        </li>
-                    {% endfor %}
-
-                    {% if page_obj.has_next %}
-                        <li><a href="?page={{ page_obj.next_page_number }}">&raquo;</a></li>
-                    {% endif %}
-                </ul>
-            {% endif %}
-        </nav>
-      </section>
     </form>
   </section>
+
+  <section id="pagination">
+        
+    {% if is_paginated %}
+
+      <nav aria-label="Page navigation" id="paginatorNav">
+        <ul class="pagination justify-content-center">
+
+            <li class="page-item disabled">
+              <a class="page-link" href="#" tabindex="-1">Anterior</a>
+            </li>
+
+            {% for i in paginator.page_range %}
+                <li class="page-item {% if page_obj.number == i %} active {% endif %}">
+                  <a class="page-link" href="?page={{i}}">{{ i }}</a>
+                </li>
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+                <li class="page-item">
+                  <a class="page-link" href="?page={{ page_obj.next_page_number }} " tabindex="1">Siguiente</a>
+                </li>
+            {% endif %}
+        </ul>
+      </nav>  
+
+    {% else %}
+
+      <nav aria-label="Page navigation example">
+        <ul class="pagination justify-content-center">
+          <li class="page-item disabled">
+            <a class="page-link" href="#" tabindex="-1">Previous</a>
+          </li>
+          <li class="page-item"><a class="page-link" href="#">1</a></li>
+          <li class="page-item"><a class="page-link" href="#">2</a></li>
+          <li class="page-item"><a class="page-link" href="#">3</a></li>
+          <li class="page-item">
+            <a class="page-link" href="#">Next</a>
+          </li>
+        </ul>
+      </nav>
+
+    {% endif %}
+    
+  </section>
+
 {% endblock %}

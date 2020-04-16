@@ -41,7 +41,7 @@ class MotivoAusenciaAdmin(admin.ModelAdmin):
 
 @admin.register(Saldo)
 class SaldoAdmin(admin.ModelAdmin):
-    list_display = ('actividad', 'year', 'periodo', 'saldo_inicial', 'saldo_actual', 'sede', 'saldo_disponible')
+    list_display = ('actividad', 'sede', 'desde', 'hasta', 'saldo_asignado', 'saldo_disponible')
 
 @admin.register(Recurrencia)
 class RecurrenciaAdmin(admin.ModelAdmin):

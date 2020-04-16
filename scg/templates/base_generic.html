@@ -68,14 +68,29 @@
           <a class="dropdown-item" href="{% url 'auto_clockings'%}">Auto clockings</a>
         </div>
       </li>
-      <li class="nav-item {% block active_programar%}{% endblock %}">
-        <a class="nav-link" href="{% url 'programar' %}">Programar clases</a>
+      <li class="nav-item dropdown {% block active_drop_listar%}{% endblock %}">
+        <a class="nav-link dropdown-toggle" href="#" id="dropdownListar" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+          Ver
+        </a>
+        <div class="dropdown-menu" aria-labelledby="dropdownListar">
+          <a class="dropdown-item {% block active_monitor%}{% endblock %}" href="{% url 'clases_view'%}">Monitor de clases</a>
+          <a class="dropdown-item {% block active_empleados%}{% endblock %}" href="{% url 'empleados_view'%}">Empleados</a>
+          <a class="dropdown-item {% block active_saldos%}{% endblock %}" href="{% url 'saldos_view'%}">Saldos</a>
+          <a class="dropdown-item {% block active_sedes%}{% endblock %}" href="{% url 'empleados_view'%}">Sedes</a>
+          <a class="dropdown-item {% block active_recurrencias%}{% endblock %}" href="{% url 'empleados_view'%}">Recurrencias</a>
+        </div>
       </li>
-      <li class="nav-item {% block active_monitor%}{% endblock %}">
-        <a class="nav-link" href="{% url 'clases_view' %}">Monitor</a>
+      <li class="nav-item dropdown {% block active_drop_crear%}{% endblock %}">
+        <a class="nav-link dropdown-toggle" href="#" id="dropdownCrear" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+          Crear
+        </a>
+        <div class="dropdown-menu" aria-labelledby="dropdownCrear">
+          <a class="dropdown-item {% block active_programar%}{% endblock %}" href="{% url 'programar'%}">Programación</a>
+        </div>
       </li>
+      
       <li class="nav-item {% block active_about%}{% endblock %}">
-        <a class="nav-link" href="{% url 'about' %}">Acerca de</a>
+        <a class="nav-link" href="{% url 'about' %}">Wiki</a>
       </li>
     </ul>
   
@@ -148,8 +163,10 @@
   <script src="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/js/select2.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/selectize.js/0.12.6/js/standalone/selectize.min.js" integrity="sha256-+C0A5Ilqmu4QcSPxrlGpaZxJ04VjsRjKu+G82kl5UJk=" crossorigin="anonymous"></script> -->
   
-
+  <script src="{%  static 'js/jquery-dateformat.min.js' %}"></script>
   <script src="{%  static 'js/main.js' %}"></script>
+  <script src="{%  static 'js/monitor.js' %}"></script>
+
 
   
 {% endblock %}

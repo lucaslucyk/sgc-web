@@ -68,7 +68,8 @@ class FiltroForm(forms.Form):
     actividad = forms.CharField(max_length=50, help_text="", required=False, widget=widget_search)
     actividad.widget.attrs.update({'placeholder': "Algún dato de la actividad o grupo...",})
 
-    dia_inicio = forms.CharField(max_length=10, help_text="", required=False, widget=widget_date)
+    dia_inicio = forms.CharField(max_length=10, initial=datetime.date.today().strftime("%Y-%m-%d"),
+        required=False, widget=widget_date)
     dia_fin = forms.CharField(max_length=10, help_text="", required=False, widget=widget_date)
 
     hora_inicio = forms.TimeField(widget=forms.TimeInput(format="%H:%M"), 

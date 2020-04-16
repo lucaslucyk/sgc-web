@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-
 import datetime
 import re
+import math
 from django.conf import settings
 from django.contrib.auth import login, authenticate
 from django.contrib.auth.decorators import login_required, permission_required, user_passes_test
@@ -18,14 +18,44 @@ from django.views.generic.list import ListView
 from collections import defaultdict
 
 from dal import autocomplete
-
 try:
     from django.urls import reverse_lazy
 except ImportError:
     from django.core.urlresolvers import reverse_lazy
-from django.forms import inlineformset_factory
+from django.forms import inlineformset_factory, model_to_dict
 from django.views import generic
 from django.http import JsonResponse, Http404
+from django.core import serializers
+
+class SafePaginator(Paginator):
+    def validate_number(self, number):
+        try:
+            return super(SafePaginator, self).validate_number(number)
+        except EmptyPage:
+            if number > 1:
+                return self.num_pages
+            else:
+                raise
+
+class EmpleadosList(ListView):
+    model = Empleado
+    template_name = 'scg_app/empleados_list.html'
+    context_object_name = 'empleados_list'
+
+    paginator_class = SafePaginator
+    paginate_by = 25
+
+    ordering = ['apellido', 'nombre',]
+
+class SaldosList(ListView):
+    model = Saldo
+    template_name = 'scg_app/saldos_list.html'
+    context_object_name = 'saldos_list'
+
+    paginator_class = SafePaginator
+    paginate_by = 25
+
+    ordering = ['desde', 'sede__nombre', 'actividad__nombre']
 
 def confirm_delete(request, model, pk, context=None):
 
@@ -220,137 +250,162 @@ def check_admin(user):
 
 @login_required
 def index(request):
-    context = {"empleados": Empleado.objects.all()}
 
-    #contador de visitas, por la variable sesion 
-    #(cookies, se elimina al desloguear)
-    num_visits = request.session.get('num_visits', 0)
-    request.session['num_visits'] = num_visits + 1
-    context['num_visits'] = num_visits
-
-    return render(request, "scg_app/index.html", context)
+    return render(request, "scg_app/index.html", {})
 
 def about(request): return render(request, "scg_app/about.html", {})
 
-class SafePaginator(Paginator):
-    def validate_number(self, number):
-        try:
-            return super(SafePaginator, self).validate_number(number)
-        except EmptyPage:
-            if number > 1:
-                return self.num_pages
-            else:
-                raise
+# def clases_list(request, context):
+
 
 class ClasesView(ListView):
     model = Clase
     template_name = 'scg_app/clases.html'
     context_object_name = 'clases_list'
 
-    #paginator_class = SafePaginator
-    #paginate_by = 25
+    paginator_class = SafePaginator
+    paginate_by = 10
 
     #ordering = ['fecha']
+    results_per_page = 10
 
     def post(self, request, *args, **kwargs):
-        #returns get view for process all filters
-        return super().get(request, *args, **kwargs)
+        """ return json format for ajax request """
+
+        form = FiltroForm(request.POST)
+        if not form.is_valid():
+            messages.warning(self.request, "Datos no válidos.")
+            return JsonResponse({"error": "error on form"})
+
+        ### get form data ###
+        ## searchs
+        data_emple = form.cleaned_data.get('empleado')
+        data_reemplazo = form.cleaned_data.get('reemplazo')
+        data_actividad = form.cleaned_data.get('actividad')
+
+        # select
+        dia_semana = form.cleaned_data.get('dia_semana')
+        estado = form.cleaned_data.get('estado')
+        motivo_ausencia = form.cleaned_data.get('motivo_ausencia')
+        sede = form.cleaned_data.get('sede')
+
+        #times
+        dia_inicio = form.cleaned_data.get('dia_inicio')
+        dia_fin = form.cleaned_data.get('dia_fin')
+        hora_inicio = form.cleaned_data.get('hora_inicio')
+        hora_fin = form.cleaned_data.get('hora_fin')
+
+        ### checks ###
+        solo_ausencia = form.cleaned_data.get('solo_ausencia')
+        solo_reemplazos = form.cleaned_data.get('solo_reemplazos')
+        
+        #for don't create specific keys
+        querys = defaultdict(Q)
+
+        ### searchs ###
+        if data_emple or data_reemplazo:
+            for field in Empleado._meta.fields:
+                #if data_emple:
+                for data in data_emple.split():
+                    querys["empleado"].add(Q(**{
+                        f'empleado__{field.name}__icontains': data
+                    }), Q.OR)
+                #if data_reemplazo:
+                for data in data_reemplazo.split():
+                    querys["reemplazo"].add(Q(**{
+                        f'reemplazo__{field.name}__icontains': data
+                    }), Q.OR)
+
+        #if data_actividad:
+        for data in data_actividad.split():
+            querys["actividad"].add(Q(**{
+                f'actividad__nombre__icontains': data
+            }), Q.OR)
+            querys["actividad"].add(Q(**{
+                f'actividad__grupo__nombre__icontains': data
+            }), Q.OR)
+
+        ### selects ###
+        if dia_semana:
+            querys["dia_semana"] = Q(dia_semana=dia_semana)
+        if estado:
+            querys["estado"] = Q(estado=estado)
+        if motivo_ausencia:
+            querys["motivo_ausencia"] = Q(ausencia=motivo_ausencia)
+        if sede:
+            querys["sede"] = Q(sede=sede)
+
+
+        ### times ###
+        if dia_inicio:
+            querys["dia_inicio"] = Q(fecha__gte=dia_inicio)
+        if dia_fin:
+            querys["dia_fin"] = Q(fecha__lte=dia_fin)
+        if hora_inicio != datetime.time(0, 0):
+            querys["hora_inicio"] = Q(horario_hasta__gte=hora_inicio)
+        if hora_fin != datetime.time(23, 59):
+            querys["hora_fin"] = Q(horario_desde__lt=hora_fin)
+
+        ### checks ###
+        if solo_ausencia:
+            querys["solo_ausencia"] = Q(ausencia__isnull=not solo_ausencia)
+        if solo_reemplazos:
+            querys["solo_reemplazos"] = Q(reemplazo__isnull=not solo_reemplazos)
+
+        #get ordering data
+        order_by = request.POST.get('order_by', None)
+        order_by = [_order.replace("order_", "", 1) for _order in order_by.split(",")] if order_by else None
+        order_by = order_by if order_by else ('fecha',)
+
+        #add all the filters with and critery
+        query = Q()
+        [query.add(v, Q.AND) for k, v in querys.items()]
+        qs = Clase.objects.filter(query).order_by(*order_by)
+
+        total_regs = qs.count()
+
+        #get page data
+        try:
+            page = int(request.POST.get('page'))
+        except:
+            page = 1
+
+        reg_ini = (page - 1) * self.results_per_page
+        reg_end = page * self.results_per_page
+
+        #security validate
+        reg_ini = 0 if reg_ini > total_regs else reg_ini
+        reg_end = total_regs if reg_end > total_regs else reg_end
+
+        #return corresponding page
+        qs = qs[reg_ini:reg_end]
+
+        #list of dict for JsonResponse
+        results = [{
+            'id': clase.id,
+            'estado': clase.get_estado_display(),
+            'was_made': clase.was_made,
+            'empleado': clase.empleado.__str__(),
+            'reemplazo': clase.reemplazo.__str__() if clase.reemplazo else "",
+            'sede': clase.sede.nombre,
+            'actividad': clase.actividad.nombre,
+            'dia_semana': clase.get_dia_semana_display(),
+            'fecha': clase.fecha,
+            'horario_desde': clase.horario_desde.strftime("%H:%M"),
+            'horario_hasta': clase.horario_hasta.strftime("%H:%M"),
+            'ausencia': clase.ausencia.__str__() if clase.ausencia else "",
+            'confirmada': clase.confirmada,
+        } for clase in qs]
+
+        return JsonResponse({
+            "results": results,
+            "pages": math.ceil(total_regs/self.results_per_page),
+            "page": page
+        })
+
 
     def get_queryset(self):
-
-        order_by = self.request.GET.get('order_by')
-        qs = Clase.objects.filter(fecha__gte=datetime.date.today()).order_by(order_by or 'fecha')
-
-        if self.request.method == 'POST':
-            ### if called search button on classes_view ###
-            
-            form = FiltroForm(self.request.POST)
-            if not form.is_valid():
-                messages.warning(self.request, "Datos no válidos.")
-                return Clase.objects.none()
-
-            ### get form data ###
-            ## searchs
-            data_emple = form.cleaned_data.get('empleado')
-            data_reemplazo = form.cleaned_data.get('reemplazo')
-            data_actividad = form.cleaned_data.get('actividad')
-
-            # select
-            dia_semana = form.cleaned_data.get('dia_semana')
-            estado = form.cleaned_data.get('estado')
-            motivo_ausencia = form.cleaned_data.get('motivo_ausencia')
-            sede = form.cleaned_data.get('sede')
-
-            #times
-            dia_inicio = form.cleaned_data.get('dia_inicio')
-            dia_fin = form.cleaned_data.get('dia_fin')
-            hora_inicio = form.cleaned_data.get('hora_inicio')
-            hora_fin = form.cleaned_data.get('hora_fin')
-
-            ### checks ###
-            solo_ausencia = form.cleaned_data.get('solo_ausencia')
-            solo_reemplazos = form.cleaned_data.get('solo_reemplazos')
-            
-            #for don't create specific keys
-            querys = defaultdict(Q)
-
-            ### searchs ###
-            if data_emple or data_reemplazo:
-                for field in Empleado._meta.fields:
-                    #if data_emple:
-                    for data in data_emple.split():
-                        querys["empleado"].add(Q(**{
-                            f'empleado__{field.name}__icontains': data
-                        }), Q.OR)
-                    #if data_reemplazo:
-                    for data in data_reemplazo.split():
-                        querys["reemplazo"].add(Q(**{
-                            f'reemplazo__{field.name}__icontains': data
-                        }), Q.OR)
-
-            #if data_actividad:
-            for data in data_actividad.split():
-                querys["actividad"].add(Q(**{
-                    f'actividad__nombre__icontains': data
-                }), Q.OR)
-                querys["actividad"].add(Q(**{
-                    f'actividad__grupo__nombre__icontains': data
-                }), Q.OR)
-
-            ### selects ###
-            if dia_semana:
-                querys["dia_semana"] = Q(dia_semana=dia_semana)
-            if estado:
-                querys["estado"] = Q(estado=estado)
-            if motivo_ausencia:
-                querys["motivo_ausencia"] = Q(ausencia=motivo_ausencia)
-            if sede:
-                querys["sede"] = Q(sede=sede)
-
-
-            ### times ###
-            if dia_inicio:
-                querys["dia_inicio"] = Q(fecha__gte=dia_inicio)
-            if dia_fin:
-                querys["dia_fin"] = Q(fecha__lte=dia_fin)
-            if hora_inicio != datetime.time(0, 0):
-                querys["hora_inicio"] = Q(horario_hasta__gte=hora_inicio)
-            if hora_fin != datetime.time(23, 59):
-                querys["hora_fin"] = Q(horario_desde__lt=hora_fin)
-
-            ### checks ###
-            if solo_ausencia:
-                querys["solo_ausencia"] = Q(ausencia__isnull=not solo_ausencia)
-            if solo_reemplazos:
-                querys["solo_reemplazos"] = Q(reemplazo__isnull=not solo_reemplazos)
-
-            #add all the filters with and critery
-            query = Q()
-            [query.add(v, Q.AND) for k, v in querys.items()]
-            qs = Clase.objects.filter(query).order_by(order_by or 'fecha')
-
-            #self.context["form"] = form¿
-
+        qs = Clase.objects.filter(fecha__gte=datetime.date.today()).order_by('fecha')
         return qs
 
     def get_context_data(self, *args, **kwargs):     

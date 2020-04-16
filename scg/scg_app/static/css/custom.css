@@ -34,6 +34,21 @@ footer {
   margin-top: 1em;
 }
 
+th[view-model-order="true"]{
+  cursor: pointer;
+}
+/*fontawesome*/
+.fa-check-circle{
+  color: green !important;
+}
+.fa-times-circle{
+  color: red !important;
+}
+
+li.active a{
+  background-color: #4285f4 !important;
+}
+
 .navbar-dark .navbar-nav .nav-link {
     color: rgba(255,255,255,.5);
 }

@@ -161,10 +161,10 @@ DIA_SEMANA_CHOICES = (
 
 ESTADOS_CHOICES = (
         ("0", "Pendiente"),
-        ("1", "Realizada Normalmente"), 
-        ("2", "Realizada por Reemplazo"), 
-        ("3", "No Realizada por Ausencia"), 
-        ("4", "No Realizada por Feriado"),
+        ("1", "Realizada"), 
+        ("2", "Reemplazado"), 
+        ("3", "Ausencia"), 
+        ("4", "Feriado"),
          
         ("5", "Cancelada"), # keep last
     )

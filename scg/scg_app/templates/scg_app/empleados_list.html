@@ -1,0 +1,81 @@
+{% extends "base_generic.html" %}
+
+{% block title %}<title>Lista de empleados</title>{% endblock %}
+{% block active_drop_listar %} active {% endblock %}
+{% block active_empleados %} active {% endblock %}
+
+{% block content %}
+    
+  {% if messages %}
+    <section id="mensajes">
+      {% for message in messages %}
+        <div class="alert alert-{% if message.tags %}{{ message.tags }}{% endif %} alert-dismissible" >
+          <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+            {{ message }}
+        </div>
+        {% endfor %}
+      </section>
+  {% endif %}
+
+  <div class="row">
+        <div class="col-md-1 col-xs-1 col-sm-1"></div>
+        <div class="col-md-10 col-xs-10 col-sm-10">
+            <h3 class="round3" style="text-align:center;">Lista de empleados</h3>
+        </div>
+        <div class="col-md-1 col-xs-1 col-sm-1"></div>
+    </div>
+  
+  <br>
+
+  <section id="empleados">
+    <table class="table .table-responsive">
+      <thead>
+        <tr>
+          <th class="align-middle" scope="col"><a href="#">Apellido  <i class="fas fa-sort"></i></a></th>
+          <th class="align-middle" scope="col"><a href="#">Nombre  <i class="fas fa-sort"></i></a></th>
+          <th class="align-middle" scope="col"><a href="#">DNI  <i class="fas fa-sort"></i></a></th>
+          <th class="align-middle" scope="col"><a href="#">Legajo  <i class="fas fa-sort"></i></a></th>
+          <th class="align-middle" scope="col"><a href="#">Empresa  <i class="fas fa-sort"></i></a></th>
+          <th class="align-middle" scope="col"><a href="#">Tipo  <i class="fas fa-sort"></i></a></th>
+          <th class="align-middle" scope="col"><a href="#">Liquidaci&oacute;n  <i class="fas fa-sort"></i></a></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for empleado in empleados_list %}
+          
+          <tr>
+            <td class="align-middle">{{empleado.apellido|capfirst}}</td>
+            <td class="align-middle">{{empleado.nombre|capfirst}}</td>
+            <td class="align-middle">{{empleado.dni}}</td>
+            <td class="align-middle">{{empleado.legajo}}</td>
+            <td class="align-middle">{{empleado.empresa}}</td>
+            <td class="align-middle">{{empleado.get_tipo_display}}</td>
+            <td class="align-middle">{{empleado.get_liquidacion_display}}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+
+  <section id="pagination">
+    <nav>
+        {% if is_paginated %}
+            <ul class="pagination">
+                {% if page_obj.has_previous %}
+                    <li><a href="?page={{ page_obj.previous_page_number }}">&laquo;</a></li>
+                {% endif %}
+
+                {% for i in paginator.page_range %}
+                    <li {% if page_obj.number == i %} class="active" {% endif %}>
+                        <a href="?page={{i}}">{{ i }}</a>
+                    </li>
+                {% endfor %}
+
+                {% if page_obj.has_next %}
+                    <li><a href="?page={{ page_obj.next_page_number }}">&raquo;</a></li>
+                {% endif %}
+            </ul>
+        {% endif %}
+    </nav>
+  </section>
+{% endblock %}
