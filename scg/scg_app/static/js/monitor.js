@@ -1,16 +1,29 @@
-// this is the id of the form
 $("#formFiltros").submit(function(e) {
-  e.preventDefault(); // avoid to execute the actual submit of the form.
-  //reset page number and filter
-  get_classes(1, 'fecha'); //get classes and update tables
+  /* at send form, get classes and reset orders and page */
+  e.preventDefault();
+  //remove all order icons
+  $('[view-model-order=true] i').hide();
+
+  //reset storage management
+  clean_localStorage();
+
+  //reset flipp and fliiper class
+  $('[view-model-order=true] i').removeClass('flipp').addClass('flipper');
+
+  //get classes, reset current page and orders
+  //update tables and paginator
+  get_classes(1, 'fecha'); 
 });
 
 $('[view-model-order=true]').click(function(e){
   e.preventDefault();
+  $(this).children('i').show().toggleClass('flipper flipp');
   append_order($(this).attr("data-order"));
 });
 
 $( '#paginatorNav ul' ).on( "click", "li a", function(e) {
+  /* call the get_classes ajax with page clicked number */
+
   e.preventDefault();
   var page = parseInt($(this).text());
   var actual_page = parseInt($('#paginatorNav ul li.active a').text());
@@ -19,19 +32,15 @@ $( '#paginatorNav ul' ).on( "click", "li a", function(e) {
     var offset = parseInt($(this).attr("tabindex"));
     page = actual_page + offset;
   }
-
   localStorage.setItem('page', page);
-
-  //console.log(page);
   get_classes(page, localStorage.getItem("order_by"));
 });
 
-
 async function append_order(_order){
+  /* append the order key received to the context of orders */
 
   //trying get item
   var order_by = localStorage.getItem('order_by');
-  
   
   if (order_by == null) {
     order_by = _order;
@@ -56,9 +65,12 @@ async function append_order(_order){
   get_classes(localStorage.getItem('page'), order_by);
 }
 
-
-
-function get_classes(_page, _order){
+async function get_classes(_page, _order){
+  /*  
+    get classes with POST method of endpoint view 
+    after remove results table and put obtained json data with "update_table" function
+    after update paginator with function "update_paginator" and obtained json data 
+  */
 
   var form = $('#formFiltros').serializeArray();
   form.push({name: 'order_by', value: _order});
@@ -74,13 +86,13 @@ function get_classes(_page, _order){
    success: function(response){
       const table = update_table(response.results);
       const paginator = update_paginator(response.pages, response.page);
-
-      //console.log(response.page);
    }
   });
 }
 
-function update_paginator(_pages, _page){
+async function update_paginator(_pages, _page){
+  /* remove actual and create new paginator with current _page and number of _pages */
+
   $('#paginatorNav ul li').remove();
 
   $('#paginatorNav ul').append('\
@@ -100,11 +112,11 @@ function update_paginator(_pages, _page){
       <a class="page-link" href="#" tabindex="1">Siguiente</a>\
     </li>\
   ');
-
-  //console.log(_page + " of " + _pages);
 }
 
-function update_table(dataList){
+async function update_table(dataList){
+  /* recive a list of classes and remove and refresh the container clasesResults */
+
   $("#clasesResults tr").remove();
 
   $.each(dataList, function(i, item){
@@ -130,11 +142,11 @@ function update_table(dataList){
       <td class="align-middle">'+ item.ausencia +'</td>\
       <td class="align-middle"><i class="fas fa-'+ (item.confirmada ? 'check': 'times') +'-circle"></i></td>\
     ');
-
   });
 }
 
 function clean_localStorage(){
+  /* clean localStorage what can be saved by another functions */
   localStorage.removeItem("order_by");
   localStorage.removeItem("page");
 }

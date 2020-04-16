@@ -329,9 +329,9 @@ class Clase(models.Model):
     confirmada = models.BooleanField(blank=True, default=False)
 
     modificada = models.BooleanField(blank=True, default=False)
-    estado = models.CharField(max_length=1, choices=settings.ESTADOS_CHOICES, null=True, blank=True, default=settings.ESTADOS_CHOICES[0][-1])
-    presencia = models.CharField(max_length=12, choices=settings.PRESENCIA_CHOICES, null=True, blank=True, default=settings.PRESENCIA_CHOICES[0][-1])
-    comentario = models.CharField(max_length=1000, blank=True, help_text="Aclaraciones para feriados/no laborables con o sin ausencias")
+    estado = models.CharField(max_length=1, choices=settings.ESTADOS_CHOICES, null=True, blank=True, default=settings.ESTADOS_CHOICES[0][0])
+    presencia = models.CharField(max_length=12, choices=settings.PRESENCIA_CHOICES, null=True, blank=True, default=settings.PRESENCIA_CHOICES[0][0])
+    comentario = models.CharField(max_length=1000, blank=True, help_text="Aclaraciones varias")
 
     @property
     def is_cancelled(self):
@@ -364,8 +364,10 @@ class Clase(models.Model):
             self.estado = settings.ESTADOS_CHOICES[0][0]    #pendiente
 
         if self.was_made:
+            self.presencia = settings.PRESENCIA_CHOICES[-1][0]
             self.estado = settings.ESTADOS_CHOICES[1][0]    #realizada
         else:
+            self.presencia = settings.PRESENCIA_CHOICES[0][0]
             self.estado = settings.ESTADOS_CHOICES[0][0]    #pendiente
 
         if self.ausencia:
