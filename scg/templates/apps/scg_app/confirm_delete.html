@@ -1,52 +1,58 @@
 {% extends "base_template.html" %}
 
-{% block namepage %}Confirmar eliminaci&oacute;n{% endblock %}
+{% block namepage %}Eliminaci&oacute;n de objetos{% endblock %}
 
 {% block content %}
-	<div class="row">
-  	<div class="col-md-12">
+  <div class="row">
+    <div class="col-md-12">
 
-			{% if messages %}
-				<section id="mensajes">
-					{% for message in messages %}
-						<div class="alert alert-{% if message.tags %}{{ message.tags }}{% endif %} alert-dismissible" >
-							<a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
-					  		{{ message }}
-						</div>
-				    {% endfor %}
-			    </section>
-			{% endif %}
+      {% if messages %}
+        <section id="mensajes">
+          {% for message in messages %}
+            <div class="alert alert-{% if message.tags %}{{ message.tags }}{% endif %} alert-dismissible" >
+              <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+                {{ message }}
+            </div>
+            {% endfor %}
+          </section>
+      {% endif %}
 
-			{% if object %}
-				
-				<div class="row">
-			        <div class="col-md-1 col-xs-1 col-sm-1"></div>
-			        <div class="col-md-10 col-xs-10 col-sm-10">
-			            <h3 class="round3" style="text-align:center;">¿Seguro que desea eliminar {{ pronoun }} {{ model }}</h3> 
-			            <h3 class="round3" style="text-align:center;">{{ object.get_str }}?</h3>
-			        </div>
-			        <div class="col-md-1 col-xs-1 col-sm-1"></div>
-			    </div>
-				<br/>
+      {% if object %}
+        <div class="row">
+          <div class="col-md-1 col-xs-1 col-sm-1"></div>
+          <div class="col-md-10 col-xs-10 col-sm-10">
 
-				<form method="POST">
-					{% csrf_token %}
-					
-					<div class="form-row">
+            <div class="card card-danger">
+              <div class="card-header">
+                <h3 class="card-title">Confirmar eliminación</h3>
+              </div>
+              <div class="card-body">
+                <h4 class="round3" style="text-align:center;">¿Seguro que desea eliminar {{ pronoun }} {{ model }}</h4> 
+                <h4 class="round3" style="text-align:center;">{{ object.get_str }}?</h4>
+                
+                <form method="POST">
+                  {% csrf_token %}
+                  
+                  <div class="form-row">
 
-						<div class="form-group-inline col-md-12 col-lg-12 text-center">
-							<button class="btn btn-danger" type="submit">Eliminar</button>
-							<a class="btn btn-secondary" href="javascript: window.history.back();" role="button">Cancelar</a>
-			          	</div>
+                    <div class="form-group-inline col-md-12 col-lg-12 text-center">
+                      <button class="btn btn-danger" type="submit">Eliminar</button>
+                      <a class="btn btn-secondary" href="javascript: window.history.back();" role="button">Cancelar</a>
+                    </div>
 
-			         </div>
-				</form>
-			{% endif %}
+                  </div>
+                </form>
 
-			<hr /><br/>
+              </div><!-- /.card-body -->
+            </div><!-- /.card -->
+          </div><!-- /.col -->
+          <div class="col-md-1 col-xs-1 col-sm-1"></div>
+        </div><!-- /.row -->
+        
+      {% endif %}
 
-		</div> <!-- principal col -->
-	</div> <!-- principal row -->
+    </div> <!-- principal col -->
+  </div> <!-- principal row -->
 
 {% endblock %}
 

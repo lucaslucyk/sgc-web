@@ -1,0 +1,64 @@
+{% extends "base_template.html" %}
+
+{% block namepage %}Gestión de Reemplazo{% endblock %}
+
+{% block content %}
+  <div class="row">
+    <div class="col-md-12">
+
+    	{% if messages %}
+    		{% for message in messages %}
+    			<div class="alert alert-{% if message.tags %}{{ message.tags }}{% endif %} alert-dismissible" >
+    				<a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+    		  		{{ message }}
+    			</div>
+    	    {% endfor %}
+    	{% endif %}
+		
+    	{% if reemplazos %}
+    		<ul>
+    			{% for reemplazo in reemplazos %}
+    				<li>{{ reemplazo }}</li>
+    			{% endfor %}
+    		</ul>
+    	{% endif %}
+	
+	{% if clase_to_edit %}
+		<p> Se asignar&aacute; un reemplazo a la clase: {{ clase_to_edit }}</p>
+	{% endif %}
+
+	{% if form %}
+
+		<form method="POST">
+			{% csrf_token %}
+			{% for field in form %}
+
+				<div class="form-group">
+					{{ field.label_tag }}
+					{{ field }}
+
+					{% if field.help_text %}
+						<small class="form-text text-muted">{{ field.help_text }}</small>
+					{% endif %}
+					
+					{% for error in field.errors %}
+						<div style="color: red">{{ error }}</div>
+					{% endfor %}
+
+				</div>
+				
+			{% endfor %}
+			<button type="submit" class="btn btn-primary"> Cargar reemplazo</button>
+		</form>
+	{% endif %}
+
+	<br /> <p><a href="javascript: window.history.back();"><i class="fas fa-chevron-circle-left"></i> Volver al monitor de clases</a></p>
+  
+  </div> <!-- principal col -->
+</div> <!-- principal row -->
+
+{% endblock %}
+
+{% block extra_js %}
+<!-- for dont charge home js -->
+{% endblock %}

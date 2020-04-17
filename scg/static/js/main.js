@@ -45,10 +45,6 @@ async function get_from_api(model, filter, put_in){
   */
   var _url = window.location.origin + '/api/get/' + model + '/' + filter + '/';
 
-  //get model filter from internal api
-  //const res = await fetch(url);
-  //const json = await res.json();
-
   //remove all current options
   $("#"+ put_in +" option").remove();
 
@@ -61,4 +57,33 @@ async function get_from_api(model, filter, put_in){
 
   $("#"+ put_in).focus();
 }
+
+//function for detect style change
+(function() {
+    orig = $.fn.css;
+    $.fn.css = function() {
+        var result = orig.apply(this, arguments);
+        $(this).trigger('stylechanged');
+        return result;
+    }
+})();
+
+// Add listener to body
+$('body').on('stylechanged', function () {
+    var _style = $('body').attr("class");
+
+    //change img logo depending nav
+    if (_style.indexOf("sidebar-collapse") >= 0) {
+      //console.log("collapse");
+      $('#logo-big').hide();
+      $('#logo-small').show();
+    }
+    else {
+      //console.log("complete");
+      $('#logo-small').hide();
+      $('#logo-big').show();
+    }
+});
+
+
 

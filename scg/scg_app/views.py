@@ -428,21 +428,23 @@ def action_process(request, context=None):
         return _ids
 
     if request.method == 'POST':
-        if 'gestion_ausencia' in request.POST:
+        _accion = request.POST.get('accion_a_ejecutar')
+
+        if _accion == 'gestion_ausencia':
             ids = get_ids(request.POST.keys())
             if not ids:
                 messages.error(request, "Debe seleccionar uno o más registros para gestionar una ausencia.")
                 return redirect('clases_view')
             return redirect('gestion_ausencia', ids_clases='-'.join(ids))
 
-        if 'asignar_reemplazo' in request.POST:
+        if _accion == 'asignar_reemplazo':
             ids = get_ids(request.POST.keys())
             if len(ids) != 1: 
                 messages.error(request, "Debe seleccionar -solo- un registro para asignar un reemplazo.")
                 return redirect('clases_view')
             return redirect('asignar_reemplazo', id_clase=ids[0])
 
-        if 'confirmar_clases' in request.POST:
+        if _accion == 'confirmar_clases':
             ids = get_ids(request.POST.keys())
             if not ids:
                 messages.error(request, "Debe seleccionar una o más clases para confirmarlas.")
@@ -454,7 +456,7 @@ def action_process(request, context=None):
 
             return redirect('clases_view')
 
-        if 'gestion_recurrencia' in request.POST:
+        if _accion == 'gestion_recurrencia':
 
             ids = get_ids(request.POST.keys())
             if len(ids) != 1:
@@ -464,7 +466,7 @@ def action_process(request, context=None):
             messages.warning(request, "Acción aún no implementada.")
             return redirect('clases_view')
 
-        if 'gestion_marcajes' in request.POST:
+        if _accion == 'gestion_marcajes':
 
             ids = get_ids(request.POST.keys())
             if len(ids) != 1:
@@ -476,7 +478,7 @@ def action_process(request, context=None):
             return redirect('gestion_marcajes', id_empleado=clase.empleado.id, fecha=clase.fecha)
 
     # if accessed by url or method is not POST
-    messages.error(request, "La vista no soporta el método GET.")
+    messages.error(request, "Acción o método no soportado.")
     return redirect('clases_view')
 
 def confirmar_clases(_ids):
@@ -502,7 +504,7 @@ def gestion_ausencia(request, ids_clases=None, context=None):
 
     #in errors only
     if not ids_clases:
-        return render(request, "scg_app/gestion_ausencia.html", context)
+        return render(request, "apps/scg_app/gestion_ausencia.html", context)
 
     form = MotivoAusenciaForm(request.POST if request.method == 'POST' else None)
     context = context or {'form': form}
@@ -516,7 +518,7 @@ def gestion_ausencia(request, ids_clases=None, context=None):
 
             # if not motivo_ausencia:
             #     messages.error(request, "Seleccione un Motivo de ausencia.")
-            #     return render(request, "scg_app/gestion_ausencia.html", context)
+            #     return render(request, "apps/scg_app/gestion_ausencia.html", context)
 
             for clase in clases_to_edit:
                 clase.ausencia = motivo_ausencia
@@ -525,7 +527,7 @@ def gestion_ausencia(request, ids_clases=None, context=None):
 
             messages.success(request, "Acción finalizada.")
 
-    return render(request, "scg_app/gestion_ausencia.html", context)
+    return render(request, "apps/scg_app/gestion_ausencia.html", context)
 
 @login_required
 def asignar_reemplazo(request, id_clase=None, context=None):
@@ -534,7 +536,7 @@ def asignar_reemplazo(request, id_clase=None, context=None):
     context = context or {'form': form}
 
     if not id_clase:
-        return render(request, "scg_app/gestionar_reemplazos.html", context)
+        return render(request, "apps/scg_app/gestion_reemplazo.html", context)
 
     clase_to_edit = get_object_or_404(Clase, pk=id_clase)
     context["clase_to_edit"] = clase_to_edit
@@ -549,15 +551,15 @@ def asignar_reemplazo(request, id_clase=None, context=None):
                 clase_to_edit.save()
                 clase_to_edit.update_status()
                 messages.success(request, "Se ha borrado el reemplazo.")
-                return render(request, "scg_app/gestionar_reemplazos.html", context)
+                return render(request, "apps/scg_app/gestion_reemplazo.html", context)
 
             if clase_to_edit.empleado == reemplazante:
                 messages.error(request, "El reemplazante no puede ser el empleado asignado.")
-                return render(request, "scg_app/gestionar_reemplazos.html", context)
+                return render(request, "apps/scg_app/gestion_reemplazo.html", context)
 
             if reemplazante.is_busy(fecha=clase_to_edit.fecha, inicio=clase_to_edit.horario_desde, fin=clase_to_edit.horario_hasta):
                 messages.error(request, "El reemplazante no está disponible en el rango horario de esta clase.")
-                return render(request, "scg_app/gestionar_reemplazos.html", context)
+                return render(request, "apps/scg_app/gestion_reemplazo.html", context)
 
             clase_to_edit.reemplazo = reemplazante
             clase_to_edit.save()
@@ -565,7 +567,7 @@ def asignar_reemplazo(request, id_clase=None, context=None):
 
             messages.success(request, "Reemplazo cargado con éxito!")
 
-    return render(request, "scg_app/gestionar_reemplazos.html", context)
+    return render(request, "apps/scg_app/gestion_reemplazo.html", context)
 
 @login_required
 def gestion_marcajes(request, id_empleado=None, fecha=None, context=None):

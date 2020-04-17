@@ -28,6 +28,14 @@ th[view-model-order="true"]:hover{
 .fa-times-circle{
   color: red !important;
 }
+
+.invert-color{
+  -webkit-filter: invert(1);
+   filter: invert(1);
+}
+.img-center{
+  float: none !important;
+}
 .flipper{
 
   -webkit-transform: rotateX(180deg);

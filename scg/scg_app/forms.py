@@ -126,7 +126,7 @@ class ReemplazoForm(forms.Form):
         empty_label="Ninguno", 
         label="Reemplazante",
         )
-    reemplazo.widget.attrs.update({'class': 'form-control'})
+    reemplazo.widget.attrs.update({'class': 'form-control custom-select my-1 mr-sm-8'})
 
     class Meta:
         model = Clase
@@ -139,7 +139,7 @@ class MotivoAusenciaForm(forms.Form):
         empty_label="Ninguno", 
         label="Motivo de Ausencia",
         )
-    motivo.widget.attrs.update({'class': 'form-control'})
+    motivo.widget.attrs.update({'class': 'form-control custom-select my-1 mr-sm-8'})
 
     class Meta:
         model = MotivoAusencia
