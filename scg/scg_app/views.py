@@ -15,6 +15,7 @@ from django.apps import apps
 
 from django.core.paginator import EmptyPage, Paginator
 from django.views.generic.list import ListView
+from django.contrib.auth.mixins import LoginRequiredMixin
 from collections import defaultdict
 
 from dal import autocomplete
@@ -52,7 +53,7 @@ class SafePaginator(Paginator):
             else:
                 raise
 
-class EmpleadosList(ListView):
+class EmpleadosList(LoginRequiredMixin, ListView):
     model = Empleado
     template_name = 'apps/scg_app/empleados_list.html'
     context_object_name = 'empleados_list'
@@ -62,7 +63,7 @@ class EmpleadosList(ListView):
 
     ordering = ['apellido', 'nombre',]
 
-class SaldosList(ListView):
+class SaldosList(LoginRequiredMixin, ListView):
     model = Saldo
     template_name = 'scg_app/saldos_list.html'
     context_object_name = 'saldos_list'
@@ -262,7 +263,7 @@ def generar_clases(_fields, _dia, _recurrencia):
 
 # def clases_list(request, context):
 
-class ClasesView(ListView):
+class ClasesView(LoginRequiredMixin, ListView):
     model = Clase
     template_name = 'apps/scg_app/monitor_clases.html'
     context_object_name = 'clases_list'

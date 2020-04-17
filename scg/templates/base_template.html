@@ -76,6 +76,13 @@
 
     <!-- Right navbar links -->
     <ul class="navbar-nav ml-auto">
+      {% if user.is_authenticated %}
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'logout'%}?next={{request.path}}">
+          Cerrar sesi&oacute;n
+          </a>
+        </li>
+      {% endif %}
       <li class="nav-item">
         <a class="nav-link" data-widget="control-sidebar" data-slide="true" href="#" role="button">
           <i class="fas fa-th-large"></i>
@@ -128,12 +135,14 @@
               <p>Inicio</p>
             </a>
           </li>
-          <li class="nav-item">
-            <a href="/admin/" class="nav-link">
-              <i class="nav-icon fas fa-tools"></i>
-              <p>Admin panel</p>
-            </a>
-          </li>
+          {% if user.is_superuser %}
+            <li class="nav-item">
+              <a href="/admin/" class="nav-link">
+                <i class="nav-icon fas fa-tools"></i>
+                <p>Admin panel</p>
+              </a>
+            </li>
+          {% endif %}
           <li class="nav-item has-treeview">
             <a href="#" class="nav-link">
               <i class="nav-icon fas fa-database"></i>

@@ -5,8 +5,8 @@ $("#formFiltros").submit(function(e) {
   //show results
   $('body').addClass('sidebar-collapse');
   //change to small logo
-  $('#logo-big').hide();
-  $('#logo-small').show();
+  $('#logo-big').hide("fast");
+  $('#logo-small').show("fast");
   
   $('#actions_results').show("slow");
 

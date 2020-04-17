@@ -75,13 +75,13 @@ $('body').on('stylechanged', function () {
     //change img logo depending nav
     if (_style.indexOf("sidebar-collapse") >= 0) {
       //console.log("collapse");
-      $('#logo-big').hide();
-      $('#logo-small').show();
+      $('#logo-big').hide("fast");
+      $('#logo-small').show("fast");
     }
     else {
       //console.log("complete");
-      $('#logo-small').hide();
-      $('#logo-big').show();
+      $('#logo-small').hide("fast");
+      $('#logo-big').show("fast");
     }
 });
 
