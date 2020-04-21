@@ -9,6 +9,28 @@ from .models import *
 from django_select2.forms import Select2MultipleWidget
 from dal import autocomplete
 
+class ClaseUpdForm(forms.ModelForm):
+    """docstring for ClaseUpdForm"""
+
+    horario_desde = forms.TimeField(widget=forms.TimeInput(format="%H:%M"), 
+        help_text="Horario de inicio de clase", required=True)#, initial="00:00")
+    horario_desde.widget.attrs.update({'class': 'form-control hour-input', 'placeholder':'00:00'})
+    horario_hasta = forms.TimeField(widget=forms.TimeInput(format="%H:%M"), 
+        help_text="Horario de fin de clase", required=True)#, initial="00:00")
+    horario_hasta.widget.attrs.update({'class': 'form-control hour-input', 'placeholder':'00:00'})
+
+    comentario = forms.CharField(widget=forms.Textarea, required=True)
+    comentario.widget.attrs.update({
+        'class': 'form-control',
+        'rows': '3',
+        'placeholder': 'Ingrese un comentario...',
+    })
+
+    class Meta:
+        model = Clase
+        fields = ['horario_desde', 'horario_hasta', 'comentario']
+
+
 class RecurrenciaForm(forms.Form):
     #empleado = forms.ModelMultipleChoiceField(queryset=Empleado.objects.all(), widget=Select2MultipleWidget)
     widget_date = forms.TextInput(attrs={
@@ -139,7 +161,18 @@ class MotivoAusenciaForm(forms.Form):
         empty_label="Ninguno", 
         label="Motivo de Ausencia",
         )
-    motivo.widget.attrs.update({'class': 'form-control custom-select my-1 mr-sm-8'})
+    motivo.widget.attrs.update({'class': 'form-control custom-select'})
+
+    #adjunto = forms.FileField(widget=forms.ClearableFileInput(attrs={'multiple': True}), required=False)
+    adjunto = forms.FileField(required=False)
+    adjunto.widget.attrs.update({'class':'custom-file-input', 'id':'adjunto'})
+
+    comentario = forms.CharField(widget=forms.Textarea, required=False)
+    comentario.widget.attrs.update({
+        'class': 'form-control',
+        'rows': '2',
+        'placeholder': 'Ingrese un comentario...',
+    })
 
     class Meta:
         model = MotivoAusencia

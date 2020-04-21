@@ -20,6 +20,23 @@ from collections import defaultdict
 
 #         return qs
 
+@login_required
+def get_clases_from_certificado(request, certificado_id:int, context=None):
+    try:
+        cert = Certificado.objects.get(pk=certificado_id)
+        results = [{
+            'empleado': clase.empleado.__str__(),
+            'actividad': clase.actividad.nombre,
+            'dia_semana': clase.get_dia_semana_display(),
+            'fecha': clase.fecha,
+            'horario_desde': clase.horario_desde.strftime("%H:%M"),
+            'horario_hasta': clase.horario_hasta.strftime("%H:%M"),
+            'ausencia': clase.ausencia.__str__() if clase.ausencia else "",
+        } for clase in cert.clases.all().order_by('fecha')]
+
+        return JsonResponse({"results": results})
+    except:
+        return JsonResponse({"results": []})
 
 @login_required
 def get_day_classes(request, context=None):

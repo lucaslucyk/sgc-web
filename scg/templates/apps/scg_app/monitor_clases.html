@@ -175,12 +175,14 @@
          
             <div class="form-group col-md-4">
               <select class="custom-select my-1 mr-sm-8" name="accion_a_ejecutar" id="accion_a_ejecutar" style="width:100%;" required>
-                <option value="" selected>Acción</option>
+                <option value="" selected disabled="disabled">Elija una opción...</option>
                 <option value="confirmar_clases">Confirmar Clases</option>
-                <option value="asignar_reemplazo">Asignar Reemplazo</option>
-                <option value="gestion_ausencia">Gestionar Ausencia</option>
-                <option value="gestion_recurrencia">Gestionar Programación</option>
-                <option value="gestion_marcajes">Ver Marcajes</option>
+                <option value="editar_clases">Editar Clase >></option>
+                <option value="gestion_ausencia">Gestionar Ausencia >></option>
+                <option value="ver_certificados">Gestionar Certificados >></option>
+                <option value="gestion_marcajes">Gestionar Marcajes >></option>
+                <option value="gestion_recurrencia">Gestionar Programación >></option>
+                <option value="asignar_reemplazo">Gestionar Reemplazo >></option>
               </select>
             </div>
             <div class="form-group col-md-2">
@@ -190,7 +192,7 @@
         </div><!-- /.card-header -->
         <div class="card-body">
           <section id="clases">
-            <table class="table .table-responsive" style="width:100%">
+            <table class="table table-sm" style="width:100%">
               <thead>
                 <tr>
                   <th class="align-middle" scope="col">
@@ -238,12 +240,16 @@
                     <span>Fin </span>
                     <i class="fas fa-sort-down flipper" style="display:none;"></i>
                   </th>
+                  <th class="align-middle" scope="col" view-model-order="true" data-order="order_modificada">
+                    <span>Modif. </span>
+                    <i class="fas fa-sort-down flipper" style="display:none;"></i>
+                  </th>
                   <th class="align-middle" scope="col" view-model-order="true" data-order="order_ausencia">
                     <span>Ausencia </span>
                     <i class="fas fa-sort-down flipper" style="display:none;"></i>
                   </th>
                   <th class="align-middle" scope="col" view-model-order="true" data-order="order_confirmada">
-                    <span>Confirmada </span>
+                    <span>Confir. </span>
                     <i class="fas fa-sort-down flipper" style="display:none;"></i>
                   </th>
                 </tr>
@@ -282,6 +288,13 @@
                     <td class="align-middle">{{clase.fecha}}</td>
                     <td class="align-middle">{{clase.horario_desde}}</td>
                     <td class="align-middle">{{clase.horario_hasta}}</td>
+                    <td class="align-middle">
+                      {% if clase.modificada %}
+                        <i class="fas fa-exclamation-circle"></i>
+                      {% else %}
+                        &nbsp;
+                      {% endif %}
+                    </td>
                     <td class="align-middle">
                       {% if clase.ausencia %}
                         {{clase.ausencia}}
@@ -323,19 +336,20 @@
                         <a class="page-link" href="?page={{ page_obj.next_page_number }} " tabindex="1">Siguiente</a>
                       </li>
                   {% endif %}
+                  
                 </ul>
               </nav>
             {% else %}
               <nav aria-label="Page navigation example">
                 <ul class="pagination justify-content-center">
                   <li class="page-item disabled">
-                    <a class="page-link" href="#" tabindex="-1">Previous</a>
+                    <a class="page-link" href="#" tabindex="-1">Anterior</a>
                   </li>
                   <li class="page-item"><a class="page-link" href="#">1</a></li>
                   <li class="page-item"><a class="page-link" href="#">2</a></li>
                   <li class="page-item"><a class="page-link" href="#">3</a></li>
                   <li class="page-item">
-                    <a class="page-link" href="#">Next</a>
+                    <a class="page-link" href="#">Siguiente</a>
                   </li>
                 </ul>
               </nav>
@@ -354,6 +368,8 @@
 {% block extra_js %}
 <!-- for dont charge home js -->
 {% load static %}
+<!-- dateformat -->
+<script src="{%  static 'js/jquery-dateformat.min.js' %}"></script>
 <script src="{%  static 'js/monitor.js' %}"></script>
 
 {% endblock %}

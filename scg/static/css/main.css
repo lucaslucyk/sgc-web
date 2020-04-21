@@ -28,6 +28,12 @@ th[view-model-order="true"]:hover{
 .fa-times-circle{
   color: red !important;
 }
+.fa-times-circle{
+  color: red !important;
+}
+.fa-exclamation-circle{
+  color: orange !important;
+}
 
 .invert-color{
   -webkit-filter: invert(1);
@@ -36,6 +42,7 @@ th[view-model-order="true"]:hover{
 .img-center{
   float: none !important;
 }
+
 .flipper{
 
   -webkit-transform: rotateX(180deg);

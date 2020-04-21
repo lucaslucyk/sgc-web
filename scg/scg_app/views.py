@@ -15,6 +15,7 @@ from django.apps import apps
 
 from django.core.paginator import EmptyPage, Paginator
 from django.views.generic.list import ListView
+from django.views.generic.edit import UpdateView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from collections import defaultdict
 
@@ -28,6 +29,56 @@ from django.views import generic
 from django.http import JsonResponse, Http404
 from django.core import serializers
 
+
+@login_required
+def certificados_list(request, id_clase:int, context=None):
+    clase = get_object_or_404(Clase, pk=id_clase)
+    certificados = Certificado.objects.filter(clases__in=[clase])
+
+    _ids = set()
+    for certificado in certificados:
+        [_ids.add(clase.id) for clase in certificado.clases.all()]
+
+    clases_impacto = Clase.objects.filter(id__in=_ids)
+
+    context = {
+        "certificados": certificados,
+        "clase": clase,
+        "clases_impacto": clases_impacto,
+    }
+
+    return render(request, "apps/scg_app/certificados.html", context)
+
+@login_required
+def clase_edit(request, pk, context=None):
+    clase = get_object_or_404(Clase, pk=pk)
+
+    if request.method == 'POST':
+        form = ClaseUpdForm(request.POST, instance=clase)
+        if not form.is_valid():
+            messages.error(request, f'Error de formulario.')
+            context = context or {'form': ClaseUpdForm(instance=clase)}
+            return render(request, 'apps/scg_app/clase_edit.html', context)
+
+        clase = form.save(commit=False)
+
+        if clase.parent_recurrencia:
+            if clase.horario_desde != clase.parent_recurrencia.horario_desde or clase.horario_hasta != clase.parent_recurrencia.horario_hasta:
+                clase.modificada = True
+                messages.success(request, f'La clase ha sido modificada como excepción a la serie.')
+            else:
+                clase.modificada = False
+                messages.success(request, f'La clase ha sido modificada.')
+        
+        clase.save()
+
+        context = context or {'form': form}
+        return render(request, 'apps/scg_app/clase_edit.html', context)
+
+    form = ClaseUpdForm(instance=clase)
+    context = context or {'form': form}
+
+    return render(request, 'apps/scg_app/clase_edit.html', context)
 
 # Create your views here.
 def check_admin(user):
@@ -260,9 +311,6 @@ def generar_clases(_fields, _dia, _recurrencia):
 
     return success, rejected, cant_creadas
 
-
-# def clases_list(request, context):
-
 class ClasesView(LoginRequiredMixin, ListView):
     model = Clase
     template_name = 'apps/scg_app/monitor_clases.html'
@@ -398,6 +446,7 @@ class ClasesView(LoginRequiredMixin, ListView):
             'fecha': clase.fecha,
             'horario_desde': clase.horario_desde.strftime("%H:%M"),
             'horario_hasta': clase.horario_hasta.strftime("%H:%M"),
+            'modificada': clase.modificada,
             'ausencia': clase.ausencia.__str__() if clase.ausencia else "",
             'confirmada': clase.confirmada,
         } for clase in qs]
@@ -430,27 +479,35 @@ def action_process(request, context=None):
 
     if request.method == 'POST':
         _accion = request.POST.get('accion_a_ejecutar')
+        ids = get_ids(request.POST.keys())
+
+        if not ids:
+            messages.error(request, "Debe seleccionar uno o más registros para ejecutar una acción.")
+            return redirect('clases_view')
+
+        ### actions ###
+        if _accion == 'ver_certificados':
+            if len(ids) != 1: 
+                messages.error(request, "Debe seleccionar solo un registro para editarlo.")
+                return redirect('clases_view')
+            return redirect('certificados_list', id_clase=ids[0])
+
+        if _accion == 'editar_clases':
+            if len(ids) != 1: 
+                messages.error(request, "Debe seleccionar solo un registro para editarlo.")
+                return redirect('clases_view')
+            return redirect('clase_update', pk=ids[0])
 
         if _accion == 'gestion_ausencia':
-            ids = get_ids(request.POST.keys())
-            if not ids:
-                messages.error(request, "Debe seleccionar uno o más registros para gestionar una ausencia.")
-                return redirect('clases_view')
             return redirect('gestion_ausencia', ids_clases='-'.join(ids))
 
         if _accion == 'asignar_reemplazo':
-            ids = get_ids(request.POST.keys())
             if len(ids) != 1: 
-                messages.error(request, "Debe seleccionar -solo- un registro para asignar un reemplazo.")
+                messages.error(request, "Debe seleccionar solo un registro para asignar un reemplazo.")
                 return redirect('clases_view')
             return redirect('asignar_reemplazo', id_clase=ids[0])
 
         if _accion == 'confirmar_clases':
-            ids = get_ids(request.POST.keys())
-            if not ids:
-                messages.error(request, "Debe seleccionar una o más clases para confirmarlas.")
-                return redirect('clases_view')
-
             success, error = confirmar_clases(ids)
             messages.success(request, f'Se {"confirmaron" if success > 1 else "confirmó"} {success} clase(s).') if success else None
             messages.error(request, f'No se {"pudieron" if error > 1 else "pudo"} confirmar {error} clase(s) porque esta(n) cancelada(s).') if error else None
@@ -458,20 +515,16 @@ def action_process(request, context=None):
             return redirect('clases_view')
 
         if _accion == 'gestion_recurrencia':
-
-            ids = get_ids(request.POST.keys())
             if len(ids) != 1:
-                messages.error(request, "Debe seleccionar -solo- una clase para gestionar su programación.")
+                messages.error(request, "Debe seleccionar solo una clase para gestionar su programación.")
                 return redirect('clases_view')
 
             messages.warning(request, "Acción aún no implementada.")
             return redirect('clases_view')
 
         if _accion == 'gestion_marcajes':
-
-            ids = get_ids(request.POST.keys())
             if len(ids) != 1:
-                messages.error(request, "Debe seleccionar -solo- una clase para ver los marcajes del día.")
+                messages.error(request, "Debe seleccionar solo una clase para ver los marcajes del día.")
                 return redirect('clases_view')
 
             # get the class if all verifications were correct
@@ -507,26 +560,36 @@ def gestion_ausencia(request, ids_clases=None, context=None):
     if not ids_clases:
         return render(request, "apps/scg_app/gestion_ausencia.html", context)
 
-    form = MotivoAusenciaForm(request.POST if request.method == 'POST' else None)
+    if request.method == 'POST':
+        form = MotivoAusenciaForm(request.POST, request.FILES)
+    else:
+        form = MotivoAusenciaForm()
+    
     context = context or {'form': form}
 
     clases_to_edit = Clase.objects.filter(pk__in=ids_clases.split('-'))
     context["clases_to_edit"] = clases_to_edit
 
     if request.method == 'POST':
-        if form.is_valid():
-            motivo_ausencia = form.cleaned_data["motivo"]
+        if not form.is_valid():
+            messages.error(request, "Error de formulario.")
+            return render(request, "apps/scg_app/gestion_ausencia.html", context)
 
-            # if not motivo_ausencia:
-            #     messages.error(request, "Seleccione un Motivo de ausencia.")
-            #     return render(request, "apps/scg_app/gestion_ausencia.html", context)
+        motivo_ausencia = form.cleaned_data["motivo"]
+        adjunto = form.cleaned_data["adjunto"]
 
-            for clase in clases_to_edit:
-                clase.ausencia = motivo_ausencia
-                clase.save()
-                clase.update_status()
+        #if a file was added
+        if adjunto:
+            certif = Certificado.objects.create(file=adjunto, motivo=motivo_ausencia)
+            certif.clases.set(clases_to_edit)
 
-            messages.success(request, "Acción finalizada.")
+        #assign absence for each class
+        for clase in clases_to_edit:
+            clase.ausencia = motivo_ausencia
+            clase.save()
+            clase.update_status()
+
+        messages.success(request, "Acción finalizada.")
 
     return render(request, "apps/scg_app/gestion_ausencia.html", context)
 
@@ -832,8 +895,4 @@ def time_ops(f1, f2, sum=None): #para usar los offsets --> offsets_inicio_clase,
 
 def historizar():
     #todo
-    return
-
-@user_passes_test(check_admin)
-def modificar_estado(request): #admin-only conflict-resolver tool
     return

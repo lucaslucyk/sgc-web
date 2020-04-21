@@ -6,56 +6,102 @@
   <div class="row">
     <div class="col-md-12">
 
-	{% if messages %}
-		{% for message in messages %}
-			<div class="alert alert-{% if message.tags %}{{ message.tags }}{% endif %} alert-dismissible" >
-				<a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
-		  		{{ message }}
-			</div>
-	    {% endfor %}
-	{% endif %}
-		
-	{% if reemplazos %}
-		<ul>
-			{% for reemplazo in reemplazos %}
-				<li>{{ reemplazo }}</li>
-			{% endfor %}
-		</ul>
-	{% endif %}
-	
-	{% if clases_to_edit %}
-		<p> Se asignar&aacute; un motivo de ausencia a la/s clase/s:</p>
-		{% for clase_to_edit in clases_to_edit %}
-			<p>{{ clase_to_edit }}</p>
-		{% endfor %}
-	{% endif %}
-
-	{% if form %}
-
-		<form method="POST">
-			{% csrf_token %}
-			{% for field in form %}
-
-				<div class="form-group">
-					{{ field.label_tag }}
-					{{ field }}
-
-					{% if field.help_text %}
-						<small class="form-text text-muted">{{ field.help_text }}</small>
-					{% endif %}
-					
-					{% for error in field.errors %}
-						<div style="color: red">{{ error }}</div>
-					{% endfor %}
-
+		{% if messages %}
+			{% for message in messages %}
+				<div class="alert alert-{% if message.tags %}{{ message.tags }}{% endif %} alert-dismissible" >
+					<a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+			  		{{ message }}
 				</div>
-				
-			{% endfor %}
-			<button type="submit" class="btn btn-primary">Cargar Ausencia</button>
-		</form>
+		    {% endfor %}
+		{% endif %}
 
-		<br /> <p><a href="javascript: window.history.back();"><i class="fas fa-chevron-circle-left"></i> Volver al monitor de clases</a></p>
-	{% endif %}
+		<div class="row">
+      <div class="col-md-2 col-xs-1 col-sm-1"></div>
+      <div class="col-md-8 col-xs-10 col-sm-10">
+				
+				{% if clases_to_edit %}
+					<div class="card card-info collapsed-card">
+            <div class="card-header">
+              <h3 class="card-title">Clase/s a justificar</h3>
+              <div class="card-tools">
+			          <button type="button" class="btn btn-tool" data-card-widget="collapse">
+			            <i class="fas fa-plus"></i>
+			          </button>
+			        </div>
+            </div>
+            <div class="card-body">
+              
+              <table class="table table-sm">
+                <thead>
+                  <tr>
+                    <th>Actividad</th>
+                    <th>D&iacute;a</th>
+                    <th>Fecha</th>
+                    <th>Inicio</th>
+                    <th>Fin</th>
+                    <th>Empleado</th>
+                  </tr>
+                </thead>
+                <tbody>
+                	{% for clase_to_edit in clases_to_edit %}
+	                  <tr>
+	                    <td>{{ clase_to_edit.actividad.nombre }}</td>
+	                    <td>{{ clase_to_edit.get_dia_semana_display }}</td>
+	                    <td>{{ clase_to_edit.fecha }}</td>
+	                    <td>{{ clase_to_edit.horario_desde }}</td>
+	                    <td>{{ clase_to_edit.horario_hasta }}</td>
+	                    <td>{{ clase_to_edit.empleado }}</td>
+	                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+
+            </div><!-- /.card-body -->
+          </div><!-- /.card -->
+				{% endif %}
+
+				{% if form %}
+					<form method="POST" enctype="multipart/form-data">
+					{% csrf_token %}
+
+						<div class="card card-info">
+              <div class="card-header">
+                <h3 class="card-title">Justificación</h3>
+              </div>
+              <div class="card-body">
+              	<div class="form-row">
+              		<div class="form-group col-md-6 col-sm-12 col-xs-12">
+				            <label for="motivo">Motivo</label>
+				            {{ form.motivo }}
+				          </div>
+				          <div class="form-group col-md-6 col-sm-12 col-xs-12">
+				          	<label for="adjunto">Adjunto</label>
+										<div class="input-group">
+					          	<div class="custom-file">
+					            	{{ form.adjunto }}
+					            	<label for="adjunto" class="custom-file-label">Elija un archivo...</label>
+											</div>
+										</div>
+				          </div>
+								</div>
+									
+									<div class="form-group">
+				            <label for="comentario">Comentario</label>
+				            {{ form.comentario }}
+				          </div>
+								
+              </div><!-- /.card-body -->
+              <div class="card-footer text-center">
+                <button type="submit" class="btn btn-info">Confirmar</button>
+                <a class="btn btn-secondary" href="javascript: window.history.back();" role="button">Volver</a>
+              </div>
+              <!-- /.card-footer -->
+            </div><!-- /.card -->
+          </form>
+				{% endif %}
+			</div><!-- /.col -->
+      <div class="col-md-2 col-xs-1 col-sm-1"></div>
+    </div><!-- /.row -->
 
   </div> <!-- principal col -->
 </div> <!-- principal row -->
@@ -63,5 +109,13 @@
 {% endblock %}
 
 {% block extra_js %}
-<!-- for dont charge home js -->
+	{% load static %}
+	<!-- bs-custom-file-input -->
+	<script src="{% static 'plugins/bs-custom-file-input/bs-custom-file-input.min.js' %}"></script>
+
+	<script>
+    $(document).ready(function () {
+		  bsCustomFileInput.init();
+		});
+	</script>
 {% endblock %}

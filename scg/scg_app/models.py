@@ -1,3 +1,4 @@
+import os
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
@@ -35,9 +36,10 @@ class Rol(models.Model):
         verbose_name_plural = "Roles"
         get_latest_by = "id"
 
+
 class Escala(models.Model):
     nombre = models.CharField(max_length=30)
-    grupo = models.ForeignKey('GrupoActividad', on_delete=models.SET(''), null=True, blank=True)
+    grupo = models.ForeignKey('GrupoActividad', on_delete=models.SET_NULL, null=True, blank=True)
     monto_hora = models.CharField(max_length=10)
 
     @property
@@ -49,7 +51,7 @@ class Escala(models.Model):
         return self.__str__()
 
     def __str__(self):
-        return f'Escala (Monto/Hora) para {self.nombre}: {self.monto_hora}'
+        return f'{self.monto_hora} AR$/h para {self.grupo.nombre}'
 
     class Meta:
         verbose_name = "Escala"
@@ -302,9 +304,11 @@ class Recurrencia(models.Model):
         return self.__str__()
 
     def __str__(self):
-        return f'Los {self.dia_semana} desde el {self.fecha_desde} hasta el \
-            {self.fecha_hasta}, \
-            de {self.horario_desde} a {self.horario_hasta}'.replace("\t", "")
+        return f'Los {self.get_dia_semana_display()} \
+            de {self.horario_desde.strftime("%H:%M")} a \
+            {self.horario_hasta.strftime("%H:%M")}, \
+            desde el {self.fecha_desde} hasta el \
+            {self.fecha_hasta}'.replace("\t", "")
 
     class Meta:
         verbose_name = "Recurrencia"
@@ -314,7 +318,8 @@ class Recurrencia(models.Model):
 class Clase(models.Model):
     parent_recurrencia = models.ForeignKey('Recurrencia', on_delete=models.CASCADE, null=True)
 
-    parent = models.CharField(max_length=200, blank=True)
+    #parent = models.CharField(max_length=200, blank=True)
+    
     creacion = models.DateTimeField(default=timezone.now)
     dia_semana = models.CharField(max_length=9, choices=settings.DIA_SEMANA_CHOICES, blank=True)
     fecha = models.DateField(blank=True, default=timezone.now)
@@ -332,6 +337,13 @@ class Clase(models.Model):
     estado = models.CharField(max_length=1, choices=settings.ESTADOS_CHOICES, null=True, blank=True, default=settings.ESTADOS_CHOICES[0][0])
     presencia = models.CharField(max_length=12, choices=settings.PRESENCIA_CHOICES, null=True, blank=True, default=settings.PRESENCIA_CHOICES[0][0])
     comentario = models.CharField(max_length=1000, blank=True, help_text="Aclaraciones varias")
+
+    #adjunto = models.FileField("Adjunto", null=True, blank=True, upload_to='clases/')
+
+    @property
+    def certificados(self):
+        cert = Certificado.objects.filter(clases__in=[self])
+        return cert    
 
     @property
     def is_cancelled(self):
@@ -356,6 +368,9 @@ class Clase(models.Model):
         )
         #
         return True if blocks else False
+    #was_made.boolean = True
+    #was_made.short_description = "Realizada"
+    #was_made = property(was_made)
 
     def update_status(self):
         """ update the class status according to all its variables  """
@@ -504,3 +519,37 @@ class BloqueDePresencia(models.Model):
         return f'Presencia de {self.empleado} el {self.fecha} de \
             {self.inicio.hora.strftime("%H:%M")} a \
             {self.fin.hora.strftime("%H:%M")}'.replace('\t','')
+
+class Certificado(models.Model):
+    """docstring for Certificado"""
+    #empleado = models.ForeignKey(Empleado, on_delete=models.CASCADE, null=True)
+    clases =  models.ManyToManyField('Clase')
+    file = models.FileField("Archivo", null=True, blank=True, upload_to='certificados/')
+    motivo = models.ForeignKey('MotivoAusencia', blank=True, null=True, on_delete=models.SET_NULL, related_name='motivo')
+
+    @property
+    def filename(self):
+        return os.path.basename(self.file.name)
+
+    def get_delete_url(self):
+        """ construct delete url from current object """
+        return reverse('confirm_delete', 
+            kwargs={"model":self.__class__.__name__, "pk":self.id}
+        )
+
+    def pos_delete_url(self):
+        """ construct pos delete url from current object """
+        return reverse('certificados_list', 
+            kwargs={"id_clase": self.clases.first().id}
+        )
+
+    @property
+    def pronombre(self):
+        return "el"
+
+    @property
+    def get_str(self):
+        return self.__str__()
+
+    def __str__(self):
+        return f'Certificado por {self.motivo.nombre} para {self.clases.count()} clases.'

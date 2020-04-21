@@ -50,18 +50,21 @@ class RecurrenciaAdmin(admin.ModelAdmin):
 
 @admin.register(Clase)
 class Clase(admin.ModelAdmin):
-    fields = (('parent_recurrencia', 'parent'), ('fecha', 'dia_semana'), 
+    fields = ('parent_recurrencia', ('dia_semana', 'fecha'), 
         ('horario_desde', 'horario_hasta'), 'actividad', 'sede', 'empleado', 
         'modificada', 'estado', 'presencia', 'ausencia', 'reemplazo',
-        'confirmada',
+        'confirmada', 'adjunto',
     )
-    list_display = ('dia_semana', 'fecha', 'horario_desde', 'horario_hasta', 
-        'creacion', 'actividad', 'sede', 'empleado', 'modificada', 'estado',
-        'confirmada', 
+
+    list_display = (
+        'estado', 'presencia', 'empleado', 'reemplazo', 'sede',
+        'actividad', 'dia_semana', 'fecha', 'horario_desde', 'horario_hasta',
+        'modificada', 'ausencia', 'confirmada',
     )
+
     readonly_fields = ('parent_recurrencia', 'creacion', 'dia_semana', 'fecha',
         'horario_desde', 'horario_hasta', 'actividad', 'sede', 'empleado', 
-        'parent', 'modificada', 'presencia',
+        'modificada', 'presencia', 'ausencia', 'reemplazo', 'estado',
         #'estado',
     )
 
@@ -93,3 +96,4 @@ class GrupoActividad(admin.ModelAdmin):
     list_display = ('nombre', )
 
 admin.site.register(BloqueDePresencia)
+admin.site.register(Certificado)

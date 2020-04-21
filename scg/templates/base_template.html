@@ -119,14 +119,13 @@
           <img src="{% static 'img/python.png' %}" class="img-circle elevation-2" alt="User Image">
         </div>
         <div class="info">
-          <a href="#" class="d-block">Lucyk Lucas</a>
+          <a href="#" class="d-block">{{ user.last_name }} {{ user.first_name }}</a>
         </div>
       </div>
-        
 
       <!-- Sidebar Menu -->
       <nav class="mt-2">
-        <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
+        <ul class="nav nav-pills nav-sidebar flex-column nav-child-indent" data-widget="treeview" role="menu" data-accordion="false">
           <!-- Add icons to the links using the .nav-icon class
                with font-awesome or any other icon font library -->
           <li class="nav-item">
@@ -381,8 +380,6 @@
 <script src="{%  static 'dist/js/adminlte.min.js' %}"></script>
 <!-- AdminLTE for demo purposes -->
 <script src="{%  static 'dist/js/demo.js' %}"></script>
-<!-- dateformat -->
-<script src="{%  static 'js/jquery-dateformat.min.js' %}"></script>
 <script src="{%  static 'js/main.js' %}"></script>
 <!-- page script -->
 {% block extra_js %}

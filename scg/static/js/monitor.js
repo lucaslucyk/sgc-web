@@ -8,7 +8,11 @@ $("#formFiltros").submit(function(e) {
   $('#logo-big').hide("fast");
   $('#logo-small').show("fast");
   
+  //show results
   $('#actions_results').show("slow");
+  $('html, body').animate({
+      scrollTop: $("#actions_results").offset().top
+  }, 1000);
 
   //remove all order icons
   $('[view-model-order=true] i').hide();
@@ -42,6 +46,9 @@ $( '#paginatorNav ul' ).on( "click", "li a", function(e) {
   }
   localStorage.setItem('page', page);
   get_classes(page, localStorage.getItem("order_by"));
+  $('html, body').animate({
+      scrollTop: $("#actions_results").offset().top
+  }, 500);
 });
 
 async function append_order(_order){
@@ -104,6 +111,13 @@ async function update_paginator(_pages, _page){
 
   $('#paginatorNav ul li').remove();
 
+
+  $('#paginatorNav ul').append('\
+    <li class="page-item '+ (_page <= 1 ? 'disabled' : '') +'">\
+      <a class="page-link" href="#" tabindex="'+ (parseInt(_page) * (-1) + 1 ) +'"><i class="fas fa-step-backward"></i></a>\
+    </li>\
+  ');
+
   $('#paginatorNav ul').append('\
     <li class="page-item '+ (_page <= 1 ? 'disabled' : '') +'">\
       <a class="page-link" href="#" tabindex="-1">Anterior</a>\
@@ -119,6 +133,11 @@ async function update_paginator(_pages, _page){
   $('#paginatorNav ul').append('\
     <li class="page-item '+ (_page == _pages || _pages == 0 ? 'disabled' : '') +'">\
       <a class="page-link" href="#" tabindex="1">Siguiente</a>\
+    </li>\
+  ');
+  $('#paginatorNav ul').append('\
+    <li class="page-item '+ (_page == _pages || _pages == 0 ? 'disabled' : '') +'">\
+      <a class="page-link" href="#" tabindex="'+ (parseInt(_pages) - parseInt(_page)) +'"><i class="fas fa-step-forward"></i></a>\
     </li>\
   ');
 }
@@ -148,6 +167,7 @@ async function update_table(dataList){
       <td class="align-middle">'+ $.format.date(new Date(item.fecha.split("-")), "d MMMM yyyy") +'</td>\
       <td class="align-middle">'+ item.horario_desde +'</td>\
       <td class="align-middle">'+ item.horario_hasta +'</td>\
+      <td class="align-middle">'+ (item.modificada ? '<i class="fas fa-exclamation-circle"></i>': '&nbsp;') +'</td>\
       <td class="align-middle">'+ item.ausencia +'</td>\
       <td class="align-middle"><i class="fas fa-'+ (item.confirmada ? 'check': 'times') +'-circle"></i></td>\
     ');

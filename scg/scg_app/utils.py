@@ -16,6 +16,11 @@ def get_min_offset(_time:datetime.time, _mins:int, _sub=False) -> datetime.time:
         fulldate = fulldate + datetime.timedelta(minutes=_mins)
     return fulldate.time()
 
+# def handle_uploaded_file(f):
+#     with open('some/file/name.txt', 'wb+') as destination:
+#         for chunk in f.chunks():
+#             destination.write(chunk)
+
 # if __name__ == '__main__':
 #   for x, y in grouped(range(11), 2):
 #       print(x, y)
