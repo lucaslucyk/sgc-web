@@ -10,7 +10,6 @@ urlpatterns = [
     path('delete/<str:model>/<int:pk>', views.confirm_delete, name="confirm_delete"),
 
     ### clases ###
-    path('programar/', views.programar, name='programar'),
     path('clases/', views.ClasesView.as_view(), name='clases_view'),
     path('clase/<int:pk>/edit/', views.clase_edit, name='clase_update'),
     path('action_process/', views.action_process, name='action_process'),
@@ -21,9 +20,21 @@ urlpatterns = [
     ### certificados ###
     path('certificados/<int:id_clase>', views.certificados_list, name="certificados_list"),
 
+    ### lists ###
     path('empleados/', views.EmpleadosList.as_view(), name='empleados_view'),
     path('saldos/', views.SaldosList.as_view(), name='saldos_view'),
+    path('programaciones/', views.RecurrenciasList.as_view(), name='programaciones_view'),
+    path('motivos_ausencia/', views.MotivosAusenciaList.as_view(), name='motivos_ausencia_view'),
 
+    ### create ###
+    path('create/programacion/', views.programar, name='programar'),
+    path('create/saldo/', views.generar_saldo, name='generar_saldo'),
+
+    ### update ###
+    path('update/programacion/<int:pk>', views.programar, name='programar'),
+    path('update/saldo/<int:pk>', views.saldo_update, name='saldo_update'),
+
+    ### others ###
     path('wiki/', views.wiki, name='wiki'), 
 
     path('about/', views.about, name='about'), 

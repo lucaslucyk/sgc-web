@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -189,22 +189,23 @@
           </li>
       	  -->
 
+          <li class="nav-item">
+            <a href="{% url 'clases_view'%}" class="nav-link {% block active_monitor %}{% endblock %}">
+              <i class="nav-icon fas fa-tv"></i>
+              <p>Monitor de clases</p>
+            </a>
+          </li>
+
           <li class="nav-item has-treeview {% block open_ver %}{% endblock %}">
             <a href="#" class="nav-link">
               <i class="nav-icon far fa-eye"></i>
               <p>
-                Ver
+                Listar
                 <i class="fas fa-angle-left right"></i>
                 <!--<span class="badge badge-info right">6</span>-->
               </p>
             </a>
             <ul class="nav nav-treeview">
-              <li class="nav-item">
-                <a href="{% url 'clases_view'%}" class="nav-link {% block active_monitor %}{% endblock %}">
-                  <i class="fas fa-dumbbell nav-icon"></i>
-                  <p>Monitor de clases</p>
-                </a>
-              </li>
               <li class="nav-item">
                 <a href="{% url 'empleados_view'%}" class="nav-link {% block active_ver_empleados %}{% endblock %}">
                   <i class="far fa-user nav-icon"></i>
@@ -212,21 +213,21 @@
                 </a>
               </li>
               <li class="nav-item">
-                <a href="#" class="nav-link">
-                  <i class="far fa-calendar-check nav-icon"></i>
-                  <p>Saldos</p>
+                <a href="{% url 'motivos_ausencia_view'%}" class="nav-link {% block active_ver_mot_aus %}{% endblock %}">
+                  <i class="fas fa-business-time nav-icon"></i>
+                  <p>Motivos de ausencia</p>
                 </a>
               </li>
               <li class="nav-item">
-                <a href="#" class="nav-link">
-                  <i class="far fa-building nav-icon"></i>
-                  <p>Sedes</p>
-                </a>
-              </li>
-              <li class="nav-item">
-                <a href="#" class="nav-link">
+                <a href="{% url 'programaciones_view'%}" class="nav-link {% block active_ver_program %}{% endblock %}">
                   <i class="far fa-calendar-alt nav-icon"></i>
                   <p>Programaciones</p>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="{% url 'saldos_view'%}" class="nav-link {% block active_ver_saldos %}{% endblock %}">
+                  <i class="fas fa-balance-scale nav-icon"></i>
+                  <p>Saldos</p>
                 </a>
               </li>
             </ul>
@@ -235,7 +236,7 @@
             <a href="#" class="nav-link">
               <i class="nav-icon fas fa-plus-square"></i>
               <p>
-                Crear
+                Generar
                 <i class="right fas fa-angle-left"></i>
               </p>
             </a>
@@ -244,6 +245,12 @@
                 <a href="{% url 'programar'%}" class="nav-link {% block active_programar %}{% endblock %}">
                   <i class="far fa-calendar-alt nav-icon"></i>
                   <p>Programación</p>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="{% url 'generar_saldo'%}" class="nav-link {% block active_saldo %}{% endblock %}">
+                  <i class="fas fa-balance-scale nav-icon"></i>
+                  <p>Saldo</p>
                 </a>
               </li>
             </ul>

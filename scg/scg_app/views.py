@@ -106,24 +106,36 @@ class SafePaginator(Paginator):
 
 class EmpleadosList(LoginRequiredMixin, ListView):
     model = Empleado
-    template_name = 'apps/scg_app/empleados_list.html'
+    template_name = 'apps/scg_app/list/empleados.html'
     context_object_name = 'empleados_list'
 
-    paginator_class = SafePaginator
-    paginate_by = 25
+    # paginator_class = SafePaginator
+    # paginate_by = 25
 
     ordering = ['apellido', 'nombre',]
 
 class SaldosList(LoginRequiredMixin, ListView):
     model = Saldo
-    template_name = 'scg_app/saldos_list.html'
+    template_name = 'apps/scg_app/list/saldos.html'
     context_object_name = 'saldos_list'
 
-    paginator_class = SafePaginator
-    paginate_by = 25
+    ordering = ['-desde', 'sede__nombre', 'actividad__nombre']
 
-    ordering = ['desde', 'sede__nombre', 'actividad__nombre']
+class RecurrenciasList(LoginRequiredMixin, ListView):
+    model = Recurrencia
+    template_name = 'apps/scg_app/list/programaciones.html'
+    context_object_name = 'programaciones_list'
 
+    ordering = ['-fecha_desde', '-horario_desde', 'actividad__nombre']
+
+class MotivosAusenciaList(LoginRequiredMixin, ListView):
+    model = MotivoAusencia
+    template_name = 'apps/scg_app/list/motivos_ausencia.html'
+    context_object_name = 'motivos_list'
+
+    ordering = ['nombre']
+
+@login_required
 def confirm_delete(request, model, pk, context=None):
 
     try:
@@ -152,7 +164,72 @@ def confirm_delete(request, model, pk, context=None):
 
     return render(request, "apps/scg_app/confirm_delete.html", context)
 
+@login_required
+def saldo_update(request, pk, context=None):
+    saldo = get_object_or_404(Saldo, pk=pk)
+    
+    if request.method == 'POST':
+        form = SaldoUpdForm(request.POST, instance=saldo)
+        context = context or {'form': SaldoUpdForm(instance=saldo)}
 
+        if not form.is_valid():
+            messages.error(request, 'Error de formulario.')
+            return render(request, 'apps/scg_app/create/saldo.html', context)
+
+        saldo = form.save(commit=False)
+
+        if Saldo.check_overlap(
+            _sede = saldo.sede,
+            _actividad = saldo.actividad,
+            _desde = saldo.desde,
+            _hasta = saldo.hasta,
+            id_exclude = saldo.pk
+        ):
+            messages.error(request, "El periodo se superpone con otro ya creado.")
+            return render(request, "apps/scg_app/create/saldo.html", context)
+
+        #after of all checks
+        saldo.save()
+        messages.success(request, "Se actualizó el saldo correctamente.")
+
+    form = SaldoUpdForm(instance=saldo)
+    context = {'form': form}
+
+    return render(request, 'apps/scg_app/create/saldo.html', context)
+
+@login_required
+def generar_saldo(request, context=None):
+    form = SaldoForm(request.POST if request.method == 'POST' else None)
+    context = context or {'form': form}
+
+    if request.method == 'POST':
+        if not form.is_valid():
+            messages.error(request, "Error en datos del formulario.")
+            return render(request, "apps/scg_app/create/saldo.html", context)
+
+        if Saldo.check_overlap(
+            _sede = form.cleaned_data.get("sede"),
+            _actividad = form.cleaned_data.get("actividad"),
+            _desde = form.cleaned_data.get("desde"),
+            _hasta = form.cleaned_data.get("hasta"),
+        ):
+            messages.error(request, "El periodo se superpone con otro ya creado.")
+            return render(request, "apps/scg_app/create/saldo.html", context)
+
+        #after of security checks
+        new_saldo = Saldo.objects.create(
+            sede = form.cleaned_data.get("sede"),
+            actividad = form.cleaned_data.get("actividad"),
+            desde = form.cleaned_data.get("desde"),
+            hasta = form.cleaned_data.get("hasta"), 
+            saldo_asignado = form.cleaned_data.get("saldo_asignado"), 
+        )
+        messages.success(request, "Se ha generado el saldo para la sede y actividad seleccionada.")
+        return redirect('saldo_update', pk=new_saldo.id)
+
+    return render(request, "apps/scg_app/create/saldo.html", context)
+
+@login_required
 def programar(request, context=None):
 
     form = RecurrenciaForm(request.POST if request.method == 'POST' else None)
@@ -169,7 +246,7 @@ def programar(request, context=None):
 
         if "empleados-results" and "actividades-results" and "sedes-results" not in request.POST.keys():
                 messages.warning(request, "Busque y seleccione los datos en desplegables.")
-                return render(request, "apps/scg_app/programar_clase.html", context)
+                return render(request, "apps/scg_app/create/programacion.html", context)
 
         try:    #process data geted by API
             fields = {
@@ -179,12 +256,12 @@ def programar(request, context=None):
             }
         except:
             messages.error(request, "Error en campos de búsqueda.")
-            return render(request, "apps/scg_app/programar_clase.html", context)
+            return render(request, "apps/scg_app/create/programacion.html", context)
 
         ###validate info and process more data
         if not form.is_valid():
             messages.error(request, "Error en datos del formulario.")
-            return render(request, "apps/scg_app/programar_clase.html", context)
+            return render(request, "apps/scg_app/create/programacion.html", context)
 
         fields.update({
             "dia_semana": form.cleaned_data["dia_semana"], 
@@ -198,15 +275,15 @@ def programar(request, context=None):
 
         if fields["fecha_hasta"] < datetime.date.today() and not settings.DEBUG:
             messages.error(request, "No se pueden programar clases para fechas pasadas.")
-            return render(request, "apps/scg_app/programar_clase.html", context)
+            return render(request, "apps/scg_app/create/programacion.html", context)
 
         if fields["fecha_desde"] >= fields["fecha_hasta"]:
             messages.error(request, "La fecha de fin debe ser mayor a la de inicio.")
-            return render(request, "apps/scg_app/programar_clase.html", context)
+            return render(request, "apps/scg_app/create/programacion.html", context)
 
         if fields["horario_desde"] >= fields["horario_hasta"]:
             messages.error(request, "La hora de fin debe ser mayor a la de inicio.")
-            return render(request, "apps/scg_app/programar_clase.html", context)
+            return render(request, "apps/scg_app/create/programacion.html", context)
 
         if not Saldo.objects.filter(
             actividad=fields["actividad"], 
@@ -215,7 +292,7 @@ def programar(request, context=None):
             hasta__gte=fields["fecha_hasta"]
         ).exists():
             messages.error(request, f'No hay saldos para la actividad en la sede seleccionada.')
-            return render(request, "apps/scg_app/programar_clase.html", context)
+            return render(request, "apps/scg_app/create/programacion.html", context)
 
         _to_delete = []
         for dia in fields["dia_semana"]:
@@ -233,7 +310,7 @@ def programar(request, context=None):
 
         if not fields["dia_semana"]:
             messages.error(request, f'Todos los días estan cubiertos por otras programaciones.')
-            return render(request, "apps/scg_app/programar_clase.html", context)
+            return render(request, "apps/scg_app/create/programacion.html", context)
 
         _not_success, _rejecteds, _creadas = False, False, 0
 
@@ -246,6 +323,7 @@ def programar(request, context=None):
                 horario_hasta=fields["horario_hasta"], 
                 empleado=fields["empleado"], 
                 actividad=fields["actividad"], 
+                sede=fields["sede"],
             )
             success, rejected, cant_creadas = generar_clases(fields, dia, rec)
 
@@ -270,7 +348,7 @@ def programar(request, context=None):
         else:
             messages.success(request, "Programación generada!")
 
-    return render(request, "apps/scg_app/programar_clase.html", context)
+    return render(request, "apps/scg_app/create/programacion.html", context)
 
 def generar_clases(_fields, _dia, _recurrencia):
 

@@ -1,0 +1,34 @@
+{% extends "apps/scg_app/list/base.html" %}
+
+{% block active_ver_mot_aus %} active {% endblock %}
+
+{% block tableName %}Motivos de ausencia{% endblock %}
+
+{% block tableHeaders %}
+  <tr>
+    <th>Nombre</th>
+    <th>Genera pago</th>
+  </tr>
+{% endblock %}
+
+{% block tableBody %}
+  {% for motivo in motivos_list %}
+    <tr>
+      <td class="align-middle">{{motivo.nombre|capfirst}}</td>
+      <td class="align-middle">
+        {% if motivo.genera_pago %}
+          <i class="fas fa-check-circle" style="color: green !important;"></i>
+        {% else %}
+          <i class="fas fa-times-circle" style="color: red !important;"></i>
+        {% endif %}
+      </td>
+    </tr>
+  {% endfor %}
+{% endblock %}
+
+{% block tableFooter %}
+  <tr>
+    <th>Nombre</th>
+    <th>Genera pago</th>
+  </tr>
+{% endblock %}

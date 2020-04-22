@@ -1,0 +1,28 @@
+{% extends "apps/scg_app/list/base.html" %}
+
+{% block active_ver_sedes %} active {% endblock %}
+
+{% block tableName %}Sedes{% endblock %}
+
+{% block tableHeaders %}
+  <tr>
+    <th>Nombre</th>
+    <th>Tipo</th>
+  </tr>
+{% endblock %}
+
+{% block tableBody %}
+  {% for sede in sedes_list %}
+    <tr>
+      <td class="align-middle">{{sede.nombre|capfirst}}</td>
+      <td class="align-middle">{{sede.tipo|capfirst}}</td>
+    </tr>
+  {% endfor %}
+{% endblock %}
+
+{% block tableFooter %}
+  <tr>
+    <th>Nombre</th>
+    <th>Tipo</th>
+  </tr>
+{% endblock %}

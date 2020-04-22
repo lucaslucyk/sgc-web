@@ -45,8 +45,8 @@ class SaldoAdmin(admin.ModelAdmin):
 
 @admin.register(Recurrencia)
 class RecurrenciaAdmin(admin.ModelAdmin):
-    fields = ('dia_semana', ('fecha_desde', 'horario_desde'), ('fecha_hasta', 'horario_hasta'), 'empleado', )
-    list_display = ('id', 'empleado', 'dia_semana', 'fecha_desde', 'fecha_hasta', 'horario_desde', 'horario_hasta', )
+    fields = ('dia_semana', ('fecha_desde', 'horario_desde'), ('fecha_hasta', 'horario_hasta'), 'empleado', 'sede')
+    list_display = ('id', 'empleado', 'dia_semana', 'fecha_desde', 'fecha_hasta', 'horario_desde', 'horario_hasta', 'sede')
 
 @admin.register(Clase)
 class Clase(admin.ModelAdmin):

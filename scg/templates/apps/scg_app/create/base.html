@@ -1,0 +1,35 @@
+{% extends "base_template.html" %}
+
+{% block namepage %}Creaci&oacute;n/Edici&oacute;n{% endblock %}
+{% block open_crear %}menu-open{% endblock %}
+
+{% block content %}
+ <div class="row">
+    <div class="col-md-12">
+
+	{% if messages %}
+		<section id="mensajes">
+			{% for message in messages %}
+				<div class="alert alert-{% if message.tags %}{{ message.tags }}{% endif %} alert-dismissible" >
+					<a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+			  		{{ message }}
+				</div>
+		    {% endfor %}
+	    </section>
+	{% endif %}
+	
+	<section id="creacion">
+    {% block formulario %}
+      <!-- card or another item -->
+    {% endblock %}
+	</section>
+
+  </div> <!-- principal col -->
+</div> <!-- principal row -->
+
+{% endblock %}
+
+{% block extra_js %}
+	
+{% endblock %}
+

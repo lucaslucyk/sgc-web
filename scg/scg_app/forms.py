@@ -9,6 +9,40 @@ from .models import *
 from django_select2.forms import Select2MultipleWidget
 from dal import autocomplete
 
+class SaldoForm(forms.Form):
+    widget_date = forms.TextInput(attrs={
+        'type': 'date',
+        'class': 'form-control',
+        'placeholder':'aaaa-mm-dd',
+    })
+
+    sede = forms.ModelChoiceField(
+        queryset=Sede.objects.all().order_by('nombre'), 
+        required=True, label="Sede", 
+        empty_label="Seleccione una sede..."
+    )
+    actividad = forms.ModelChoiceField(
+        queryset=Actividad.objects.all().order_by('nombre'), 
+        required=True, label="Sede", 
+        empty_label="Seleccione una actividad..."
+    )
+    desde = forms.CharField(max_length=10, required=True, widget=widget_date)
+    hasta = forms.CharField(max_length=10, required=True, widget=widget_date)
+
+    saldo_asignado = forms.IntegerField(required=True)
+    saldo_asignado.widget.attrs.update({
+       'class':'form-control', 
+       'placeholder': '0',
+       'min': '1',
+       'max': '9999',
+    })  
+
+class SaldoUpdForm(SaldoForm, forms.ModelForm):
+
+    class Meta:
+        model = Saldo
+        fields = ['sede', 'actividad', 'desde', 'hasta', 'saldo_asignado']
+
 class ClaseUpdForm(forms.ModelForm):
     """docstring for ClaseUpdForm"""
 

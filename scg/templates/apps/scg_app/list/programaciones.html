@@ -1,0 +1,49 @@
+{% extends "apps/scg_app/list/base.html" %}
+
+{% block active_ver_program %} active {% endblock %}
+
+{% block tableName %}Programaciones{% endblock %}
+{% block generar_btn %}
+  <a href="{% url 'programar' %}" class="btn btn-outline-dark">Generar programaci&oacute;n</a>
+{% endblock %}
+
+{% block tableHeaders %}
+  <tr>
+    <th>Empleado</th>
+    <th>Sede</th>
+    <th>Actividad</th>
+    <th>D&iacute;a</th>
+    <th>Desde</th>
+    <th>Hasta</th>
+    <th>Hora Inicio</th>
+    <th>Hora Fin</th>
+  </tr>
+{% endblock %}
+
+{% block tableBody %}
+  {% for programacion in programaciones_list %}
+    <tr>
+      <td class="align-middle">{{programacion.empleado|capfirst}}</td>
+      <td class="align-middle">{{programacion.sede.nombre|capfirst}}</td>
+      <td class="align-middle">{{programacion.actividad.nombre|capfirst}}</td>
+      <td class="align-middle">{{programacion.get_dia_semana_display}}</td>
+      <td class="align-middle">{{programacion.fecha_desde}}</td>
+      <td class="align-middle">{{programacion.fecha_hasta}}</td>
+      <td class="align-middle">{{programacion.horario_desde}}</td>
+      <td class="align-middle">{{programacion.horario_hasta}}</td>
+    </tr>
+  {% endfor %}
+{% endblock %}
+
+{% block tableFooter %}
+  <tr>
+    <th>Empleado</th>
+    <th>Sede</th>
+    <th>Actividad</th>
+    <th>D&iacute;a</th>
+    <th>Desde</th>
+    <th>Hasta</th>
+    <th>Hora Inicio</th>
+    <th>Hora Fin</th>
+  </tr>
+{% endblock %}

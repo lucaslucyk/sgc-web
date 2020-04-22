@@ -1,0 +1,43 @@
+{% extends "apps/scg_app/list/base.html" %}
+
+{% block active_ver_empleados %} active {% endblock %}
+
+{% block tableName %}Empleados{% endblock %}
+
+{% block tableHeaders %}
+  <tr>
+    <th>Apellido</th>
+    <th>Nombre</th>
+    <th>DNI</th>
+    <th>Legajo</th>
+    <th>Empresa</th>
+    <th>Tipo</th>
+    <th>Liquidaci&oacute;n</th>
+  </tr>
+{% endblock %}
+
+{% block tableBody %}
+  {% for empleado in empleados_list %}
+    <tr>
+      <td class="align-middle">{{empleado.apellido|capfirst}}</td>
+      <td class="align-middle">{{empleado.nombre|capfirst}}</td>
+      <td class="align-middle">{{empleado.dni}}</td>
+      <td class="align-middle">{{empleado.legajo}}</td>
+      <td class="align-middle">{{empleado.empresa}}</td>
+      <td class="align-middle">{{empleado.get_tipo_display}}</td>
+      <td class="align-middle">{{empleado.get_liquidacion_display}}</td>
+    </tr>
+  {% endfor %}
+{% endblock %}
+
+{% block tableFooter %}
+  <tr>
+    <th>Apellido</th>
+    <th>Nombre</th>
+    <th>DNI</th>
+    <th>Legajo</th>
+    <th>Empresa</th>
+    <th>Tipo</th>
+    <th>Liquidaci&oacute;n</th>
+  </tr>
+{% endblock %}

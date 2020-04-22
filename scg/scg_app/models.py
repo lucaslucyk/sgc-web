@@ -6,6 +6,7 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.shortcuts import reverse
 
 import datetime
+from collections import defaultdict
 
 from django.db.models import Q
 from . import utils
@@ -209,16 +210,46 @@ class Saldo(models.Model):
         validators=[MinValueValidator(1)], 
         help_text="Cantidad de clases que desea disponibilizar"
     )
-    
 
-    #delete from
-    # year = models.CharField(max_length=4, choices=settings.ANOS_CHOICES, 
-    #     blank=False, default=settings.ANOS_CHOICES[0][0], help_text="Año"
-    # )
-    # saldo_inicial = models.DecimalField(decimal_places=0, max_digits=5, default=0, help_text="Mes para el que desea sumar el saldo")
-    # saldo_actual = models.DecimalField(decimal_places=0, max_digits=5, default=0)
-    # periodo = models.CharField(max_length=14, choices=settings.PERIODOS_CHOICES, blank=False, help_text="Periodos de liquidacion")
-    #delete to
+    def get_edit_url(self):
+        """ construct edit url from current object """
+        return reverse('saldo_update', kwargs={"pk": self.id})
+
+    def get_delete_url(self):
+        """ construct delete url from current object """
+        return reverse('confirm_delete', 
+            kwargs={"model":self.__class__.__name__, "pk":self.id}
+        )
+
+    def pos_delete_url(self):
+        """ construct pos delete url from current object """
+        return reverse('saldos_view')
+    
+    @classmethod
+    def check_overlap(cls, _sede, _actividad, _desde, _hasta, id_exclude=None):
+        """ informs if a period generates an overlap with one already created """
+        start_before = Q()
+        start_before.add(Q(desde__lte=_desde), Q.AND)
+        start_before.add(Q(hasta__gte=_desde), Q.AND)
+
+        start_after = Q()
+        start_after.add(Q(desde__gte=_desde), Q.AND)
+        start_after.add(Q(desde__lte=_hasta), Q.AND)
+
+        period = Q()
+        period.add(start_before, Q.OR)
+        period.add(start_after, Q.OR)
+
+        _saldos = cls.objects.filter(
+            sede = _sede,
+            actividad = _actividad,
+        ).filter(period)
+
+        if id_exclude:
+            _saldos = _saldos.exclude(pk=id_exclude)
+
+        return _saldos.count()
+
 
     @property
     def saldo_disponible(self):
@@ -257,7 +288,7 @@ class Saldo(models.Model):
         return self.__str__()
 
     def __str__(self):
-        return f'{self.saldo_inicial} para {self.actividad.nombre} en {self.sede.nombre}'
+        return f'{self.saldo_disponible} de {self.saldo_asignado} para {self.actividad.nombre} en {self.sede.nombre}'
 
     class Meta:
         verbose_name = "Saldo"
