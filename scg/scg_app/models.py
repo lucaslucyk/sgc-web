@@ -10,7 +10,23 @@ from collections import defaultdict
 
 from django.db.models import Q
 from . import utils
+from multiselectfield import MultiSelectField
 # Create your models here.
+
+
+class ModelTest(models.Model):
+    """docstring for ModelTest"""
+    nombre = models.CharField(max_length=30)
+    options = MultiSelectField(choices=settings.DIA_SEMANA_CHOICES)
+
+
+
+    def get_dias_str(self):
+        return ', '.join(utils.get_dia_display(*self.options))
+
+    def get_dias_list(self):
+        return utils.get_dia_display(*self.options)
+        
 
 class Rol(models.Model):
     ROLES = (
@@ -296,7 +312,7 @@ class Saldo(models.Model):
         get_latest_by = "id"
 
 class Recurrencia(models.Model):
-    dia_semana = models.CharField(max_length=9, choices=settings.DIA_SEMANA_CHOICES, blank=True)
+    #dia_semana = models.CharField(max_length=9, choices=settings.DIA_SEMANA_CHOICES, blank=True)
     fecha_desde = models.DateField(default=timezone.now)
     fecha_hasta = models.DateField(blank=True)
     horario_desde = models.TimeField(default=timezone.now)
@@ -304,6 +320,15 @@ class Recurrencia(models.Model):
     empleado = models.ForeignKey('Empleado', on_delete=models.SET(''), null=True)
     actividad = models.ForeignKey('Actividad', on_delete=models.SET(''), null=True)
     sede = models.ForeignKey('Sede', on_delete=models.SET(''), null=True)
+
+    weekdays = MultiSelectField('Días de la semana', choices=settings.DIA_SEMANA_CHOICES, null=True, blank=True)
+
+    def get_dias_str(self):
+        return ', '.join(utils.get_dia_display(*self.weekdays))
+    get_dias_str.short_description = "Días"
+
+    def get_dias_list(self):
+        return utils.get_dia_display(*self.weekdays)
 
     @classmethod
     def in_use(cls, employee, week_day, date_ini, date_end, hour_ini, hour_end):
@@ -326,6 +351,65 @@ class Recurrencia(models.Model):
         
         return recs
 
+    @classmethod
+    def check_overlap(cls, employee, weekdays, desde, hasta, hora_ini, hora_end, ignore=None):
+        """ informs if a period generates an overlap with one already created """
+        ### dates ###
+        start_before = Q()
+        start_before.add(Q(fecha_desde__lte=desde), Q.AND)
+        start_before.add(Q(fecha_hasta__gte=desde), Q.AND)
+
+        start_after = Q()
+        start_after.add(Q(fecha_desde__gte=desde), Q.AND)
+        start_after.add(Q(fecha_desde__lte=hasta), Q.AND)
+
+        period = Q()
+        period.add(start_before, Q.OR)
+        period.add(start_after, Q.OR)
+        ### dates ###
+
+        ### hours ###
+        onset_before = Q()
+        onset_before.add(Q(horario_desde__lte=hora_ini), Q.AND)
+        onset_before.add(Q(horario_hasta__gt=hora_ini), Q.AND)
+
+        onset_after = Q()
+        onset_after.add(Q(horario_desde__gte=hora_ini), Q.AND)
+        onset_after.add(Q(horario_desde__lt=hora_end), Q.AND)
+
+        timelapse = Q()
+        timelapse.add(onset_before, Q.OR)
+        timelapse.add(onset_after, Q.OR)
+        ### hours ###
+
+        ### weekdays ###
+        qs_days = Q()
+        [qs_days.add(Q(weekdays__contains=day), Q.OR) for day in weekdays]
+
+
+        _recs = cls.objects.filter(
+            empleado=employee,
+        ).filter(period).filter(timelapse).filter(qs_days)
+
+        if ignore:
+            _recs = _recs.exclude(pk=ignore)
+
+        return _recs.count()
+
+    def get_edit_url(self):
+        """ construct edit url from current object """
+        return reverse('programacion_update', kwargs={"pk": self.id})
+
+    def get_delete_url(self):
+        """ construct delete url from current object """
+        return reverse('confirm_delete', 
+            kwargs={"model":self.__class__.__name__, "pk":self.id}
+        )
+
+    def pos_delete_url(self):
+        """ construct pos delete url from current object """
+        return reverse('programaciones_view')
+
     @property
     def pronombre(self):
         return "la"
@@ -335,11 +419,11 @@ class Recurrencia(models.Model):
         return self.__str__()
 
     def __str__(self):
-        return f'Los {self.get_dia_semana_display()} \
+        return f'Los {self.get_dias_str()} \
             de {self.horario_desde.strftime("%H:%M")} a \
             {self.horario_hasta.strftime("%H:%M")}, \
             desde el {self.fecha_desde} hasta el \
-            {self.fecha_hasta}'.replace("\t", "")
+            {self.fecha_hasta} para el empleado {self.empleado}'.replace("\t", "")
 
     class Meta:
         verbose_name = "Recurrencia"

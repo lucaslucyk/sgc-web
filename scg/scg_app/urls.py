@@ -21,17 +21,17 @@ urlpatterns = [
     path('certificados/<int:id_clase>', views.certificados_list, name="certificados_list"),
 
     ### lists ###
-    path('empleados/', views.EmpleadosList.as_view(), name='empleados_view'),
-    path('saldos/', views.SaldosList.as_view(), name='saldos_view'),
-    path('programaciones/', views.RecurrenciasList.as_view(), name='programaciones_view'),
-    path('motivos_ausencia/', views.MotivosAusenciaList.as_view(), name='motivos_ausencia_view'),
+    path('list/empleados/', views.EmpleadosList.as_view(), name='empleados_view'),
+    path('list/saldos/', views.SaldosList.as_view(), name='saldos_view'),
+    path('list/programaciones/', views.RecurrenciasList.as_view(), name='programaciones_view'),
+    path('list/motivos_ausencia/', views.MotivosAusenciaList.as_view(), name='motivos_ausencia_view'),
 
     ### create ###
     path('create/programacion/', views.programar, name='programar'),
     path('create/saldo/', views.generar_saldo, name='generar_saldo'),
 
     ### update ###
-    path('update/programacion/<int:pk>', views.programar, name='programar'),
+    path('update/programacion/<int:pk>', views.programacion_update, name='programacion_update'),
     path('update/saldo/<int:pk>', views.saldo_update, name='saldo_update'),
 
     ### others ###

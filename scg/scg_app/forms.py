@@ -9,6 +9,7 @@ from .models import *
 from django_select2.forms import Select2MultipleWidget
 from dal import autocomplete
 
+
 class SaldoForm(forms.Form):
     widget_date = forms.TextInput(attrs={
         'type': 'date',
@@ -84,12 +85,23 @@ class RecurrenciaForm(forms.Form):
         help_text="Horario de fin de clase", required=True)
     horario_hasta.widget.attrs.update({'class': 'form-control hour-input', 'placeholder':'23:59'})
 
-    dia_semana = forms.MultipleChoiceField(widget=forms.CheckboxSelectMultiple, choices=settings.DIA_SEMANA_CHOICES, required=True, initial=None)
-    dia_semana.widget.attrs.update({'class':'form-check-input'})
+    weekdays = forms.MultipleChoiceField(widget=forms.CheckboxSelectMultiple, 
+        choices=settings.DIA_SEMANA_CHOICES, required=True, initial=None
+    )
+    weekdays.widget.attrs.update({'class':'form-check-input'})
 
     # class Meta:
     #     model = Recurrencia
     #     fields = ('empleado')
+
+
+class RecurrenciaUpdForm(RecurrenciaForm, forms.ModelForm):
+
+    class Meta:
+        model = Recurrencia
+        fields = ['fecha_desde', 'fecha_hasta', 
+            'horario_desde', 'horario_hasta', 'weekdays',
+        ]
 
 
 class SignUpForm(UserCreationForm):

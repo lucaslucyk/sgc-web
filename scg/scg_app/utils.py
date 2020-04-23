@@ -1,6 +1,6 @@
 """ Utils for internal use """
-
 import datetime
+from django.conf import settings
 
 def grouped(iterable, n=2):
     """  Agrupa los elementos de un iterable para obtener conjuntos de n elementos """
@@ -15,6 +15,10 @@ def get_min_offset(_time:datetime.time, _mins:int, _sub=False) -> datetime.time:
     else:
         fulldate = fulldate + datetime.timedelta(minutes=_mins)
     return fulldate.time()
+
+def get_dia_display(*args):
+    to_dict = dict(settings.DIA_SEMANA_CHOICES)
+    return [to_dict.get(str(char)) for char in args]
 
 # def handle_uploaded_file(f):
 #     with open('some/file/name.txt', 'wb+') as destination:

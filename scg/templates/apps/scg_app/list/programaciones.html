@@ -12,11 +12,12 @@
     <th>Empleado</th>
     <th>Sede</th>
     <th>Actividad</th>
-    <th>D&iacute;a</th>
+    <th>D&iacute;a/s</th>
     <th>Desde</th>
     <th>Hasta</th>
     <th>Hora Inicio</th>
     <th>Hora Fin</th>
+    <th>Acciones</th>
   </tr>
 {% endblock %}
 
@@ -26,11 +27,17 @@
       <td class="align-middle">{{programacion.empleado|capfirst}}</td>
       <td class="align-middle">{{programacion.sede.nombre|capfirst}}</td>
       <td class="align-middle">{{programacion.actividad.nombre|capfirst}}</td>
-      <td class="align-middle">{{programacion.get_dia_semana_display}}</td>
+      <td class="align-middle">{{programacion.get_dias_str}}</td>
       <td class="align-middle">{{programacion.fecha_desde}}</td>
       <td class="align-middle">{{programacion.fecha_hasta}}</td>
       <td class="align-middle">{{programacion.horario_desde}}</td>
       <td class="align-middle">{{programacion.horario_hasta}}</td>
+      <td class="py-0 align-middle">
+        <div class="btn-group btn-group-sm">
+          <a href="{{ programacion.get_edit_url|safe }}" class="btn btn-info"><i class="fas fa-pencil-alt"></i></a>
+          <a href="{{ programacion.get_delete_url|safe }}" class="btn btn-danger"><i class="fas fa-trash"></i></a>
+        </div>
+      </td>
     </tr>
   {% endfor %}
 {% endblock %}
@@ -40,10 +47,12 @@
     <th>Empleado</th>
     <th>Sede</th>
     <th>Actividad</th>
-    <th>D&iacute;a</th>
+    <th>D&iacute;a/s</th>
     <th>Desde</th>
     <th>Hasta</th>
     <th>Hora Inicio</th>
     <th>Hora Fin</th>
+    <th>Acciones</th>
   </tr>
 {% endblock %}
+

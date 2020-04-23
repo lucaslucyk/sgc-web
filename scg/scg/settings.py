@@ -32,10 +32,6 @@ ALLOWED_HOSTS = ['*']
 # Application definition
 
 INSTALLED_APPS = [
-    #third
-    # 'dal',
-    # 'dal_select2',
-
     #django
     'django.contrib.admin',
     'django.contrib.auth',
@@ -45,7 +41,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     #terceros
-    # 'django_select2',
+    'multiselectfield',
 
     #propias
     'scg_app',
