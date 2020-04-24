@@ -1,0 +1,142 @@
+{% extends "base_template.html" %}
+
+{% block namepage %}Inicio{% endblock %}
+{% block active_home %}active{% endblock %}
+
+{% block content %}
+  
+  {% if messages or not certificados %}
+    <div class="row">
+      <div class="col-md-12">
+        {% for message in messages %}
+          <div class="alert alert-{% if message.tags %}{{ message.tags }}{% endif %} alert-dismissible" >
+            <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+              {{ message }}
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  {% endif %}
+  
+  <div class="row">
+    <div class="col-md-6">
+      <!-- AREA CHART -->
+      <div class="card card-primary">
+        <div class="card-header">
+          <h3 class="card-title">Clases futuras</h3>
+
+          <div class="card-tools">
+            <button type="button" class="btn btn-tool" data-card-widget="collapse"><i class="fas fa-minus"></i>
+            </button>
+            <button type="button" class="btn btn-tool" data-card-widget="remove"><i class="fas fa-times"></i></button>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="chart">
+            <canvas id="myChart" style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas>
+          </div>
+        </div>
+        <!-- /.card-body -->
+      </div>
+      <!-- /.card -->
+    </div>
+    <!-- /.col (LEFT) -->
+    <div class="col-md-6">
+      <!-- LINE CHART -->
+      <div class="card card-info">
+        <div class="card-header">
+          <h3 class="card-title">Clases por sede</h3>
+
+          <div class="card-tools">
+            <button type="button" class="btn btn-tool" data-card-widget="collapse"><i class="fas fa-minus"></i>
+            </button>
+            <button type="button" class="btn btn-tool" data-card-widget="remove"><i class="fas fa-times"></i></button>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="chart">
+            <canvas id="graph-sedes" style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas>
+          </div>
+        </div>
+        <!-- /.card-body -->
+      </div>
+      <!-- /.card -->
+
+    </div>
+    <!-- /.col (RIGHT) -->
+  </div>
+  <!-- /.row -->
+
+{% endblock %}
+
+{% block extra_js %}
+  <!-- for dont charge home js -->
+
+  <script>
+    async function get_day_classes(put_in){
+
+      var randomColorGenerator = function () {
+        return '#' + (Math.random().toString(16) + '0000000').slice(2, 8);
+      };
+
+      var url = window.location.origin + '/api/get/day_classes/';
+      const res = await fetch(url);
+      const json = await res.json();
+
+      var labelNames = [];
+      var values = [];
+      var colors = []
+
+      $.each(json.results, function(i, item){
+        labelNames.push(item.label);
+        values.push(item.cantidad);
+        colors.push(randomColorGenerator());
+      });
+
+      var ctx = document.getElementById(put_in).getContext('2d');
+      var myChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+          labels: labelNames,
+          datasets: [
+            {
+              label: "",
+              data: values,
+              backgroundColor: colors,
+            }
+          ]
+      },
+      options: {
+          scales: {
+              yAxes: [{
+                  ticks: {
+                      beginAtZero: true
+                  }
+              }]
+          },
+          responsive: true,
+          maintainAspectRatio: true,
+          legend: {
+              position: 'none'
+          },
+          title: {
+              display: true
+          },
+          animation: {
+              animateScale: true,
+              animateRotate: true
+          }
+      }
+      });
+
+    }
+    $(document).ready(function() {
+      if ($('#myChart').length) {
+        const graph = get_day_classes("myChart");
+      }
+      if ($('#graph-sedes').length) {
+      const graph = get_day_classes("graph-sedes");
+      }
+    });
+  </script>
+{% endblock %}

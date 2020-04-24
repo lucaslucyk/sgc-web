@@ -73,7 +73,11 @@ def get_empleados(request, _filter, context=None):
     """ return employees what match with filter in JSON format """
 
     #get queryset objects
-    empleados = get_model_data(Empleado, _filter, _order='apellido')
+    empleados = get_model_data(Empleado, _filter, _order='apellido',
+         _fields=('apellido', 'nombre', 'dni', 'legajo', 
+            'empresa', 'tipo__nombre', 'liquidacion__nombre'
+        )
+    )
 
     #list of dict (id: id, text: __str__)
     results = [{

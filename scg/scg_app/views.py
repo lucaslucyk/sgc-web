@@ -1,11 +1,14 @@
 # -*- coding: utf-8 -*-
+from collections import defaultdict
 import datetime
 import re
 import math
+
 from django.conf import settings
 from django.contrib.auth import login, authenticate
 from django.contrib.auth.decorators import login_required, permission_required, user_passes_test
-from django.shortcuts import render, redirect, reverse, get_object_or_404
+from django.shortcuts import render, redirect, get_object_or_404
+
 from requests.exceptions import ConnectionError, HTTPError
 from scg_app.forms import *
 from scg_app.models import *
@@ -17,17 +20,17 @@ from django.core.paginator import EmptyPage, Paginator
 from django.views.generic.list import ListView
 from django.views.generic.edit import UpdateView
 from django.contrib.auth.mixins import LoginRequiredMixin
-from collections import defaultdict
 
-from dal import autocomplete
-try:
-    from django.urls import reverse_lazy
-except ImportError:
-    from django.core.urlresolvers import reverse_lazy
-from django.forms import inlineformset_factory, model_to_dict
-from django.views import generic
 from django.http import JsonResponse, Http404
-from django.core import serializers
+
+#from django.forms import inlineformset_factory, model_to_dict
+#from django.views import generic.
+#from django.core import serializers
+#from django.shortcuts import reverse
+# try:
+#     from django.urls import reverse_lazy
+# except ImportError:
+#     from django.core.urlresolvers import reverse_lazy
 
 @login_required
 def certificados_list(request, id_clase:int, context=None):
@@ -85,7 +88,7 @@ def check_admin(user):
 
 @login_required
 def index(request):
-    return render(request, "base_template.html", {})
+    return render(request, "index.html", {})
 
 def about(request): return render(request, "scg_app/about.html", {})
 
@@ -504,7 +507,10 @@ class ClasesView(LoginRequiredMixin, ListView):
 
         ### searchs ###
         if data_emple or data_reemplazo:
-            for field in Empleado._meta.fields:
+            _fields = ('apellido', 'nombre', 'dni', 'legajo', 'empresa', 
+                'tipo__nombre', 'liquidacion__nombre'
+            )
+            for field in _fields:
                 #if data_emple:
                 for data in data_emple.split():
                     querys["empleado"].add(Q(**{
@@ -869,17 +875,105 @@ def gestion_marcajes(request, id_empleado=None, fecha=None, context=None):
     return render(request, "apps/scg_app/gestion_marcajes.html", context)
 
 
+def pull_netTime(container, _fields=[], _filter=''):
+    """ 
+        Pull from nettime with listfields method,
+        Use args how fields and can use filter parameter for specific cases.
+    """
+    results = list()
+    try:
+        client = Client(settings.SERVER_URL)
+        ns4 = client.type_factory('ns4')
+        aos =  ns4.ArrayOfstring(_fields)
+
+        nt_response = client.service.ListFields(container, aos, _filter)
+
+        for db_records in nt_response["KeyValueOfstringanyType"]:
+            result = dict()
+            for data in db_records["Value"]["Data"]["KeyValueOfstringanyType"]:
+                result[data['Key']] = data['Value']
+            results.append(result)
+
+    except Exception as error:
+        #print(error)
+        pass
+
+    return {container: results}
+
+
+@user_passes_test(check_admin)
+def get_nt_empleados(request, context=None):
+    try:
+        empleados_nt = pull_netTime("Employee", #Container
+            _fields = [
+                "id", "name", "nameEmployee", "LastName", "companyCode", 
+                "employeeCode", "persoTipo", "persoLiq",
+            ]
+        )
+
+        for registro in empleados_nt.get("Employee"):
+            try:
+                empleado = Empleado.objects.get(id_netTime=registro.get("id"))
+            except:
+                empleado = Empleado.objects.create(id_netTime=registro.get("id"))
+            
+            #update employee data
+            empleado.dni = registro.get("name")
+            empleado.apellido = registro.get("LastName")
+            empleado.nombre = registro.get("nameEmployee")
+            empleado.legajo = registro.get("employeeCode")
+            empleado.empresa = registro.get("companyCode")
+            try:    #trying get from id_nettime
+                empleado.tipo = TipoContrato.objects.get(id_netTime=registro.get("persoTipo"))
+                empleado.liquidacion = TipoLiquidacion.objects.get(id_netTime=registro.get("persoLiq"))
+            except:
+                pass
+
+            empleado.save()
+
+        messages.success(request, "Se actualizó la tabla de empleados.")
+
+    except Exception as error:
+        messages.error(request, f"{error}")
+
+    return redirect('empleados_view')
+
+@user_passes_test(check_admin)
+def get_nt_sedes(request, context=None):
+    try:
+        sedes_nt = pull_netTime("Custom", #Container
+            _fields = ["id", "name"],
+            _filter = 'this.type == "sede"'
+        )
+
+        for registro in sedes_nt.get("Custom"):
+            try:
+                sede = Sede.objects.get(id_netTime=registro.get("id"))
+            except:
+                sede = Sede.objects.create(id_netTime=registro.get("id"))
+            
+            #update employee data
+            sede.nombre = registro.get("name")
+            sede.save()
+
+        messages.success(request, "Se actualizaron las sedes desde NetTime.")
+
+    except Exception as error:
+        messages.error(request, f"{error}")
+
+    return redirect('index')
+
 ### from tbs ###
 @user_passes_test(check_admin)
 def pulldbs(request): return render(request, "scg_app/pull_dbs.html", {})
 
-def pulldb_generic(tabla, filtros):
+def pulldb_generic(tabla, fields):
     """Usa el namespace 'tabla' y la lista de filtros 'filtros' para hacer un request ListField y obtener todos los registros y los campos de los filtros"""
     contents = []
     try:
         client = Client(settings.SERVER_URL)
         ns4 = client.type_factory('ns4')
-        payload = ns4.ArrayOfstring(filtros)
+        payload = ns4.ArrayOfstring(fields)
         db = client.service.ListFields(tabla, payload, '')
         for db_records in db["KeyValueOfstringanyType"]:
             content = []
@@ -890,44 +984,6 @@ def pulldb_generic(tabla, filtros):
     except ConnectionError: contents = "VPN desconectada o red caida!"
     except HTTPError: contents = "404!, la url no es valida"
     return contents
-
-@user_passes_test(check_admin)
-def pull_empleados(request):
-    empleados, context = Empleado.objects, {}
-    emp_records_init = empleados.count()
-    empleados_db = pulldb_generic("Employee", ["id", "name", "nameEmployee", "lastName", "companyCode", "employeeCode", "persoTipo", ]) #fetch empleados
-
-    if type(empleados_db) == list:
-        for empleado in empleados_db:
-            user = empleados.filter(id=empleado[0][0])
-            if user.exists(): user.update(dni=empleado[1][0], nombre=empleado[2][0], apellido=empleado[3][0], empresa=empleado[4][0], legajo=empleado[5][0])
-            else: user = empleados.update_or_create(id=empleado[0][0], dni=empleado[1][0], nombre=empleado[2][0], apellido=empleado[3][0], empresa=empleado[4][0], legajo=empleado[5][0])
-        
-        if emp_records_init < Empleado.objects.count():
-            messages.success(request, "Tabla de empleados importada correctamente!")
-        else:
-            messages.success(request, "Datos de empleados actualizados correctamente!")
-    else: 
-        messages.error(request, empleados_db)
-        #context['status'] = empleados_db
-    return render(request, "apps/scg_app/pull_empleados.html", context)
-
-@user_passes_test(check_admin)
-def pull_sedes(request):
-    sedes, context = Sede.objects, {}
-    sedes_records_init = sedes.count()
-    sedes_db = pulldb_generic("Custom", ["id", "name", "type", ]) #fetch sedes/custom
-
-    if type(sedes_db) == list:
-        for sede in sedes_db:
-            location = sedes.filter(id=sede[0][0])
-            if location.exists(): location.update(nombre=sede[1][0])
-            else: sedes.update_or_create(id=sede[0][0], nombre=sede[1][0])
-        context['status'] = "Tabla de sedes importada correctamente!" if sedes_records_init < Sede.objects.count() else "Datos de sedes actualizados correctamente!"
-    else: 
-        messages.error(request, sedes_db)
-        #context['status'] = sedes_db
-    return render(request, "apps/scg_app/pull_sedes.html", context)
 
 def register(request):
     form = SignUpForm()

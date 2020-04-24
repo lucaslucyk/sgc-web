@@ -9,13 +9,13 @@ class RolAdmin(admin.ModelAdmin):
 
 @admin.register(Empleado)
 class EmpleadoAdmin(admin.ModelAdmin):
-    fields = ('apellido', 'nombre', 'dni', 'legajo', 'empresa', 'escala', 'tipo', 'liquidacion')
-    list_display = ('apellido', 'nombre', 'dni', 'legajo', 'empresa', )
+    fields = ('id_netTime', 'apellido', 'nombre', 'dni', 'legajo', 'empresa', 'escala', 'tipo', 'liquidacion')
+    list_display = ('id_netTime', 'apellido', 'nombre', 'dni', 'legajo', 'empresa', )
     ordering = ('apellido', )
     #readonly_fields = ('apellido', 'nombre', 'dni', 'legajo', 'empresa', )
 
     def has_delete_permission(self, request, obj=None):
-        return False
+        return True
 
     # def has_add_permission(self, request, obj=None):
     #    return False
@@ -98,3 +98,5 @@ class GrupoActividad(admin.ModelAdmin):
 
 admin.site.register(BloqueDePresencia)
 admin.site.register(Certificado)
+admin.site.register(TipoLiquidacion)
+admin.site.register(TipoContrato)

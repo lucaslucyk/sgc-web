@@ -13,21 +13,6 @@ from . import utils
 from multiselectfield import MultiSelectField
 # Create your models here.
 
-
-class ModelTest(models.Model):
-    """docstring for ModelTest"""
-    nombre = models.CharField(max_length=30)
-    options = MultiSelectField(choices=settings.DIA_SEMANA_CHOICES)
-
-
-
-    def get_dias_str(self):
-        return ', '.join(utils.get_dia_display(*self.options))
-
-    def get_dias_list(self):
-        return utils.get_dia_display(*self.options)
-        
-
 class Rol(models.Model):
     ROLES = (
         ('a', 'Tipo 1'),
@@ -135,27 +120,54 @@ class MotivoAusencia(models.Model):
         verbose_name_plural = 'Motivos de Ausencia'
         get_latest_by = 'nombre'
 
+class TipoLiquidacion(models.Model):
+    id_netTime = models.PositiveIntegerField(default=0,
+        validators=[MinValueValidator(1)],
+        unique=True,
+        help_text="Para matchear marcajes e importaciones"
+    )
+    nombre = models.CharField(max_length=100, unique=True)
+
+    def __str__(self):
+        return f'{self.nombre}'
+
+    class Meta:
+        verbose_name = "Tipo de liquidación"
+        verbose_name_plural = "Tipos de liquidación"
+        get_latest_by = "id_netTime"
+
+class TipoContrato(models.Model):
+    id_netTime = models.PositiveIntegerField(default=0,
+        validators=[MinValueValidator(1)],
+        unique=True,
+        help_text="Para matchear marcajes e importaciones"
+    )
+    nombre = models.CharField(max_length=100, unique=True)
+
+    def __str__(self):
+        return f'{self.nombre}'
+
+    class Meta:
+        verbose_name = "Tipo de contrato"
+        verbose_name_plural = "Tipos de contrato"
+        get_latest_by = "id_netTime"
+
 class Empleado(models.Model):
 
     ### from nettime webservice ###
+    id_netTime = models.PositiveIntegerField(default=0,
+        validators=[MinValueValidator(1)],
+        unique=True,
+        help_text="Para matchear marcajes e importaciones"
+    )
     apellido = models.CharField(max_length=20)
     nombre = models.CharField(max_length=20)
     dni = models.CharField(max_length=8, unique=True)
     legajo = models.CharField(max_length=10, null=True, blank=True)
     empresa = models.CharField(max_length=10, null=True, blank=True)
 
-
-    ### from local ###
-    C_TIPO = (
-        ('rd', 'Relación de Dependencia'),
-        ('mt', 'Monotributista'),
-    )
-    C_LIQ = (
-        ('j', 'Jornal'),
-        ('m', 'Mensual'),
-    )
-    tipo = models.CharField(max_length=2, choices=C_TIPO, blank=False)
-    liquidacion = models.CharField(max_length=2, choices=C_LIQ, blank=False)
+    tipo = models.ForeignKey('TipoContrato', on_delete=models.CASCADE, null=True, blank=True)
+    liquidacion = models.ForeignKey('TipoLiquidacion', on_delete=models.CASCADE, null=True, blank=True)
 
     escala = models.ManyToManyField('Escala')
 
@@ -196,8 +208,13 @@ class Empleado(models.Model):
         get_latest_by = "id"
 
 class Sede(models.Model):
+    id_netTime = models.PositiveIntegerField(default=0,
+        validators=[MinValueValidator(1)],
+        unique=True,
+        help_text="Para matchear marcajes e importaciones"
+    )
     nombre = models.CharField(max_length=40)
-    tipo = models.CharField(max_length=30, blank=True)
+    tipo = models.CharField(max_length=30, default="Física", blank=True)
 
     @property
     def pronombre(self):
@@ -266,7 +283,6 @@ class Saldo(models.Model):
 
         return _saldos.count()
 
-
     @property
     def saldo_disponible(self):
         clases = Clase.objects.filter(
@@ -329,27 +345,6 @@ class Recurrencia(models.Model):
 
     def get_dias_list(self):
         return utils.get_dia_display(*self.weekdays)
-
-    @classmethod
-    def in_use(cls, employee, week_day, date_ini, date_end, hour_ini, hour_end):
-        """ informs if the range of days and hours is busy by other *Recurrencia* """
-        #print(week_day)
-        
-        recs = cls.objects.filter(
-            empleado=employee,
-            dia_semana=week_day,
-            fecha_desde__lte=date_ini,
-            fecha_hasta__gte=date_end
-        ).exclude(
-            horario_hasta__lte=hour_ini
-        ).filter(
-            horario_desde__lt=hour_end
-        ).exists()
-
-        # if recs:
-        #   print(recs.first().dia_semana, "vs", week_day)
-        
-        return recs
 
     @classmethod
     def check_overlap(cls, employee, weekdays, desde, hasta, hora_ini, hora_end, ignore=None):

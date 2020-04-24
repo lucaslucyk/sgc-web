@@ -35,16 +35,17 @@ urlpatterns = [
     path('update/saldo/<int:pk>', views.saldo_update, name='saldo_update'),
 
     ### others ###
-    path('wiki/', views.wiki, name='wiki'), 
+    path('wiki/', views.wiki, name='wiki'),
+    path('register/', views.register, name='register'), 
 
     path('about/', views.about, name='about'), 
     path('auto_clockings/', views.auto_clockings, name='auto_clockings'), 
     
+    #nettime operations
     path('pulls/pulldbs/', views.pulldbs, name='pull_dbs'), 
     path('pulls/pull_clockings/', views.pull_clockings, name='pull_clockings'),
-    path('pulls/pull_empleados/', views.pull_empleados, name='pull_empleados'), 
-    path('pulls/pull_sedes/', views.pull_sedes, name='pull_sedes'), 
-    path('register/', views.register, name='register'), 
+    path('netTime/pull/empleados/', views.get_nt_empleados, name='get_nt_empleados'), 
+    path('pulls/pull_sedes/', views.get_nt_sedes, name='get_nt_sedes'), 
 
 ]
 
