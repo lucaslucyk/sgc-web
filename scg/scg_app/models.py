@@ -171,7 +171,7 @@ class Empleado(models.Model):
 
     escala = models.ManyToManyField('Escala')
 
-    def is_busy(self, fecha, inicio, fin):
+    def is_busy(self, fecha, inicio, fin, rec_ignore=None):
         """ informs if a person is busy at a certain time range 
             -including *reemplazos* and ignoring cancelled classes- """
 
@@ -187,9 +187,11 @@ class Empleado(models.Model):
             #excludes classes that end before the start time -including it-
             #or canceled
             Q(horario_hasta__lte=inicio) | Q(estado='5')
-        ).exists()
+        )
+        if rec_ignore:
+            clases.exclude(parent_recurrencia=rec_ignore)
 
-        return clases
+        return clases.exists()
 
     @property
     def pronombre(self):
@@ -349,6 +351,7 @@ class Recurrencia(models.Model):
     @classmethod
     def check_overlap(cls, employee, weekdays, desde, hasta, hora_ini, hora_end, ignore=None):
         """ informs if a period generates an overlap with one already created """
+        
         ### dates ###
         start_before = Q()
         start_before.add(Q(fecha_desde__lte=desde), Q.AND)
@@ -447,6 +450,11 @@ class Clase(models.Model):
     estado = models.CharField(max_length=1, choices=settings.ESTADOS_CHOICES, null=True, blank=True, default=settings.ESTADOS_CHOICES[0][0])
     presencia = models.CharField(max_length=12, choices=settings.PRESENCIA_CHOICES, null=True, blank=True, default=settings.PRESENCIA_CHOICES[0][0])
     comentario = models.CharField(max_length=1000, blank=True, help_text="Aclaraciones varias")
+
+    # class ReportBuilder:
+    #     #exclude = ()  # Lists or tuple of excluded fields
+    #     fields = ('get_dia_semana_display',)   # Explicitly allowed fields
+    #     #extra = ('get_dia_semana_display',)    # List extra fields (useful for methods)
 
     #adjunto = models.FileField("Adjunto", null=True, blank=True, upload_to='clases/')
 
@@ -631,7 +639,11 @@ class BloqueDePresencia(models.Model):
             {self.fin.hora.strftime("%H:%M")}'.replace('\t','')
 
 class Certificado(models.Model):
-    """docstring for Certificado"""
+    """ 
+        Can contain an attachment for one or more classes.
+        Keep the original motif. 
+    """
+
     #empleado = models.ForeignKey(Empleado, on_delete=models.CASCADE, null=True)
     clases =  models.ManyToManyField('Clase')
     file = models.FileField("Archivo", null=True, blank=True, upload_to='certificados/')
@@ -644,7 +656,7 @@ class Certificado(models.Model):
     def get_delete_url(self):
         """ construct delete url from current object """
         return reverse('confirm_delete', 
-            kwargs={"model":self.__class__.__name__, "pk":self.id}
+            kwargs={"model":self.__class__.__name__, "pk":self.pk}
         )
 
     def pos_delete_url(self):

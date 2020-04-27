@@ -141,42 +141,50 @@
                 <p>Admin panel</p>
               </a>
             </li>
+
+            <li class="nav-item">
+              <a href="/report_builder/" class="nav-link">
+                <i class="nav-icon fas fa-table"></i>
+                <p>Reporting</p>
+              </a>
+            </li>
+          
+            <li class="nav-item has-treeview">
+              <a href="#" class="nav-link">
+                <i class="nav-icon fas fa-database"></i>
+                <p>
+                  Operaciones netTime
+                  <i class="right fas fa-angle-left"></i>
+                </p>
+              </a>
+              <ul class="nav nav-treeview">
+                <li class="nav-item">
+                  <a href="{% url 'get_nt_empleados'%}" class="nav-link">
+                    <i class="far fa-user nav-icon"></i>
+                    <p>Get Empleados</p>
+                  </a>
+                </li>
+                <li class="nav-item">
+                  <a href="{% url 'get_nt_sedes'%}" class="nav-link">
+                    <i class="far fa-building nav-icon"></i>
+                    <p>Get Sedes</p>
+                  </a>
+                </li>
+                <li class="nav-item">
+                  <a href="{% url 'pull_clockings'%}" class="nav-link">
+                    <i class="fas fa-fingerprint nav-icon"></i>
+                    <p>Get Marcajes</p>
+                  </a>
+                </li>
+                <li class="nav-item">
+                  <a href="{% url 'auto_clockings'%}" class="nav-link">
+                    <i class="fas fa-user-clock nav-icon"></i>
+                    <p>Auto clockings</p>
+                  </a>
+                </li>
+              </ul>
+            </li>
           {% endif %}
-          <li class="nav-item has-treeview">
-            <a href="#" class="nav-link">
-              <i class="nav-icon fas fa-database"></i>
-              <p>
-                Operaciones netTime
-                <i class="right fas fa-angle-left"></i>
-              </p>
-            </a>
-            <ul class="nav nav-treeview">
-              <li class="nav-item">
-                <a href="{% url 'get_nt_empleados'%}" class="nav-link">
-                  <i class="far fa-user nav-icon"></i>
-                  <p>Get Empleados</p>
-                </a>
-              </li>
-              <li class="nav-item">
-                <a href="{% url 'get_nt_sedes'%}" class="nav-link">
-                  <i class="far fa-building nav-icon"></i>
-                  <p>Get Sedes</p>
-                </a>
-              </li>
-              <li class="nav-item">
-                <a href="{% url 'pull_clockings'%}" class="nav-link">
-                  <i class="fas fa-fingerprint nav-icon"></i>
-                  <p>Get Marcajes</p>
-                </a>
-              </li>
-              <li class="nav-item">
-                <a href="{% url 'auto_clockings'%}" class="nav-link">
-                  <i class="fas fa-user-clock nav-icon"></i>
-                  <p>Auto clockings</p>
-                </a>
-              </li>
-            </ul>
-          </li>
           <!--
           <li class="nav-item">
             <a href="../widgets.html" class="nav-link">

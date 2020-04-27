@@ -66,6 +66,11 @@ def clase_edit(request, pk, context=None):
 
         if clase.parent_recurrencia:
             if clase.horario_desde != clase.parent_recurrencia.horario_desde or clase.horario_hasta != clase.parent_recurrencia.horario_hasta:
+                
+                if Empleado.is_busy(clase.empleado, clase.fecha, clase.horario_desde, clase.horario_hasta, rec_ignore=clase.parent_recurrencia):
+                    messages.error(request, "La edición se superpone con otra clase.")
+                    return render(request, 'apps/scg_app/clase_edit.html', context)
+
                 clase.modificada = True
                 messages.success(request, f'La clase ha sido modificada como excepción a la serie.')
             else:
@@ -375,6 +380,10 @@ def programacion_update(request, pk, context=None):
             "fecha_hasta": datetime.date.fromisoformat(form.cleaned_data.get("fecha_hasta")),
             "horario_desde": form.cleaned_data.get("horario_desde").replace(second=0, microsecond=0),
             "horario_hasta": form.cleaned_data.get("horario_hasta").replace(second=0, microsecond=0),
+            "weekdays": form.cleaned_data.get("weekdays"),
+            "empleado": rec.empleado,
+            "actividad": rec.actividad,
+            "sede": rec.sede,
         }
         
         if fields.get("fecha_hasta") < datetime.date.today() and not settings.DEBUG:
@@ -407,22 +416,68 @@ def programacion_update(request, pk, context=None):
             messages.error(request, f'La programación se superpone con {overlays} ya creada/s.')
             return render(request, "apps/scg_app/update/programacion.html", context)
 
-        if False:   #future feature
-            ### after of all security checks
-            rec.weekdays = form.cleaned_data.get("weekdays")
-            rec.fecha_desde = form.cleaned_data.get("fecha_desde")
-            rec.fecha_hasta = form.cleaned_data.get("fecha_hasta")
-            rec.horario_desde = form.cleaned_data.get("horario_desde")
-            rec.horario_hasta = form.cleaned_data.get("horario_hasta")
-            rec.save()
+        ### dates actions ###
+        if fields.get("fecha_hasta") < old_rec.fecha_hasta: #delete end differences
+            Clase.objects.filter(parent_recurrencia=old_rec, 
+                fecha__gt=fields.get("fecha_hasta")
+            ).delete()
+
+        if fields.get("fecha_desde") > old_rec.fecha_desde: #delete coming differences
+            Clase.objects.filter(parent_recurrencia=old_rec, 
+                fecha__lt=fields.get("fecha_desde")
+            ).delete()
+
+        ### weekdays actions ###
+        if fields.get("weekdays") != old_rec.weekdays:
+            to_delete = list(set(old_rec.weekdays) - set(fields.get("weekdays")))
+            Clase.objects.filter(parent_recurrencia=old_rec, dia_semana__in=to_delete).delete()
+
+        ### time actions ###
+        exis_overlaps_classes = False
+        if fields.get("horario_desde") != old_rec.horario_desde or fields.get("horario_hasta") != old_rec.horario_hasta:
+            clases_to_edit = Clase.objects.filter(parent_recurrencia=old_rec)
+            for clase in clases_to_edit:
+                if not clase.empleado.is_busy(clase.fecha, clase.horario_desde, clase.horario_hasta, rec_ignore=rec):
+                    clase.horario_desde = fields.get("horario_desde")
+                    clase.horario_hasta = fields.get("horario_hasta")
+                    clase.save()
+                else:
+                    exis_overlaps_classes = True
+        if exis_overlaps_classes:
+            messages.warning(request, "No se pudo editar una o más clases por falta de disponibilidad")
+
+        ### create differences ###
+        _not_success, _rejecteds, _creadas = False, False, 0
+        for dia in fields["weekdays"]:
+            success, rejected, cant_creadas = generar_clases(fields, dia, rec, editing=True)
+
+            #update status vars
+            _not_success = True if not success else _not_success
+            _rejecteds = True if rejected != 0 else _rejecteds
+
+        #checks saldos
+        if not Saldo.check_saldos(
+            fields["sede"], fields["actividad"], 
+            fields["fecha_desde"], fields["fecha_hasta"]
+        ):
+            messages.warning(request, 'Ya no dispone de saldo en periodos puntuales.')
+
+        ### Recurrencia update ###
+        ### after of all security checks
+        rec.weekdays = fields.get("weekdays")
+        rec.fecha_desde = fields.get("fecha_desde")
+        rec.fecha_hasta = fields.get("fecha_hasta")
+        rec.horario_desde = fields.get("horario_desde")
+        rec.horario_hasta = fields.get("horario_hasta")
+        rec.save()
 
         #after of all checks
         #saldo.save()
-        messages.success(request, "Se actualizó la programación correctamente.")
+        messages.success(request, "Programación actualizada.")
 
     return render(request, "apps/scg_app/update/programacion.html", context)
 
-def generar_clases(_fields, _dia, _recurrencia):
+def generar_clases(_fields, _dia, _recurrencia, editing=None):
 
     #print(_dia)
     #dias = dict(settings.DIA_SEMANA_CHOICES) #get from settings
@@ -440,9 +495,12 @@ def generar_clases(_fields, _dia, _recurrencia):
 
             if str(dia_actual.weekday()) == str(_dia):
                 if not _fields["empleado"].is_busy(
-                                            dia_actual, 
-                                            _fields["horario_desde"], 
-                                            _fields["horario_hasta"]):
+                    dia_actual, 
+                    _fields["horario_desde"], 
+                    _fields["horario_hasta"],
+                    rec_ignore=_recurrencia if editing else None
+                    ):
+
                     Clase.objects.create(
                         parent_recurrencia = _recurrencia,
                         dia_semana = _dia,
@@ -895,8 +953,7 @@ def pull_netTime(container, _fields=[], _filter=''):
             results.append(result)
 
     except Exception as error:
-        #print(error)
-        pass
+        raise error
 
     return {container: results}
 
@@ -933,6 +990,9 @@ def get_nt_empleados(request, context=None):
 
         messages.success(request, "Se actualizó la tabla de empleados.")
 
+    except ConnectionError:
+        messages.error(request, "No se pudo establecer conexión con el servidor de netTime.")
+
     except Exception as error:
         messages.error(request, f"{error}")
 
@@ -957,6 +1017,9 @@ def get_nt_sedes(request, context=None):
             sede.save()
 
         messages.success(request, "Se actualizaron las sedes desde NetTime.")
+
+    except ConnectionError:
+        messages.error(request, "No se pudo establecer conexión con el servidor de netTime.")
 
     except Exception as error:
         messages.error(request, f"{error}")

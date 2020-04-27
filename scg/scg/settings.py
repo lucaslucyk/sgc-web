@@ -42,6 +42,7 @@ INSTALLED_APPS = [
 
     #terceros
     'multiselectfield',
+    'report_builder',
 
     #propias
     'scg_app',
@@ -75,6 +76,8 @@ TEMPLATES = [
             'context_processors': [
                 'django.template.context_processors.debug',
                 'django.template.context_processors.request',
+                'django.template.context_processors.static',
+                'django.template.context_processors.media',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
             ],
@@ -142,11 +145,21 @@ STATICFILES_DIRS = [
     os.path.join(BASE_DIR, "static"),
     #'/var/www/static/',
 ]
-
 STATIC_ROOT = os.path.join(os.path.dirname(BASE_DIR),'statics_pub')
 
-LOGIN_REDIRECT_URL = '/'
+### reporting ###
+#REPORT_BUILDER_ASYNC_REPORT = True
+REPORT_BUILDER_INCLUDE = [
+    'user', 
+    'scg_app.clase', 'scg_app.empleado', 'scg_app.actividad', 'scg_app.escala',
+    'scg_app.grupoactividad', 'scg_app.marcaje', 'scg_app.motivoausencia',
+    'scg_app.recurrencia', 'scg_app.saldo', 'scg_app.sede', 'scg_app.tipocontrato',
+    'scg_app.tipoliquidacion', 'scg_app.bloquedepresencia', 'scg_app.certificado',
+] # Allow only the model user to be accessed
+#REPORT_BUILDER_FRONTEND = False
 
+
+LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/accounts/logout/?next=/'
 
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend' #para testeo de recuperacion de passwords, borrar despues!

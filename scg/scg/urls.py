@@ -27,6 +27,7 @@ urlpatterns = [
 
     #for custom api functions
     path('api/', include('api.urls')),
+    path('report_builder/', include('report_builder.urls')),
 
     path('', include('scg_app.urls')),
     

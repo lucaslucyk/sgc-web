@@ -6,8 +6,8 @@ from django.contrib.auth.models import User
 from django.utils import timezone as tz
 from .models import *
 
-from django_select2.forms import Select2MultipleWidget
-from dal import autocomplete
+#from django_select2.forms import Select2MultipleWidget
+#from dal import autocomplete
 
 
 class SaldoForm(forms.Form):
