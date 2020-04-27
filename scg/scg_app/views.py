@@ -34,6 +34,10 @@ from django.http import JsonResponse, Http404
 
 @login_required
 def certificados_list(request, id_clase:int, context=None):
+    """ Lists all the justifications for which files were 
+        attached with their corresponding reasons.
+    """
+
     clase = get_object_or_404(Clase, pk=id_clase)
     certificados = Certificado.objects.filter(clases__in=[clase])
 
@@ -53,6 +57,10 @@ def certificados_list(request, id_clase:int, context=None):
 
 @login_required
 def clase_edit(request, pk, context=None):
+    """ It lists all the justifications for which files were attached with their corresponding reasons.
+        Does not allow overlap with a different class.
+    """
+
     clase = get_object_or_404(Clase, pk=pk)
 
     if request.method == 'POST':
@@ -112,6 +120,8 @@ class SafePaginator(Paginator):
                 raise
 
 class EmpleadosList(LoginRequiredMixin, ListView):
+    """ List employees without providing any available action. """
+
     model = Empleado
     template_name = 'apps/scg_app/list/empleados.html'
     context_object_name = 'empleados_list'
@@ -122,6 +132,8 @@ class EmpleadosList(LoginRequiredMixin, ListView):
     ordering = ['apellido', 'nombre',]
 
 class SaldosList(LoginRequiredMixin, ListView):
+    """ List Saldos providing any edit and delete actions. """
+
     model = Saldo
     template_name = 'apps/scg_app/list/saldos.html'
     context_object_name = 'saldos_list'
@@ -129,6 +141,8 @@ class SaldosList(LoginRequiredMixin, ListView):
     ordering = ['-desde', 'sede__nombre', 'actividad__nombre']
 
 class RecurrenciasList(LoginRequiredMixin, ListView):
+    """ List Recurrencias providing edit and delete action. """
+
     model = Recurrencia
     template_name = 'apps/scg_app/list/programaciones.html'
     context_object_name = 'programaciones_list'
@@ -136,6 +150,8 @@ class RecurrenciasList(LoginRequiredMixin, ListView):
     ordering = ['-fecha_desde', '-horario_desde', 'actividad__nombre']
 
 class MotivosAusenciaList(LoginRequiredMixin, ListView):
+    """ List MotivosDeAusencia without providing any available action. """
+    
     model = MotivoAusencia
     template_name = 'apps/scg_app/list/motivos_ausencia.html'
     context_object_name = 'motivos_list'
@@ -144,6 +160,7 @@ class MotivosAusenciaList(LoginRequiredMixin, ListView):
 
 @login_required
 def confirm_delete(request, model, pk, context=None):
+    """ view to confirm delete an object from a specific model """
 
     try:
         _model = apps.get_model('scg_app', model)
@@ -173,6 +190,9 @@ def confirm_delete(request, model, pk, context=None):
 
 @login_required
 def saldo_update(request, pk, context=None):
+    """ Allows updating the data of a Saldo.
+        It does not allow the overlap with another already generated.
+    """
     saldo = get_object_or_404(Saldo, pk=pk)
     
     if request.method == 'POST':
@@ -206,6 +226,10 @@ def saldo_update(request, pk, context=None):
 
 @login_required
 def generar_saldo(request, context=None):
+    """ Allows create a Saldo.
+        It does not allow the overlap with another already generated.
+    """
+
     form = SaldoForm(request.POST if request.method == 'POST' else None)
     context = context or {'form': form}
 
@@ -238,6 +262,7 @@ def generar_saldo(request, context=None):
 
 @login_required
 def programar(request, context=None):
+    """ create a Recurrencia and classes with corresponding data """
 
     form = RecurrenciaForm(request.POST if request.method == 'POST' else None)
     context = context or {'form': form, 'search_data': {}}
@@ -354,6 +379,7 @@ def programar(request, context=None):
 
 @login_required
 def programacion_update(request, pk, context=None):
+    """ update a Recurrencia and classes with corresponding data """
 
     old_rec = get_object_or_404(Recurrencia, pk=pk)
     rec = get_object_or_404(Recurrencia, pk=pk)
@@ -478,9 +504,8 @@ def programacion_update(request, pk, context=None):
     return render(request, "apps/scg_app/update/programacion.html", context)
 
 def generar_clases(_fields, _dia, _recurrencia, editing=None):
+    """ create, if possible, all classes in the indicated period """
 
-    #print(_dia)
-    #dias = dict(settings.DIA_SEMANA_CHOICES) #get from settings
     success, rejected, cant_creadas = True, 0, 0 
 
     try:
@@ -749,6 +774,8 @@ def action_process(request, context=None):
     return redirect('clases_view')
 
 def confirmar_clases(_ids):
+    """ confirm all classes from the ids list """
+
     clases = Clase.objects.filter(pk__in=_ids)
     _success, _error = (0, 0)
 
@@ -768,6 +795,10 @@ def confirmar_clases(_ids):
 
 @login_required
 def gestion_ausencia(request, ids_clases=None, context=None):
+    """
+        Permite asignar un motivo, adjunto y un comentario para una clase.
+        Si éste recibe un adjunto, crea un Certificado con el archivo y motivo seleccionado.
+    """
 
     #in errors only
     if not ids_clases:
@@ -808,6 +839,7 @@ def gestion_ausencia(request, ids_clases=None, context=None):
 
 @login_required
 def asignar_reemplazo(request, id_clase=None, context=None):
+    """ Allows assign and delete a replacement to a class. """
 
     form = ReemplazoForm(request.POST if request.method == 'POST' else None)
     context = context or {'form': form}
@@ -848,8 +880,11 @@ def asignar_reemplazo(request, id_clase=None, context=None):
 
 @login_required
 def gestion_marcajes(request, id_empleado=None, fecha=None, context=None):
-    #validate url format
-    #print(fecha)
+    """  
+        It shows the classes of the day of an employee and allows adding and removing markings. 
+        It is also possible to recalculate the managed day.
+    """
+
     form = MarcajeForm(request.POST if request.method == "POST" else None)
     context = context or {'form': form}
 
@@ -960,6 +995,8 @@ def pull_netTime(container, _fields=[], _filter=''):
 
 @user_passes_test(check_admin)
 def get_nt_empleados(request, context=None):
+    """ use pull_netTime() for get all employees from netTime webservice """
+
     try:
         empleados_nt = pull_netTime("Employee", #Container
             _fields = [
@@ -1000,6 +1037,8 @@ def get_nt_empleados(request, context=None):
 
 @user_passes_test(check_admin)
 def get_nt_sedes(request, context=None):
+    """ use pull_netTime() for get all Sede's from netTime webservice """
+
     try:
         sedes_nt = pull_netTime("Custom", #Container
             _fields = ["id", "name"],

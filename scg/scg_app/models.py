@@ -14,6 +14,8 @@ from multiselectfield import MultiSelectField
 # Create your models here.
 
 class Rol(models.Model):
+    """ to manage users in the future """
+
     ROLES = (
         ('a', 'Tipo 1'),
         ('b', 'Tipo 2'),
@@ -330,7 +332,6 @@ class Saldo(models.Model):
         get_latest_by = "id"
 
 class Recurrencia(models.Model):
-    #dia_semana = models.CharField(max_length=9, choices=settings.DIA_SEMANA_CHOICES, blank=True)
     fecha_desde = models.DateField(default=timezone.now)
     fecha_hasta = models.DateField(blank=True)
     horario_desde = models.TimeField(default=timezone.now)
@@ -430,9 +431,6 @@ class Recurrencia(models.Model):
 
 class Clase(models.Model):
     parent_recurrencia = models.ForeignKey('Recurrencia', on_delete=models.CASCADE, null=True)
-
-    #parent = models.CharField(max_length=200, blank=True)
-    
     creacion = models.DateTimeField(default=timezone.now)
     dia_semana = models.CharField(max_length=9, choices=settings.DIA_SEMANA_CHOICES, blank=True)
     fecha = models.DateField(blank=True, default=timezone.now)
@@ -643,8 +641,7 @@ class Certificado(models.Model):
         Can contain an attachment for one or more classes.
         Keep the original motif. 
     """
-
-    #empleado = models.ForeignKey(Empleado, on_delete=models.CASCADE, null=True)
+    
     clases =  models.ManyToManyField('Clase')
     file = models.FileField("Archivo", null=True, blank=True, upload_to='certificados/')
     motivo = models.ForeignKey('MotivoAusencia', blank=True, null=True, on_delete=models.SET_NULL, related_name='motivo')
