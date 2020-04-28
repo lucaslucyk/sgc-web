@@ -2,6 +2,11 @@
 
 {% block active_ver_mot_aus %} active {% endblock %}
 
+{% block route %}
+  <li class="breadcrumb-item"><a href="{% url 'index' %}">Inicio</a></li>
+  <li class="breadcrumb-item active">Motivos de ausencia</li>
+{% endblock route %}
+
 {% block tableName %}Motivos de ausencia{% endblock %}
 
 {% block tableHeaders %}

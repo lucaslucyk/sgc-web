@@ -57,7 +57,8 @@ def certificados_list(request, id_clase:int, context=None):
 
 @login_required
 def clase_edit(request, pk, context=None):
-    """ It lists all the justifications for which files were attached with their corresponding reasons.
+    """ It lists all the justifications for which files were attached with 
+        their corresponding reasons.
         Does not allow overlap with a different class.
     """
 
@@ -73,9 +74,13 @@ def clase_edit(request, pk, context=None):
         clase = form.save(commit=False)
 
         if clase.parent_recurrencia:
-            if clase.horario_desde != clase.parent_recurrencia.horario_desde or clase.horario_hasta != clase.parent_recurrencia.horario_hasta:
-                
-                if Empleado.is_busy(clase.empleado, clase.fecha, clase.horario_desde, clase.horario_hasta, rec_ignore=clase.parent_recurrencia):
+            if (clase.horario_desde != clase.parent_recurrencia.horario_desde 
+                or clase.horario_hasta != clase.parent_recurrencia.horario_hasta
+            ):    
+                if Empleado.is_busy(clase.empleado, clase.fecha, 
+                    clase.horario_desde, clase.horario_hasta, 
+                    rec_ignore=clase.parent_recurrencia
+                ):
                     messages.error(request, "La edición se superpone con otra clase.")
                     return render(request, 'apps/scg_app/clase_edit.html', context)
 
@@ -286,6 +291,11 @@ def programar(request, context=None):
                 "actividad" : get_object_or_404(Actividad, pk=request.POST.get("actividades-results")),
                 "sede" : get_object_or_404(Sede, pk=request.POST.get("sedes-results")),
             }
+
+            #update selected data
+            context["empleado_selected"] = fields.get("empleado")
+            context["actividad_selected"] = fields.get("actividad")
+            context["sede_selected"] = fields.get("sede")
         except:
             messages.error(request, "Error en campos de búsqueda.")
             return render(request, "apps/scg_app/create/programacion.html", context)
@@ -300,8 +310,8 @@ def programar(request, context=None):
             "weekdays": form.cleaned_data["weekdays"],
             "fecha_desde": datetime.date.fromisoformat(form.cleaned_data["fecha_desde"]), 
             "fecha_hasta": datetime.date.fromisoformat(form.cleaned_data["fecha_hasta"]), 
-            "horario_desde": form.cleaned_data["horario_desde"].replace(second=0, microsecond=0),  #limpiando segundos innecesarios
-            "horario_hasta": form.cleaned_data["horario_hasta"].replace(second=0, microsecond=0),  #limpiando segundos innecesarios
+            "horario_desde": form.cleaned_data["horario_desde"].replace(second=0, microsecond=0),
+            "horario_hasta": form.cleaned_data["horario_hasta"].replace(second=0, microsecond=0),
         })
 
         ### dates validate
@@ -371,7 +381,9 @@ def programar(request, context=None):
         if _not_success:
             messages.warning(request, 'Programación creada pero no se crearon clases puntuales.')
         elif _rejecteds:
-            messages.warning(request, 'No se crearon algunas clases porque el empleado no estaba disponible ciertos días y horarios.')
+            messages.warning(request, 
+                'No se crearon algunas clases porque el empleado no estaba disponible ciertos días y horarios.'
+            )
 
         messages.success(request, "Programación generada!")
 
@@ -460,10 +472,15 @@ def programacion_update(request, pk, context=None):
 
         ### time actions ###
         exis_overlaps_classes = False
-        if fields.get("horario_desde") != old_rec.horario_desde or fields.get("horario_hasta") != old_rec.horario_hasta:
+        if (fields.get("horario_desde") != old_rec.horario_desde 
+            or fields.get("horario_hasta") != old_rec.horario_hasta
+        ):
             clases_to_edit = Clase.objects.filter(parent_recurrencia=old_rec)
             for clase in clases_to_edit:
-                if not clase.empleado.is_busy(clase.fecha, clase.horario_desde, clase.horario_hasta, rec_ignore=rec):
+                if not clase.empleado.is_busy(
+                    clase.fecha, clase.horario_desde, 
+                    clase.horario_hasta, rec_ignore=rec
+                ):
                     clase.horario_desde = fields.get("horario_desde")
                     clase.horario_hasta = fields.get("horario_hasta")
                     clase.save()
@@ -511,12 +528,12 @@ def generar_clases(_fields, _dia, _recurrencia, editing=None):
     try:
         #+1 for process all days
         num_dias = (_fields["fecha_hasta"] - _fields["fecha_desde"]).days + 1
-        print(num_dias)
+        #print(num_dias)
 
         for i in range(num_dias):
             dia_actual = _fields["fecha_desde"] + datetime.timedelta(days=i)
 
-            print(str(dia_actual.weekday()), str(_dia))
+            #print(str(dia_actual.weekday()), str(_dia))
 
             if str(dia_actual.weekday()) == str(_dia):
                 if not _fields["empleado"].is_busy(
@@ -557,6 +574,9 @@ class ClasesView(LoginRequiredMixin, ListView):
 
     def post(self, request, *args, **kwargs):
         """ return json format for ajax request """
+
+        self.results_per_page = int(request.POST.get('rpp')) or self.results_per_page
+        #print(request.POST.get('rpp'))
 
         form = FiltroForm(request.POST)
         if not form.is_valid():
@@ -623,7 +643,6 @@ class ClasesView(LoginRequiredMixin, ListView):
             querys["motivo_ausencia"] = Q(ausencia=motivo_ausencia)
         if sede:
             querys["sede"] = Q(sede=sede)
-
 
         ### times ###
         if dia_inicio:
@@ -841,40 +860,55 @@ def gestion_ausencia(request, ids_clases=None, context=None):
 def asignar_reemplazo(request, id_clase=None, context=None):
     """ Allows assign and delete a replacement to a class. """
 
-    form = ReemplazoForm(request.POST if request.method == 'POST' else None)
-    context = context or {'form': form}
-
     if not id_clase:
         return render(request, "apps/scg_app/gestion_reemplazo.html", context)
+
+    context = context or {'search_data': {}}
 
     clase_to_edit = get_object_or_404(Clase, pk=id_clase)
     context["clase_to_edit"] = clase_to_edit
 
     if request.method == 'POST':
-        #form = ReemplazoForm(request.POST)
-        if form.is_valid():
-            reemplazante = form.cleaned_data["reemplazo"]
+        
+        context["search_data"] = {
+            "empleado": request.POST.get('empleados-search'),
+        }
 
-            if not reemplazante:
-                clase_to_edit.reemplazo = None
-                clase_to_edit.save()
-                clase_to_edit.update_status()
-                messages.success(request, "Se ha borrado el reemplazo.")
+        if request.POST.get("empleados-results"):
+            try:
+                reemplazante = get_object_or_404(
+                    Empleado, pk=request.POST.get("empleados-results")
+                )
+                context["reemplazo_selected"] = reemplazante
+            except:
+                messages.error(request, "Error en campos de búsqueda.")
                 return render(request, "apps/scg_app/gestion_reemplazo.html", context)
+        else:
+            reemplazante = None
 
-            if clase_to_edit.empleado == reemplazante:
-                messages.error(request, "El reemplazante no puede ser el empleado asignado.")
-                return render(request, "apps/scg_app/gestion_reemplazo.html", context)
-
-            if reemplazante.is_busy(fecha=clase_to_edit.fecha, inicio=clase_to_edit.horario_desde, fin=clase_to_edit.horario_hasta):
-                messages.error(request, "El reemplazante no está disponible en el rango horario de esta clase.")
-                return render(request, "apps/scg_app/gestion_reemplazo.html", context)
-
-            clase_to_edit.reemplazo = reemplazante
+        if not reemplazante:
+            clase_to_edit.reemplazo = None
             clase_to_edit.save()
             clase_to_edit.update_status()
+            messages.success(request, "Se ha borrado el reemplazo.")
+            return render(request, "apps/scg_app/gestion_reemplazo.html", context)
 
-            messages.success(request, "Reemplazo cargado con éxito!")
+        if clase_to_edit.empleado == reemplazante:
+            messages.error(request, "El reemplazante no puede ser el empleado asignado.")
+            return render(request, "apps/scg_app/gestion_reemplazo.html", context)
+
+        if reemplazante.is_busy(fecha=clase_to_edit.fecha, 
+                                inicio=clase_to_edit.horario_desde, 
+                                fin=clase_to_edit.horario_hasta
+        ):
+            messages.error(request, "El reemplazante no está disponible en el rango horario de esta clase.")
+            return render(request, "apps/scg_app/gestion_reemplazo.html", context)
+
+        clase_to_edit.reemplazo = reemplazante
+        clase_to_edit.save()
+        clase_to_edit.update_status()
+
+        messages.success(request, "Reemplazo cargado con éxito!")
 
     return render(request, "apps/scg_app/gestion_reemplazo.html", context)
 
@@ -901,9 +935,12 @@ def gestion_marcajes(request, id_empleado=None, fecha=None, context=None):
         return render(request, "apps/scg_app/gestion_marcajes.html", context)
 
     empleado = empleado.first() #checked what exists
-    day_classes = Clase.objects.filter(empleado__pk=id_empleado, fecha=fecha).order_by('horario_desde')
-    day_blocks = BloqueDePresencia.objects.filter(empleado__pk=id_empleado, fecha=fecha).order_by('inicio__hora')
-    #day_clockings = Marcaje.objects.filter(empleado__pk=id_empleado, fecha=fecha).order_by('entrada')
+    day_classes = Clase.objects.filter(
+        empleado__pk=id_empleado, fecha=fecha
+    ).order_by('horario_desde')
+    day_blocks = BloqueDePresencia.objects.filter(
+        empleado__pk=id_empleado, fecha=fecha
+    ).order_by('inicio__hora')
 
     context["day_classes"] = day_classes
     context["day_blocks"] = day_blocks
@@ -920,7 +957,9 @@ def gestion_marcajes(request, id_empleado=None, fecha=None, context=None):
             #update status
             [clase.update_status() for clase in day_classes]
 
-            day_blocks = BloqueDePresencia.objects.filter(empleado__pk=id_empleado, fecha=fecha).order_by('inicio')
+            day_blocks = BloqueDePresencia.objects.filter(
+                empleado__pk=id_empleado, fecha=fecha
+            ).order_by('inicio')
             context["day_blocks"] = day_blocks
             messages.success(request, "Se recalcularon las clases y bloques del día.")
             return render(request, "apps/scg_app/gestion_marcajes.html", context)
@@ -1070,7 +1109,10 @@ def get_nt_sedes(request, context=None):
 def pulldbs(request): return render(request, "scg_app/pull_dbs.html", {})
 
 def pulldb_generic(tabla, fields):
-    """Usa el namespace 'tabla' y la lista de filtros 'filtros' para hacer un request ListField y obtener todos los registros y los campos de los filtros"""
+    """ Usa el namespace 'tabla' y la lista de filtros 'filtros' para hacer 
+        un request ListField y obtener todos los registros y los campos 
+        de los filtros.
+    """
     contents = []
     try:
         client = Client(settings.SERVER_URL)

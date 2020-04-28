@@ -9,8 +9,12 @@ class RolAdmin(admin.ModelAdmin):
 
 @admin.register(Empleado)
 class EmpleadoAdmin(admin.ModelAdmin):
-    fields = ('id_netTime', 'apellido', 'nombre', 'dni', 'legajo', 'empresa', 'escala', 'tipo', 'liquidacion')
-    list_display = ('id_netTime', 'apellido', 'nombre', 'dni', 'legajo', 'empresa', )
+    fields = ('id_netTime', 'apellido', 'nombre', 'dni', 'legajo', 'empresa', 
+        'escala', 'tipo', 'liquidacion'
+    )
+    list_display = ('id_netTime', 'apellido', 'nombre', 'dni', 'legajo', 
+        'empresa',
+    )
     ordering = ('apellido', )
     #readonly_fields = ('apellido', 'nombre', 'dni', 'legajo', 'empresa', )
 
@@ -41,12 +45,20 @@ class MotivoAusenciaAdmin(admin.ModelAdmin):
 
 @admin.register(Saldo)
 class SaldoAdmin(admin.ModelAdmin):
-    list_display = ('actividad', 'sede', 'desde', 'hasta', 'saldo_asignado', 'saldo_disponible')
+    list_display = ('actividad', 'sede', 'desde', 'hasta', 'saldo_asignado', 
+        'saldo_disponible'
+    )
 
 @admin.register(Recurrencia)
 class RecurrenciaAdmin(admin.ModelAdmin):
-    fields = (('fecha_desde', 'horario_desde'), ('fecha_hasta', 'horario_hasta'), 'empleado', 'sede', 'actividad', 'weekdays')
-    list_display = ('id', 'empleado', 'fecha_desde', 'fecha_hasta', 'horario_desde', 'horario_hasta', 'sede',  'actividad','get_dias_str')
+    fields = (
+        ('fecha_desde', 'horario_desde'), ('fecha_hasta', 'horario_hasta'), 
+        'empleado', 'sede', 'actividad', 'weekdays'
+    )
+    list_display = ('id', 'empleado', 'fecha_desde', 'fecha_hasta', 
+        'horario_desde', 'horario_hasta', 'sede', 
+        'actividad','get_dias_str'
+    )
     list_filter = ['empleado', 'sede', 'actividad']
 
 @admin.register(Clase)

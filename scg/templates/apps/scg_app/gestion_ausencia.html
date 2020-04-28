@@ -2,6 +2,12 @@
 
 {% block namepage %}Gestión de ausencia{% endblock %}
 
+{% block route %}
+  <li class="breadcrumb-item"><a href="{% url 'index' %}">Inicio</a></li>
+  <li class="breadcrumb-item"><a href="{% url 'clases_view' %}">Monitor</a></li>
+  <li class="breadcrumb-item active">Ausencia</li>
+{% endblock route %}
+
 {% block content %}
   <div class="row">
     <div class="col-md-12">
@@ -14,7 +20,7 @@
 				</div>
 		    {% endfor %}
 		{% endif %}
-
+		
 		<div class="row">
       <div class="col-md-2 col-xs-1 col-sm-1"></div>
       <div class="col-md-8 col-xs-10 col-sm-10">

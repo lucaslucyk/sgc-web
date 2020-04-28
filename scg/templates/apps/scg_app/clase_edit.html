@@ -2,6 +2,12 @@
 
 {% block namepage %}Edición de clase{% endblock %}
 
+{% block route %}
+  <li class="breadcrumb-item"><a href="{% url 'index' %}">Inicio</a></li>
+  <li class="breadcrumb-item"><a href="{% url 'clases_view' %}">Monitor</a></li>
+  <li class="breadcrumb-item active">Editar clase</li>
+{% endblock route %}
+
 {% block content %}
   <div class="row">
     <div class="col-md-12">

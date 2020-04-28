@@ -2,6 +2,11 @@
 
 {% block namepage %}Eliminaci&oacute;n de objetos{% endblock %}
 
+{% block route %}
+  <li class="breadcrumb-item"><a href="{% url 'index' %}">Inicio</a></li>
+  <li class="breadcrumb-item active">Eliminar</li>
+{% endblock route %}
+
 {% block content %}
   <div class="row">
     <div class="col-md-12">

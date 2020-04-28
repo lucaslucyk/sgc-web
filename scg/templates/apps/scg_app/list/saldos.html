@@ -2,6 +2,11 @@
 
 {% block active_ver_saldos %} active {% endblock %}
 
+{% block route %}
+  <li class="breadcrumb-item"><a href="{% url 'index' %}">Inicio</a></li>
+  <li class="breadcrumb-item active">Saldos</li>
+{% endblock route %}
+
 {% block tableName %}Saldos{% endblock %}
 
 {% block generar_btn %}

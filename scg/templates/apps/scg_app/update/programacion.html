@@ -2,6 +2,11 @@
 
 {% block active_programar %}active{% endblock %}
 
+{% block route %}
+  <li class="breadcrumb-item"><a href="{% url 'index' %}">Inicio</a></li>
+  <li class="breadcrumb-item active">Programaci&oacute;n</li>
+{% endblock route %}
+
 {% block formulario %}
 	{% if form %}
 		<div class="row">

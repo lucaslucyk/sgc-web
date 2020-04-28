@@ -2,6 +2,11 @@
 
 {% block active_ver_program %} active {% endblock %}
 
+{% block route %}
+  <li class="breadcrumb-item"><a href="{% url 'index' %}">Inicio</a></li>
+  <li class="breadcrumb-item active">Programaciones</li>
+{% endblock route %}
+
 {% block tableName %}Programaciones{% endblock %}
 {% block generar_btn %}
   <a href="{% url 'programar' %}" class="btn btn-outline-dark">Generar programaci&oacute;n</a>

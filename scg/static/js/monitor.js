@@ -1,3 +1,9 @@
+const rpp = $('#results_per_page');
+
+$('#results_per_page').change(function() {
+  get_classes(1, localStorage.getItem("order_by"));
+});
+
 $("#formFiltros").submit(function(e) {
   /* at send form, get classes and reset orders and page */
   e.preventDefault();
@@ -87,9 +93,13 @@ async function get_classes(_page, _order){
     after update paginator with function "update_paginator" and obtained json data 
   */
 
+  //get results per page config
+  var _rpp = rpp.children("option:selected").val();
+
   var form = $('#formFiltros').serializeArray();
   form.push({name: 'order_by', value: _order});
   form.push({name: 'page', value: _page});
+  form.push({ name: 'rpp', value: _rpp});
 
   var currentUrl = window.location.href;
 

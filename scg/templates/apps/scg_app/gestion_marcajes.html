@@ -2,6 +2,12 @@
 
 {% block namepage %}Gesti&oacute;n de marcajes{% endblock %}
 
+{% block route %}
+  <li class="breadcrumb-item"><a href="{% url 'index' %}">Inicio</a></li>
+  <li class="breadcrumb-item"><a href="{% url 'clases_view' %}">Monitor</a></li>
+  <li class="breadcrumb-item active">Marcajes</li>
+{% endblock route %}
+
 {% block content %}
 
 <div class="row">
