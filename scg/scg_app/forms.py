@@ -65,7 +65,6 @@ class ClaseUpdForm(forms.ModelForm):
         model = Clase
         fields = ['horario_desde', 'horario_hasta', 'comentario']
 
-
 class RecurrenciaForm(forms.Form):
     #empleado = forms.ModelMultipleChoiceField(queryset=Empleado.objects.all(), widget=Select2MultipleWidget)
     widget_date = forms.TextInput(attrs={
@@ -94,7 +93,6 @@ class RecurrenciaForm(forms.Form):
     #     model = Recurrencia
     #     fields = ('empleado')
 
-
 class RecurrenciaUpdForm(RecurrenciaForm, forms.ModelForm):
 
     class Meta:
@@ -103,10 +101,15 @@ class RecurrenciaUpdForm(RecurrenciaForm, forms.ModelForm):
             'horario_desde', 'horario_hasta', 'weekdays',
         ]
 
-
 class SignUpForm(UserCreationForm):
-    username = forms.CharField(max_length=150, help_text="Obligatorio. Longitud máxima de 150 caracteres. Solo puede estar formado por letras, números y los caracteres @/./+/-/_.")
-    email = forms.EmailField(max_length=200, help_text="Obligatorio. Longitud máxima de 200 caracteres. Formato valido: 'usuario@servidor.dominio'")
+    username = forms.CharField(
+        max_length=50, 
+        help_text="Obligatorio. 50 caracteres sin símbolos especiales."
+    )
+    email = forms.EmailField(
+        max_length=200, 
+        help_text="Obligatorio. 200 caracteres máximo."
+    )
 
     class Meta:
         model = User
@@ -159,12 +162,12 @@ class FiltroForm(forms.Form):
         required=False, label="Estado", initial=None,
     )
     motivo_ausencia = forms.ModelChoiceField(
-        queryset=MotivoAusencia.objects.all(), 
+        queryset=MotivoAusencia.objects.all().order_by("nombre"), 
         required=False, label="Motivo de ausencia", 
         empty_label="Todos"
     )
     sede = forms.ModelChoiceField(
-        queryset=Sede.objects.all(), 
+        queryset=Sede.objects.all().order_by("nombre"),
         required=False, label="Sede", 
         empty_label="Todas"
     )
@@ -187,22 +190,9 @@ class MarcajeForm(forms.Form):
         'aria-describedby': 'basic-addon1',
         })
 
-class ReemplazoForm(forms.Form):
-    reemplazo = forms.ModelChoiceField(
-        queryset=Empleado.objects.all(), 
-        required=False, 
-        empty_label="Ninguno", 
-        label="Reemplazante",
-        )
-    reemplazo.widget.attrs.update({'class': 'form-control custom-select my-1 mr-sm-8'})
-
-    class Meta:
-        model = Clase
-        fields = ("reemplazo")
-
 class MotivoAusenciaForm(forms.Form):
     motivo = forms.ModelChoiceField(
-        queryset=MotivoAusencia.objects.all(), 
+        queryset=MotivoAusencia.objects.all().order_by("nombre"), 
         required=False, 
         empty_label="Ninguno", 
         label="Motivo de Ausencia",

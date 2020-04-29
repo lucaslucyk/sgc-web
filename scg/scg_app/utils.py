@@ -1,4 +1,5 @@
 """ Utils for internal use """
+from zeep import Client
 import datetime
 from django.conf import settings
 
@@ -19,6 +20,48 @@ def get_min_offset(_time:datetime.time, _mins:int, _sub=False) -> datetime.time:
 def get_dia_display(*args):
     to_dict = dict(settings.DIA_SEMANA_CHOICES)
     return [to_dict.get(str(char)) for char in args]
+
+def pull_netTime(container, _fields=[], _filter=''):
+    """ 
+        Pull from nettime with listfields method,
+        Use args how fields and can use filter parameter for specific cases.
+    """
+
+    results = list()
+    try:
+        client = Client(settings.SERVER_URL)
+        ns4 = client.type_factory('ns4')
+        aos = ns4.ArrayOfstring(_fields)
+
+        nt_response = client.service.ListFields(container, aos, _filter)
+
+        for db_records in nt_response["KeyValueOfstringanyType"]:
+            result = dict()
+            for data in db_records["Value"]["Data"]["KeyValueOfstringanyType"]:
+                result[data['Key']] = data['Value']
+            results.append(result)
+
+    except Exception as error:
+        raise error
+    
+    return {container: results}
+
+
+def pull_nt_clockings(_employee, _start, _end, _type):
+    """ 
+        Pull clockings from nettime with Clockings method,
+        Use parameters for get data.
+    """
+    
+    response = []
+    try:
+        client = Client(settings.SERVER_URL)
+        response = client.service.Clockings(_employee, _start, _end, _type)
+    
+    except Exception as error:
+        raise error
+
+    return response
 
 # def handle_uploaded_file(f):
 #     with open('some/file/name.txt', 'wb+') as destination:

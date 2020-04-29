@@ -153,7 +153,7 @@
               <a href="#" class="nav-link">
                 <i class="nav-icon fas fa-database"></i>
                 <p>
-                  Operaciones netTime
+                  Get from netTime
                   <i class="right fas fa-angle-left"></i>
                 </p>
               </a>
@@ -161,25 +161,25 @@
                 <li class="nav-item">
                   <a href="{% url 'get_nt_empleados'%}" class="nav-link">
                     <i class="far fa-user nav-icon"></i>
-                    <p>Get Empleados</p>
+                    <p>Empleados</p>
                   </a>
                 </li>
                 <li class="nav-item">
                   <a href="{% url 'get_nt_sedes'%}" class="nav-link">
                     <i class="far fa-building nav-icon"></i>
-                    <p>Get Sedes</p>
+                    <p>Sedes</p>
                   </a>
                 </li>
                 <li class="nav-item">
-                  <a href="{% url 'pull_clockings'%}" class="nav-link">
-                    <i class="fas fa-fingerprint nav-icon"></i>
-                    <p>Get Marcajes</p>
-                  </a>
-                </li>
-                <li class="nav-item">
-                  <a href="{% url 'auto_clockings'%}" class="nav-link">
+                  <a href="{% url 'get_nt_marcajes'%}" class="nav-link">
                     <i class="fas fa-user-clock nav-icon"></i>
-                    <p>Auto clockings</p>
+                    <p>Marcajes</p>
+                  </a>
+                </li>
+                <li class="nav-item">
+                  <a href="{% url 'get_nt_incidencias'%}" class="nav-link">
+                    <i class="fas fa-business-time nav-icon"></i>
+                    <p>Motivos de ausencia</p>
                   </a>
                 </li>
               </ul>

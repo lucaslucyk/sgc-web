@@ -40,11 +40,12 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
-    #terceros
+    #third
     'multiselectfield',
     'report_builder',
+    #'django_crontab',
 
-    #propias
+    #own
     'scg_app',
     'api',
 ]
@@ -146,6 +147,11 @@ STATICFILES_DIRS = [
     #'/var/www/static/',
 ]
 STATIC_ROOT = os.path.join(os.path.dirname(BASE_DIR),'statics_pub')
+
+### crons ###
+CRONJOBS = [
+    ('*/5 * * * *', 'scg_app.cron.pull_synchronous')
+]
 
 ### reporting ###
 #REPORT_BUILDER_ASYNC_REPORT = True

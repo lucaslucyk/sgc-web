@@ -1,36 +1,29 @@
 # -*- coding: utf-8 -*-
+
+### built-in ###
 from collections import defaultdict
 import datetime
 import re
 import math
 
+### django ###
 from django.conf import settings
 from django.contrib.auth import login, authenticate
 from django.contrib.auth.decorators import login_required, permission_required, user_passes_test
 from django.shortcuts import render, redirect, get_object_or_404
-
 from requests.exceptions import ConnectionError, HTTPError
-from scg_app.forms import *
-from scg_app.models import *
-from zeep import Client
-from django.contrib import messages
-from django.apps import apps
-
 from django.core.paginator import EmptyPage, Paginator
 from django.views.generic.list import ListView
 from django.views.generic.edit import UpdateView
 from django.contrib.auth.mixins import LoginRequiredMixin
-
 from django.http import JsonResponse, Http404
 
-#from django.forms import inlineformset_factory, model_to_dict
-#from django.views import generic.
-#from django.core import serializers
-#from django.shortcuts import reverse
-# try:
-#     from django.urls import reverse_lazy
-# except ImportError:
-#     from django.core.urlresolvers import reverse_lazy
+### own ###
+from scg_app.forms import *
+from scg_app.models import *
+from django.contrib import messages
+from django.apps import apps
+
 
 @login_required
 def certificados_list(request, id_clase:int, context=None):
@@ -1006,65 +999,17 @@ def gestion_marcajes(request, id_empleado=None, fecha=None, context=None):
 
     return render(request, "apps/scg_app/gestion_marcajes.html", context)
 
-
-def pull_netTime(container, _fields=[], _filter=''):
-    """ 
-        Pull from nettime with listfields method,
-        Use args how fields and can use filter parameter for specific cases.
-    """
-    results = list()
-    try:
-        client = Client(settings.SERVER_URL)
-        ns4 = client.type_factory('ns4')
-        aos =  ns4.ArrayOfstring(_fields)
-
-        nt_response = client.service.ListFields(container, aos, _filter)
-
-        for db_records in nt_response["KeyValueOfstringanyType"]:
-            result = dict()
-            for data in db_records["Value"]["Data"]["KeyValueOfstringanyType"]:
-                result[data['Key']] = data['Value']
-            results.append(result)
-
-    except Exception as error:
-        raise error
-
-    return {container: results}
-
+###################
+### front pulls ###
+###################
 
 @user_passes_test(check_admin)
 def get_nt_empleados(request, context=None):
     """ use pull_netTime() for get all employees from netTime webservice """
 
-    try:
-        empleados_nt = pull_netTime("Employee", #Container
-            _fields = [
-                "id", "name", "nameEmployee", "LastName", "companyCode", 
-                "employeeCode", "persoTipo", "persoLiq",
-            ]
-        )
-
-        for registro in empleados_nt.get("Employee"):
-            try:
-                empleado = Empleado.objects.get(id_netTime=registro.get("id"))
-            except:
-                empleado = Empleado.objects.create(id_netTime=registro.get("id"))
-            
-            #update employee data
-            empleado.dni = registro.get("name")
-            empleado.apellido = registro.get("LastName")
-            empleado.nombre = registro.get("nameEmployee")
-            empleado.legajo = registro.get("employeeCode")
-            empleado.empresa = registro.get("companyCode")
-            try:    #trying get from id_nettime
-                empleado.tipo = TipoContrato.objects.get(id_netTime=registro.get("persoTipo"))
-                empleado.liquidacion = TipoLiquidacion.objects.get(id_netTime=registro.get("persoLiq"))
-            except:
-                pass
-
-            empleado.save()
-
-        messages.success(request, "Se actualizó la tabla de empleados.")
+    try: 
+        Empleado.update_from_nettime()  # internal method
+        messages.success(request, "Se actualizaron los empleados desde netTime.")
 
     except ConnectionError:
         messages.error(request, "No se pudo establecer conexión con el servidor de netTime.")
@@ -1079,21 +1024,7 @@ def get_nt_sedes(request, context=None):
     """ use pull_netTime() for get all Sede's from netTime webservice """
 
     try:
-        sedes_nt = pull_netTime("Custom", #Container
-            _fields = ["id", "name"],
-            _filter = 'this.type == "sede"'
-        )
-
-        for registro in sedes_nt.get("Custom"):
-            try:
-                sede = Sede.objects.get(id_netTime=registro.get("id"))
-            except:
-                sede = Sede.objects.create(id_netTime=registro.get("id"))
-            
-            #update employee data
-            sede.nombre = registro.get("name")
-            sede.save()
-
+        Sede.update_from_nettime()  # internal method
         messages.success(request, "Se actualizaron las sedes desde NetTime.")
 
     except ConnectionError:
@@ -1104,144 +1035,56 @@ def get_nt_sedes(request, context=None):
 
     return redirect('index')
 
-### from tbs ###
-@user_passes_test(check_admin)
-def pulldbs(request): return render(request, "scg_app/pull_dbs.html", {})
 
-def pulldb_generic(tabla, fields):
-    """ Usa el namespace 'tabla' y la lista de filtros 'filtros' para hacer 
-        un request ListField y obtener todos los registros y los campos 
-        de los filtros.
+@user_passes_test(check_admin)
+def get_nt_incidencias(request, context=None):
+    """ use pull_netTime() for get all MotivoAusencia's from netTime webservice """
+
+    try:
+        MotivoAusencia.update_from_nettime()
+        messages.success(request, "Se actualizaron los motivos de ausencia desde NetTime.")
+
+    except ConnectionError:
+        messages.error(
+            request, "No se pudo establecer conexión con el servidor de netTime.")
+
+    except Exception as error:
+        messages.error(request, f"{error}")
+
+    return redirect('motivos_ausencia_view')
+
+@user_passes_test(check_admin)
+def get_nt_marcajes(request, context=None):
+    """ use pull_clockings() for get all clockings of a employee in a 
+        specific period.
     """
-    contents = []
     try:
-        client = Client(settings.SERVER_URL)
-        ns4 = client.type_factory('ns4')
-        payload = ns4.ArrayOfstring(fields)
-        db = client.service.ListFields(tabla, payload, '')
-        for db_records in db["KeyValueOfstringanyType"]:
-            content = []
-            campos = db_records["Value"]["Data"]["KeyValueOfstringanyType"]
-            [content.append([data["Value"]]) for data in campos]
-            contents.append(content)
+        Marcaje.update_from_nettime()   #internal method
+        messages.success(request, "Se importaron marcajes desde NetTime.")
 
-    except ConnectionError: contents = "VPN desconectada o red caida!"
-    except HTTPError: contents = "404!, la url no es valida"
-    return contents
+    except ConnectionError:
+        messages.error(
+            request, 
+            "No se pudo establecer conexión con el servidor de netTime."
+        )
 
-def register(request):
-    form = SignUpForm()
-    context = {'form': form}
-    if request.method == 'POST':
-        form = SignUpForm(request.POST)
-        if form.is_valid():
-            form.save()
-            username = form.cleaned_data.get('username')
-            raw_password = form.cleaned_data.get('password1')
-            user = authenticate(username=username, password=raw_password)
-            login(request, user)
-            return redirect('/')
-        else: context = {'form': form}
-    return render(request, "scg_app/register.html", context)
+    except Exception as error:
+        messages.error(request, f"{error}")
 
-@user_passes_test(check_admin)
-def pull_clockings(request):
-    context, marcajes, empleados = {}, [], Empleado.objects.all()
-    for empleado in empleados:
-        eid, tipo = empleado.id, "Attendance" #hardcodeado, por ahora. Posibles valores: ["Attendance", "Access", "Visit"]
-        fin = datetime.datetime(2020, 1, 3, 23, 59) #hardcodeado para testeo, dps va a ser --> datetime.datetime.now().date
-        marcaje = get_clockings(eid, fin, tipo)
-        if type(marcaje) == list: marcajes += marcaje
-    context["marcajes"] = marcajes
-    return render(request, "scg_app/pull_clockings.html", context)
+    return redirect('clases_view')
 
-def get_clockings(eid, fin, tipo):
-    contents = []
-    try:
-        client = Client(settings.SERVER_URL)
-        inicio = fin - datetime.timedelta(days=3)
-        contents = client.service.Clockings(eid, inicio, fin, tipo)
-    except ConnectionError: contents = "VPN desconectada o red caida!"
-    except HTTPError: contents = "404!, la url no es valida"
-    return contents
-
-@user_passes_test(check_admin)
-def auto_clockings(request):
-    context, resultado = {}, compare_clockigns(True)
-    if resultado[-1]: context = {"status": "Operacion finalizada exitosamente!", "resultados": resultado[0]}
-    else: context["status"] = "Operacion finalizada con errores"
-    return render(request, "scg_app/auto_clockings.html", context)
-
-def compare_clockigns(update=False):
-    offsets_inicio_clase, offsets_fin_clase, success, pull_data, matcheos, clockings = (15, 10), (5, 20), False, [], [], []
-    clases, reemplazos, ausencias, actividades, empleados, marcajes = Clase.objects.all(), Reemplazo.objects.all(), Ausencia.objects.all(), Actividad.objects.all(), Empleado.objects.all(), Marcaje.objects.all()
-    if update:
-        #"""
-        for empleado in empleados:
-            eid, tipo, fin = empleado.id, "Attendance", datetime.datetime(2020, 1, 3, 23, 59) #hardcodeado para testeo, dps va a ser --> datetime.datetime.now().date
-            marcaje = get_clockings(eid, fin, tipo)
-            if type(marcaje) == list: pull_data += marcaje
-        """
-        pull_data = [ #faster test-data
-            {'AllDay': False,'CardNumber': None,'ClockingType': 18,'Datetime': datetime.datetime(2020, 1, 2, 6, 35),'IP': '192.168.1.182','IdClocking': 14,'IdEmployer': 1,'IdReader': -1,'IdTerminal': -1,'IdTimeType': 0,'IdZone': -1,'Source': 8,'State': 0,'User': 'Admin'},
-            {'AllDay': False,'CardNumber': None,'ClockingType': 18,'Datetime': datetime.datetime(2020, 1, 2, 10, 0),'IP': '192.168.1.182','IdClocking': 15,'IdEmployer': 1,'IdReader': -1,'IdTerminal': -1,'IdTimeType': 0,'IdZone': -1,'Source': 8,'State': 0,'User': 'Admin'},
-            {'AllDay': False,'CardNumber': None,'ClockingType': 18,'Datetime': datetime.datetime(2020, 1, 2, 15, 50),'IP': '192.168.1.182','IdClocking': 16,'IdEmployer': 1,'IdReader': -1,'IdTerminal': -1,'IdTimeType': 0,'IdZone': -1,'Source': 8,'State': 0,'User': 'Admin'},
-            {'AllDay': False,'CardNumber': None,'ClockingType': 18,'Datetime': datetime.datetime(2020, 1, 2, 18, 50),'IP': '192.168.1.182','IdClocking': 17,'IdEmployer': 1,'IdReader': -1,'IdTerminal': -1,'IdTimeType': 0,'IdZone': -1,'Source': 8,'State': 0,'User': 'Admin'},
-
-            {'AllDay': False,'CardNumber': None,'ClockingType': 18,'Datetime': datetime.datetime(2020, 1, 3, 5, 45),'IP': '192.168.1.182','IdClocking': 18,'IdEmployer': 1,'IdReader': -1,'IdTerminal': -1,'IdTimeType': 0,'IdZone': -1,'Source': 8,'State': 0,'User': 'Admin'},
-            {'AllDay': False,'CardNumber': None,'ClockingType': 18,'Datetime': datetime.datetime(2020, 1, 3, 9, 5),'IP': '192.168.1.182','IdClocking': 19,'IdEmployer': 1,'IdReader': -1,'IdTerminal': -1,'IdTimeType': 0,'IdZone': -1,'Source': 8,'State': 0,'User': 'Admin'},
-            {'AllDay': False,'CardNumber': None,'ClockingType': 18,'Datetime': datetime.datetime(2020, 1, 3, 10, 50),'IP': '192.168.1.182','IdClocking': 20,'IdEmployer': 1,'IdReader': -1,'IdTerminal': -1,'IdTimeType': 0,'IdZone': -1,'Source': 8,'State': 0,'User': 'Admin'},
-            {'AllDay': False,'CardNumber': None,'ClockingType': 18,'Datetime': datetime.datetime(2020, 1, 3, 12, 55),'IP': '192.168.1.182','IdClocking': 21,'IdEmployer': 1,'IdReader': -1,'IdTerminal': -1,'IdTimeType': 0,'IdZone': -1,'Source': 8,'State': 0,'User': 'Admin'},
-            {'AllDay': False,'CardNumber': None,'ClockingType': 18,'Datetime': datetime.datetime(2020, 1, 3, 17, 20),'IP': '192.168.1.182','IdClocking': 22,'IdEmployer': 1,'IdReader': -1,'IdTerminal': -1,'IdTimeType': 0,'IdZone': -1,'Source': 8,'State': 0,'User': 'Admin'},
-            {'AllDay': False,'CardNumber': None,'ClockingType': 18,'Datetime': datetime.datetime(2020, 1, 3, 20, 55),'IP': '192.168.1.182','IdClocking': 23,'IdEmployer': 1,'IdReader': -1,'IdTerminal': -1,'IdTimeType': 0,'IdZone': -1,'Source': 8,'State': 0,'User': 'Admin'},
-
-            {'AllDay': False,'CardNumber': None,'ClockingType': 18,'Datetime': datetime.datetime(2020, 1, 2, 6, 15),'IP': '192.168.1.182','IdClocking': 24,'IdEmployer': 2,'IdReader': -1,'IdTerminal': -1,'IdTimeType': 0,'IdZone': -1,'Source': 8,'State': 0,'User': 'Admin'},
-            {'AllDay': False,'CardNumber': None,'ClockingType': 18,'Datetime': datetime.datetime(2020, 1, 2, 9, 25),'IP': '192.168.1.182','IdClocking': 25,'IdEmployer': 2,'IdReader': -1,'IdTerminal': -1,'IdTimeType': 0,'IdZone': -1,'Source': 8,'State': 0,'User': 'Admin'},
-            {'AllDay': False,'CardNumber': None,'ClockingType': 18,'Datetime': datetime.datetime(2020, 1, 2, 12, 15),'IP': '192.168.1.182','IdClocking': 26,'IdEmployer': 2,'IdReader': -1,'IdTerminal': -1,'IdTimeType': 0,'IdZone': -1,'Source': 8,'State': 0,'User': 'Admin'},
-            {'AllDay': False,'CardNumber': None,'ClockingType': 18,'Datetime': datetime.datetime(2020, 1, 2, 15, 25),'IP': '192.168.1.182','IdClocking': 27,'IdEmployer': 2,'IdReader': -1,'IdTerminal': -1,'IdTimeType': 0,'IdZone': -1,'Source': 8,'State': 0,'User': 'Admin'},
-            {'AllDay': False,'CardNumber': None,'ClockingType': 18,'Datetime': datetime.datetime(2020, 1, 2, 18, 10),'IP': '192.168.1.182','IdClocking': 28,'IdEmployer': 2,'IdReader': -1,'IdTerminal': -1,'IdTimeType': 0,'IdZone': -1,'Source': 8,'State': 0,'User': 'Admin'},
-            {'AllDay': False,'CardNumber': None,'ClockingType': 18,'Datetime': datetime.datetime(2020, 1, 2, 21, 5),'IP': '192.168.1.182','IdClocking': 29,'IdEmployer': 2,'IdReader': -1,'IdTerminal': -1,'IdTimeType': 0,'IdZone': -1,'Source': 8,'State': 0,'User': 'Admin'},
-
-            {'AllDay': False,'CardNumber': None,'ClockingType': 18,'Datetime': datetime.datetime(2020, 1, 3, 6, 45),'IP': '192.168.1.182','IdClocking': 30,'IdEmployer': 2,'IdReader': -1,'IdTerminal': -1,'IdTimeType': 0,'IdZone': -1,'Source': 8,'State': 0,'User': 'Admin'},
-            {'AllDay': False,'CardNumber': None,'ClockingType': 18,'Datetime': datetime.datetime(2020, 1, 3, 15, 25),'IP': '192.168.1.182','IdClocking': 31,'IdEmployer': 2,'IdReader': -1,'IdTerminal': -1,'IdTimeType': 0,'IdZone': -1,'Source': 8,'State': 0,'User': 'Admin'},
-        ]
-        #"""
-
-        fin = datetime.datetime(2020, 1, 3, 23, 59) #hardcodeado para testeo, dps va a ser --> datetime.datetime.now().date
-        inicio = fin - datetime.timedelta(days=3)
-        clases = clases.filter(fecha__gte=inicio.strftime("%Y-%m-%d"), fecha__lte=fin.strftime("%Y-%m-%d")).order_by('fecha', 'horario_desde') #filtro: rango de fechas
-
-        for i in range(max([m["IdEmployer"] for m in pull_data]) + 1): #los indices claramente empiezan por 0, pero los ids en 1
-            marcaje_empleado = [marcaje for marcaje in pull_data if marcaje['IdEmployer']==i]
-            if marcaje_empleado:
-                j = 0
-                while j < len(marcaje_empleado):
-                    clocking_tmp = Marcaje(
-                        id=None,
-                        empleado=empleados.filter(id=i)[0],
-                        fecha=marcaje_empleado[j]["Datetime"].date(),
-                        entrada=marcaje_empleado[j]["Datetime"].time(),
-                        salida=marcaje_empleado[j + 1]["Datetime"].time() if j + 1 < len(marcaje_empleado) else None
-                    )
-                    j += 2
-                    if not(marcajes.filter(empleado=clocking_tmp.empleado, fecha=clocking_tmp.fecha, entrada=clocking_tmp.entrada, salida=clocking_tmp.salida).exists()): clockings.append(clocking_tmp)
-                    #if check_marcaje_unique(marcajes, clocking_tmp): clockings.append(clocking_tmp)
-        marcajes.bulk_create(clockings)
-
-    for marcaje in marcajes:
-        sub_clases = clases.filter(fecha=marcaje.fecha, empleado=marcaje.empleado, horario_desde__gte=marcaje.entrada, horario_hasta__lte=marcaje.salida) if marcaje.salida else clases.filter(fecha=marcaje.fecha, empleado=marcaje.empleado, horario_hasta__lte=marcaje.entrada)
-        for clase in sub_clases:
-            clase.presencia = settings.PRESENCIA_CHOICES[-1][-1]
-            clase.save()
-            success = True
-            matcheos.append([clase, True])
-    return matcheos, success
-
-def time_ops(f1, f2, sum=None): #para usar los offsets --> offsets_inicio_clase, offsets_fin_clase = (15, 10), (5, 20)
-    date1 = datetime.datetime.now().replace(hour=f1.hour, minute=f1.minute, second=0, microsecond=0)
-    date2 = datetime.timedelta(hours=f2.hour, minutes=f2.minute, seconds=0, microseconds=0)
-    return (date1 - date2) if not sum else (date1 + date2)
-
-def historizar():
-    #todo
-    return
+### from tbs ###
+# def register(request):
+#     form = SignUpForm()
+#     context = {'form': form}
+#     if request.method == 'POST':
+#         form = SignUpForm(request.POST)
+#         if form.is_valid():
+#             form.save()
+#             username = form.cleaned_data.get('username')
+#             raw_password = form.cleaned_data.get('password1')
+#             user = authenticate(username=username, password=raw_password)
+#             login(request, user)
+#             return redirect('/')
+#         else: context = {'form': form}
+#     return render(request, "scg_app/register.html", context)

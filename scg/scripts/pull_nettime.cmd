@@ -1,0 +1,1 @@
+python "C:\Users\LucasLucyk\Documents\Programming\Python\spec\sgc-web\scg\manage.py" pull_nettime

@@ -102,9 +102,38 @@ class Actividad(models.Model):
         get_latest_by = "id"
 
 class MotivoAusencia(models.Model):
-
+    id_netTime = models.PositiveIntegerField(
+        default=0,
+        validators=[MinValueValidator(1)],
+        unique=True,
+    )
     nombre = models.CharField(max_length=50, unique=True, blank=False, null=False)
     genera_pago = models.BooleanField(blank=True, default=False)
+
+    @classmethod
+    def update_from_nettime(cls):
+        try:
+            incidencias_nt = utils.pull_netTime(
+                "TimeType",  # Container
+                _fields=["id", "name", "recuperable"],
+                _filter='this.timeTypeType != 0'
+            )
+
+            for registro in incidencias_nt.get("TimeType"):
+                try:
+                    motivo = cls.objects.get(id_netTime=registro.get("id"))
+                except:
+                    motivo = cls.objects.create(id_netTime=registro.get("id"))
+
+                #update employee data
+                motivo.nombre = registro.get("name")
+                motivo.genera_pago = registro.get("recuperable")
+                motivo.save()
+
+        except Exception as error:
+            raise error
+
+        print("Import of Timetypes from nettime has been completed!")
 
     @property
     def pronombre(self):
@@ -195,6 +224,47 @@ class Empleado(models.Model):
 
         return clases.exists()
 
+    @classmethod
+    def update_from_nettime(cls):
+        """ use pull_netTime() for get all employees from netTime webservice """
+
+        try:
+            empleados_nt = utils.pull_netTime(
+                "Employee",  # Container
+                _fields=[
+                    "id", "name", "nameEmployee", "LastName", "companyCode",
+                    "employeeCode", "persoTipo", "persoLiq",
+                ]
+            )
+
+            for registro in empleados_nt.get("Employee"):
+                try:
+                    empleado = cls.objects.get(id_netTime=registro.get("id"))
+                except:
+                    empleado = cls.objects.create(
+                        id_netTime=registro.get("id"))
+
+                #update employee data
+                empleado.dni = registro.get("name")
+                empleado.apellido = registro.get("LastName")
+                empleado.nombre = registro.get("nameEmployee")
+                empleado.legajo = registro.get("employeeCode")
+                empleado.empresa = registro.get("companyCode")
+                try:  # trying get from id_nettime
+                    empleado.tipo = TipoContrato.objects.get(
+                        id_netTime=registro.get("persoTipo"))
+                    empleado.liquidacion = TipoLiquidacion.objects.get(
+                        id_netTime=registro.get("persoLiq"))
+                except:
+                    pass
+
+                empleado.save()
+
+        except Exception as error:
+            raise error
+        
+        print("Import of Employees from nettime has been completed!")
+
     @property
     def pronombre(self):
         return "el"
@@ -219,6 +289,32 @@ class Sede(models.Model):
     )
     nombre = models.CharField(max_length=40)
     tipo = models.CharField(max_length=30, default="Física", blank=True)
+
+    @classmethod
+    def update_from_nettime(cls):
+        """ use pull_netTime() for get all Sede's from netTime webservice """
+
+        try:
+            sedes_nt = utils.pull_netTime(
+                "Custom",  # Container
+                _fields=["id", "name"],
+                _filter='this.type == "sede"'
+            )
+
+            for registro in sedes_nt.get("Custom"):
+                try:
+                    sede = cls.objects.get(id_netTime=registro.get("id"))
+                except:
+                    sede = cls.objects.create(id_netTime=registro.get("id"))
+
+                #update employee data
+                sede.nombre = registro.get("name")
+                sede.save()
+
+        except Exception as error:
+            raise error
+
+        print("Import of Sedes from nettime has been completed!")
 
     @property
     def pronombre(self):
@@ -542,11 +638,59 @@ class Clase(models.Model):
 class Marcaje(models.Model):
     empleado = models.ForeignKey('Empleado', on_delete=models.SET(''))
     fecha = models.DateField(blank=True, default=timezone.now)
-    entrada = models.TimeField(null=True, blank=True)
-    salida = models.TimeField(null=True, blank=True)
+    #entrada = models.TimeField(null=True, blank=True)
+    #salida = models.TimeField(null=True, blank=True)
 
     hora = models.TimeField(null=True, blank=True)
     
+    @classmethod
+    def update_from_nettime(cls):
+        """ 
+            Use pull_clockings() for get all clockings of a employee in a specific period.
+            Recalculate presence blocks and class status.
+        """
+
+        try:
+            #hardcoded now
+            start = datetime.datetime(2020, 1, 1, 0, 0)
+            end = datetime.datetime.now()
+            _type = "Attendance"
+
+            #employees = Empleado.objects.values_list('pk', flat=True)
+            employees = Empleado.objects.all()
+
+            for employee in employees:
+                marcs = utils.pull_nt_clockings(employee.pk, start, end, _type)
+
+                for marc in marcs:
+                    #check if exists
+                    app_marc = cls.objects.filter(
+                        empleado=employee,
+                        fecha=marc["Datetime"].date(),
+                        hora=marc["Datetime"].time(),
+                    )
+                    #create if not exists
+                    if not app_marc:
+                        cls.objects.create(
+                            empleado=employee,
+                            fecha=marc["Datetime"].date(),
+                            hora=marc["Datetime"].time(),
+                        )
+
+                #recalculate days
+                for i in range((end - start).days + 1):
+                    _day = start + datetime.timedelta(days=i)
+                    BloqueDePresencia.recalcular_bloques(employee, _day.date())
+
+            #update classes status
+            clases = Clase.objects.filter(fecha__gte=start, fecha__lte=end)
+            [clase.update_status() for clase in clases] if clases else None
+
+        except Exception as error:
+            raise error
+
+        print("Import of Clockings from nettime has been completed!")
+
     @property
     def pronombre(self):
         return "el"
@@ -569,12 +713,10 @@ class Marcaje(models.Model):
 
     def __str__(self):
         return f'{self.empleado} el {self.fecha} a las {self.hora}'
-        
     class Meta:
         verbose_name = "Marcaje"
         verbose_name_plural = "Marcajes"
         get_latest_by = "hora"
-
 
 class BloqueDePresencia(models.Model):
     empleado = models.ForeignKey('Empleado', blank=True, null=True,

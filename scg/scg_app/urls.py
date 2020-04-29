@@ -36,16 +36,14 @@ urlpatterns = [
 
     ### others ###
     path('wiki/', views.wiki, name='wiki'),
-    path('register/', views.register, name='register'), 
-
+    #path('register/', views.register, name='register'), 
     path('about/', views.about, name='about'), 
-    path('auto_clockings/', views.auto_clockings, name='auto_clockings'), 
     
     #nettime operations
-    path('pulls/pulldbs/', views.pulldbs, name='pull_dbs'), 
-    path('pulls/pull_clockings/', views.pull_clockings, name='pull_clockings'),
+    path('netTime/pull/clockings/', views.get_nt_marcajes, name='get_nt_marcajes'),
     path('netTime/pull/empleados/', views.get_nt_empleados, name='get_nt_empleados'), 
-    path('pulls/pull_sedes/', views.get_nt_sedes, name='get_nt_sedes'), 
+    path('netTime/pull/sedes/', views.get_nt_sedes, name='get_nt_sedes'),
+    path('netTime/pull/motivos_ausencia/', views.get_nt_incidencias, name='get_nt_incidencias'),
 
 ]
 

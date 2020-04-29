@@ -2,3 +2,5 @@ django==2.2
 zeep
 django-multiselectfield
 django-report-builder
+fcntl
+django-crontab

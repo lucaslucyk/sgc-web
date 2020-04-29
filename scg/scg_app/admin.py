@@ -87,21 +87,12 @@ class Clase(admin.ModelAdmin):
     def has_add_permission(self, request, obj=None):
         return False
 
-# @admin.register(Ausencia)
-# class AusenciaAdmin(admin.ModelAdmin):
-#     list_display = ('clase', 'motivo', )
-
-# @admin.register(Reemplazo)
-# class ReemplazoAdmin(admin.ModelAdmin):
-#     list_display = ('clase', 'empleado_reemplazante', )
-
 @admin.register(Marcaje)
 class MarcajeAdmin(admin.ModelAdmin):
-    list_display = ('id', 'empleado', 'fecha', 'entrada', 'salida', )
-
+    list_display = ('id', 'empleado', 'fecha', 'hora')
 
 @admin.register(Escala)
-class Escala(admin.ModelAdmin):
+class EscalaAdmin(admin.ModelAdmin):
     list_display = ('nombre', 'monto_hora', )
 
 @admin.register(GrupoActividad)
