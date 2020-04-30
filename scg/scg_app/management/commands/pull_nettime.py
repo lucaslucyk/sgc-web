@@ -1,5 +1,6 @@
 from django.core.management.base import BaseCommand, CommandError
 from scg_app.models import Empleado, Sede, MotivoAusencia, Marcaje
+from datetime import datetime
 
 class Command(BaseCommand):
     help = 'Import employees from netTime'
@@ -18,6 +19,13 @@ class Command(BaseCommand):
         #     poll.save()
 
         try:
+            #inform what start the import
+            self.stdout.write(
+                # self.style.DARK(
+                f'{datetime.now()} - INFO - Starting import from netTime...'
+                # )
+            )
+
             Sede.update_from_nettime()
             MotivoAusencia.update_from_nettime()
             Empleado.update_from_nettime()
@@ -26,9 +34,13 @@ class Command(BaseCommand):
             #if everything was correctly ended
             self.stdout.write(
                 self.style.SUCCESS(
-                    f'Successfully imported from netTime'
+                    f'{datetime.now()} - OK - Successfully imported from netTime!'
                 )
             )
 
         except Exception as error:
-            self.stdout.write(self.style.ERROR(f'{error}'))
+            self.stdout.write(
+                self.style.ERROR(
+                    f'{datetime.now()} - ERROR - {error}'
+                )
+            )

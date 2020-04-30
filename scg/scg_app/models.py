@@ -133,7 +133,7 @@ class MotivoAusencia(models.Model):
         except Exception as error:
             raise error
 
-        print("Import of Timetypes from nettime has been completed!")
+        #print("Import of Timetypes from nettime has been completed!")
 
     @property
     def pronombre(self):
@@ -263,7 +263,7 @@ class Empleado(models.Model):
         except Exception as error:
             raise error
         
-        print("Import of Employees from nettime has been completed!")
+        #print("Import of Employees from nettime has been completed!")
 
     @property
     def pronombre(self):
@@ -314,7 +314,7 @@ class Sede(models.Model):
         except Exception as error:
             raise error
 
-        print("Import of Sedes from nettime has been completed!")
+        #print("Import of Sedes from nettime has been completed!")
 
     @property
     def pronombre(self):
@@ -689,7 +689,7 @@ class Marcaje(models.Model):
         except Exception as error:
             raise error
 
-        print("Import of Clockings from nettime has been completed!")
+        #print("Import of Clockings from nettime has been completed!")
 
     @property
     def pronombre(self):
