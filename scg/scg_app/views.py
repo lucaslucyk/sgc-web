@@ -17,12 +17,14 @@ from django.views.generic.list import ListView
 from django.views.generic.edit import UpdateView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import JsonResponse, Http404
+from django.views.decorators.csrf import csrf_exempt
 
 ### own ###
 from scg_app.forms import *
 from scg_app.models import *
 from django.contrib import messages
 from django.apps import apps
+import scg_app.tasks as task_mgmt
 
 
 @login_required
@@ -1072,6 +1074,53 @@ def get_nt_marcajes(request, context=None):
         messages.error(request, f"{error}")
 
     return redirect('clases_view')
+
+
+@csrf_exempt
+@user_passes_test(check_admin)
+def tasks_management(request, context=None):
+    """ list and manage import tasks """
+    context = context or {'tasks': []}
+
+    tasks = [
+        {
+            'name': 'SGC - NetTime Sync',
+            'task_name': 'sgc_nettime_sync',
+            'installed': False,
+            'Path': '',
+            'State': '',
+            'LastRunTime':'',
+        },
+    ]
+
+    for task in tasks:
+        task_def = task_mgmt.task_get_data(task.get('task_name'))
+        
+        if task_def:
+            task['installed'] = True
+            task.update(task_def)
+
+    if request.method == 'POST':
+        actions = {
+            'task_enable': task_mgmt.task_enable,
+            'task_disable': task_mgmt.task_disable,
+            'task_run': task_mgmt.task_run,
+            'task_delete': task_mgmt.task_delete,
+            'task_create': task_mgmt.task_create,
+        }
+        
+        try:
+            actions.get(request.POST.get('command'))(
+                request.POST.get('task_name')
+            )
+            return JsonResponse({"success": True})
+
+        except Exception as error:
+            return JsonResponse({"error": str(error)})
+
+    context['tasks'] = tasks
+
+    return render(request, "tasks/tasks_management.html", context)
 
 ### from tbs ###
 # def register(request):

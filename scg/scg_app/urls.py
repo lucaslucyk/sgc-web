@@ -45,6 +45,9 @@ urlpatterns = [
     path('netTime/pull/sedes/', views.get_nt_sedes, name='get_nt_sedes'),
     path('netTime/pull/motivos_ausencia/', views.get_nt_incidencias, name='get_nt_incidencias'),
 
+    ### tasks management ###
+    path('tasks/', views.tasks_management, name='tasks_management'),
+
 ]
 
 if settings.DEBUG:

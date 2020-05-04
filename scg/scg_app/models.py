@@ -11,7 +11,6 @@ from collections import defaultdict
 from django.db.models import Q
 from . import utils
 from multiselectfield import MultiSelectField
-# Create your models here.
 
 class Rol(models.Model):
     """ to manage users in the future """

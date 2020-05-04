@@ -1,0 +1,169 @@
+{% extends "base_template.html" %}
+
+{% block extra_css %}
+{% load static %}
+  <!-- DataTables -->
+  <link rel="stylesheet" href="{%  static 'plugins/datatables-bs4/css/dataTables.bootstrap4.min.css' %}">
+  <link rel="stylesheet" href="{%  static 'plugins/datatables-responsive/css/responsive.bootstrap4.min.css' %}">
+{% endblock %}
+
+{% block active_tareas %}active{% endblock %}
+{% block route %}
+  <li class="breadcrumb-item"><a href="{% url 'index' %}">Inicio</a></li>
+  <li class="breadcrumb-item active">Tareas programadas</li>
+{% endblock route %}
+
+{% block namepage %}Tareas programadas{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-md-12">
+
+    {% if messages %}
+      <section id="mensajes">
+        {% for message in messages %}
+          <div class="alert alert-{% if message.tags %}{{ message.tags }}{% endif %} alert-dismissible" >
+            <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+              {{ message }}
+          </div>
+        {% endfor %}
+      </section>
+    {% endif %}
+
+    <section id="results">
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">
+            {% block tableName %}Tareas{% endblock %}
+          </h3>
+        </div>
+        <!-- /.card-header -->
+        <div class="card-body">
+          <table id="data-table" class="table table-bordered table-striped table-sm table-responsive-sm">
+            <thead>
+              <tr>
+                <th>Nombre</th>
+                <th>Instalada</th>
+                <th>Path</th>
+                <th>Estado</th>
+                <th>&Uacute;ltima ejecuci&oacute;n</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+                {% for task in tasks %}
+                  <tr>
+                    <td class="align-middle">{{task.name}}</td>
+                    <td class="align-middle">
+                      {% if task.installed %}
+                        <i class="fas fa-check-circle"></i>
+                      {% else %}
+                        <i class="fas fa-times-circle"></i>
+                      {% endif %}
+                    </td>
+                    <td class="align-middle">{{task.Path}}</td>
+                    <td class="align-middle">
+                      {{task.State}}
+                    </td>
+                    <td class="align-middle">{{task.LastRunTime}}</td>
+                    <td class="py-0 align-middle">
+                      <div class="btn-group btn-group-sm">
+
+                        {% if not task.installed %}
+                          <a href="#" class="btn btn-success" title="Instalar" 
+                            action_btn="true"
+                            task_name="{{ task.task_name }}"
+                            command="task_create" >
+                            <i class="fas fa-download"></i>
+                          </a>
+                        {% endif %}
+
+                        {% if task.installed and task.State == 'Ready'%}
+                          <a href="#" class="btn btn-primary" title="Ejecutar"
+                            action_btn="true"
+                            task_name="{{ task.task_name }}"
+                            command="task_run" >
+                            <i class="fas fa-play"></i>
+                          </a>
+                        {% endif %}
+
+                        {% if task.installed and task.State != 'Disabled'%}
+                          <a href="#" class="btn btn-warning" title="Deshabilitar"
+                            action_btn="true"
+                            task_name="{{ task.task_name }}"
+                            command="task_disable" >
+                            <i class="fas fa-minus-circle"></i>
+                          </a>
+                        {% endif %}
+
+                        {% if task.installed and task.State == 'Disabled'%}
+                          <a href="#" class="btn btn-info" title="Habilitar"
+                            action_btn="true"
+                            task_name="{{ task.task_name }}"
+                            command="task_enable" >
+                            <i class="fas fa-plus-circle"></i>
+                          </a>
+                        {% endif %}
+
+                        {% if task.installed %}
+                          <a href="#" class="btn btn-danger" title="Desinstalar"
+                            action_btn="true"
+                            task_name="{{ task.task_name }}"
+                            command="task_delete" >
+                            <i class="fas fa-trash"></i>
+                          </a>
+                        {% endif %}
+
+                      </div>
+                      <div 
+                        class="spinner-border spinner-border-sm" role="status"
+                        task_name="{{ task.task_name }}"
+
+                        style="display:none;">
+                        <span class="sr-only">Loading...</span>
+                      </div>
+                    </td>
+                  </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+              <tr>
+                <th>Nombre</th>
+                <th>Instalada</th>
+                <th>Path</th>
+                <th>Estado</th>
+                <th>&Uacute;ltima ejecuci&oacute;n</th>
+                <th>Acciones</th>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+        <!-- /.card-body -->
+      </div>
+      <!-- /.card -->
+    </section>
+
+  </div> <!-- principal col -->
+</div> <!-- principal row -->
+{% endblock %}
+
+{% block extra_js %}
+{% load static %}
+
+<script src="{%  static 'plugins/datatables/jquery.dataTables.min.js' %}"></script>
+<script src="{%  static 'plugins/datatables-bs4/js/dataTables.bootstrap4.min.js' %}"></script>
+<script src="{%  static 'plugins/datatables-responsive/js/dataTables.responsive.min.js' %}"></script>
+<script src="{%  static 'plugins/datatables-responsive/js/responsive.bootstrap4.min.js' %}"></script>
+
+<script src="{%  static 'js/tasks.js' %}"></script>
+
+<!-- page script -->
+<script>
+  $(function () {
+    $("#data-table").DataTable({
+      "responsive": true,
+      "autoWidth": false,
+    });
+  });
+</script>
+{% endblock %}
