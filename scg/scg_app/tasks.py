@@ -2,15 +2,34 @@ import pythoncom
 import win32com.client as wc
 from subprocess import check_output
 import datetime as dt
+import os
 
-DEFAULT_ROUTE = r'"C:\Users\LucasLucyk\Documents\Programming\Python\spec\sgc-web\scg\scripts\run_pull.vbs"'
+#DEFAULT_ROUTE = r'"C:\Users\LucasLucyk\Documents\Programming\Python\spec\sgc-web\scg\scripts\run_pull.vbs"'
+# DEFAULT_ROUTE  = os.path.normpath(
+#     os.getcwd() + os.sep + os.pardir
+#     ) + '\\scg\\scripts\\run_pull.vbs'
+
+DEFAULT_ROUTE = os.path.normpath(
+    os.getcwd() + os.sep + os.pardir
+    ) + '\\scg'
+
 __ALLOWED_TASKS = {
     'sgc_nettime_sync': {
-        '/sc': 'daily',         # scheduletype
-        '/st': '00:00',         # starttime
-        '/tr': DEFAULT_ROUTE,   # taskrun
-        '/ru': 'System',        # system user
+        '/sc': 'daily',                                     # scheduletype
+        '/st': '00:00',                                     # starttime
+        '/tr': DEFAULT_ROUTE + '\\scripts\\run_ntsync.vbs',   # taskrun
+        '/ru': 'System',                                    # system user
     },
+}
+
+__TASKS_CONFIGS = {
+    'sgc_nettime_sync': {
+        'command_file': DEFAULT_ROUTE + '\\scripts\\ntsync_command.cmd',
+        'command': 'python "{0}" pull_nettime >> "{1}" \nexit'.format(
+            DEFAULT_ROUTE + '\\manage.py', 
+            DEFAULT_ROUTE + '\\scripts\\ntsync_history.log',
+        )
+    }
 }
 
 STATES = {
@@ -49,7 +68,29 @@ def task_get_data(task_name):
     return task_data
 
 
-def task_create(task_name, sc='daily', st='00:00', tr=DEFAULT_ROUTE, ru='System'):
+def create_commandfile(task_name):
+    """ create a command and run file for a specific task """
+
+    with open(__TASKS_CONFIGS.get(task_name).get('command_file'), 'w') as cf:
+        cf.write(__TASKS_CONFIGS.get(task_name).get('command'))
+        cf.close()
+
+    with open(__ALLOWED_TASKS.get(task_name).get('/tr'), 'w') as rf:
+
+        lines = [
+            'Set oShell = CreateObject ("Wscript.Shell")\n',
+            'Dim strArgs\n',
+            'strArgs = "cmd /c {0}"\n'.format(
+                __TASKS_CONFIGS.get(task_name).get('command_file')
+            ),
+            'oShell.Run strArgs, 0, false',
+        ]
+
+        rf.writelines(lines)
+        rf.close()
+    
+
+def task_create(task_name):
     """ Create a task from recived parameters """
     
     #check if is allowed
@@ -58,6 +99,11 @@ def task_create(task_name, sc='daily', st='00:00', tr=DEFAULT_ROUTE, ru='System'
 
     #check if not exist
     if task_get_data(task_name):
+        return False
+
+    try:
+        create_commandfile(task_name)
+    except:
         return False
 
     OPTIONS = {
@@ -159,11 +205,11 @@ def task_delete(task_name):
 if __name__ == "__main__":
 
     #TASK_NAME = 'sgc_pull_nettime'
-    TASK_NAME = 'pull_from_nettime'
+    TASK_NAME = 'sgc_nettime_sync'
     task_data = task_get_data(TASK_NAME)
     if not task_data: 
         try:
-            task_create(TASK_NAME, sc='daily', st='00:00', tr=DEFAULT_ROUTE, ru='System')
+            task_create(TASK_NAME)
             task_data = task_get_data(TASK_NAME)
         except Exception as error:
             print(f'{error}')
