@@ -40,7 +40,8 @@ def get_clases_from_certificado(request, certificado_id:int, context=None):
 
 @login_required
 def get_day_classes(request, context=None):
-    clases = Clase.objects.filter(fecha__gte=datetime.date.today())
+    #clases = Clase.objects.filter(fecha__gte=datetime.date.today())
+    clases = Clase.objects.all()
 
     data = defaultdict(int)
     for clase in clases:
