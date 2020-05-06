@@ -1,0 +1,47 @@
+{% extends "apps/scg_app/list/base.html" %}
+
+{% block active_ver_periodos %} active {% endblock %}
+
+{% block route %}
+  <li class="breadcrumb-item"><a href="{% url 'index' %}">Inicio</a></li>
+  <li class="breadcrumb-item active">Periodos</li>
+{% endblock route %}
+
+{% block tableName %}Periodos{% endblock %}
+
+{% block generar_btn %}
+  <a href="{% url 'periodo_create' %}" class="btn btn-outline-dark">Generar periodo</a>
+{% endblock %}
+
+{% block tableHeaders %}
+  <tr>
+    <th>Liberado</th>
+    <th>Desde</th>
+    <th>Hasta</th>
+  </tr>
+{% endblock %}
+
+{% block tableBody %}
+  {% for periodo in periodos_list %}
+    <tr>
+      <td class="align-middle">
+        {% if periodo.bloqueado %}
+          <i class="fas fa-times-circle" ></i>
+        {% else %}
+          <i class="fas fa-check-circle"></i>
+        {% endif %}
+      </td>
+
+      <td class="align-middle">{{periodo.desde}}</td>
+      <td class="align-middle">{{periodo.hasta}}</td>
+    </tr>
+  {% endfor %}
+{% endblock %}
+
+{% block tableFooter %}
+  <tr>
+    <th>Liberado</th>
+    <th>Desde</th>
+    <th>Hasta</th>
+  </tr>
+{% endblock %}

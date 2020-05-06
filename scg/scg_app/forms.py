@@ -4,11 +4,33 @@ from django.conf import settings
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from django.utils import timezone as tz
-from .models import *
+from scg_app.models import *
 
 #from django_select2.forms import Select2MultipleWidget
 #from dal import autocomplete
 
+class PeriodoForm(forms.Form):
+    widget_date = forms.TextInput(attrs={
+        'type': 'date',
+        'class': 'form-control',
+        'placeholder': 'aaaa-mm-dd',
+    })
+
+    desde = forms.CharField(max_length=10, required=True, widget=widget_date)
+    hasta = forms.CharField(max_length=10, required=True, widget=widget_date)
+
+    bloqueado = forms.BooleanField(
+        required=False, label="Bloqueado", initial=True)
+    bloqueado.widget.attrs.update({
+        'data-bootstrap-switch': '',
+        'data-off-color': 'danger',
+        'data-on-color': 'success',
+    })
+
+class PeriodoUpdForm(PeriodoForm, forms.ModelForm):
+    class Meta:
+        model = Periodo
+        fields = ['desde', 'hasta', 'bloqueado']
 
 class SaldoForm(forms.Form):
     widget_date = forms.TextInput(attrs={

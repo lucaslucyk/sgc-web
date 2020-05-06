@@ -12,8 +12,57 @@ from django.db.models import Q
 from . import utils
 from multiselectfield import MultiSelectField
 
+
+class Periodo(models.Model):
+    """ To manage available and blocked periods """
+
+    desde = models.DateField(blank=True)
+    hasta = models.DateField(blank=True)
+
+    bloqueado = models.BooleanField(blank=True, default=True)
+
+    @classmethod
+    def check_overlap(cls, _desde, _hasta, id_exclude=None):
+        """ informs if a period generates an overlap with one already created """
+
+        start_before = Q()
+        start_before.add(Q(desde__lte=_desde), Q.AND)
+        start_before.add(Q(hasta__gte=_desde), Q.AND)
+
+        start_after = Q()
+        start_after.add(Q(desde__gte=_desde), Q.AND)
+        start_after.add(Q(desde__lte=_hasta), Q.AND)
+
+        period = Q()
+        period.add(start_before, Q.OR)
+        period.add(start_after, Q.OR)
+
+        _periodos = cls.objects.filter(period)
+
+        if id_exclude:
+            _periodos = _periodos.exclude(pk=id_exclude)
+
+        return _periodos.count()
+
+    @property
+    def pronombre(self):
+        return "el"
+
+    @property
+    def get_str(self):
+        return self.__str__()
+
+    def __str__(self):
+        return f'Desde {self.desde} - Hasta {self.hasta}'
+
+    class Meta:
+        verbose_name = "Periodo"
+        verbose_name_plural = "Periodos"
+        get_latest_by = "desde"
+    
+
 class Rol(models.Model):
-    """ to manage users in the future """
+    """ To manage users in the future """
 
     ROLES = (
         ('a', 'Tipo 1'),
@@ -360,6 +409,7 @@ class Saldo(models.Model):
     @classmethod
     def check_overlap(cls, _sede, _actividad, _desde, _hasta, id_exclude=None):
         """ informs if a period generates an overlap with one already created """
+
         start_before = Q()
         start_before.add(Q(desde__lte=_desde), Q.AND)
         start_before.add(Q(hasta__gte=_desde), Q.AND)

@@ -119,6 +119,16 @@ class SafePaginator(Paginator):
             else:
                 raise
 
+
+class PeriodosList(LoginRequiredMixin, ListView):
+    """ List periods providing edit and delete actions. """
+
+    model = Periodo
+    template_name = 'apps/scg_app/list/periodos.html'
+    context_object_name = 'periodos_list'
+
+    ordering = ['-desde']
+
 class EmpleadosList(LoginRequiredMixin, ListView):
     """ List employees without providing any available action. """
 
@@ -132,7 +142,7 @@ class EmpleadosList(LoginRequiredMixin, ListView):
     ordering = ['apellido', 'nombre',]
 
 class SaldosList(LoginRequiredMixin, ListView):
-    """ List Saldos providing any edit and delete actions. """
+    """ List Saldos providing edit and delete actions. """
 
     model = Saldo
     template_name = 'apps/scg_app/list/saldos.html'
@@ -157,6 +167,55 @@ class MotivosAusenciaList(LoginRequiredMixin, ListView):
     context_object_name = 'motivos_list'
 
     ordering = ['nombre']
+
+@login_required
+def periodo_create(request, context=None):
+    """ Allows create a Periodo.
+        It does not allow the overlap with another already generated.
+    """
+
+    form = PeriodoForm(request.POST if request.method == 'POST' else None)
+    context = context or {'form': form}
+
+    if request.method == 'POST':
+        if not form.is_valid():
+            messages.error(request, "Error en datos del formulario.")
+            return render(request, "apps/scg_app/create/periodo.html", context)
+
+        fields = {
+            "desde": datetime.date.fromisoformat(form.cleaned_data.get("desde")),
+            "hasta": datetime.date.fromisoformat(form.cleaned_data.get("hasta")),
+        }
+
+        ### security dates check ###
+        if fields.get("desde") >= fields.get("hasta"):
+            messages.error(request, "El fin debe ser mayor al inicio.")
+            return render(request, "apps/scg_app/create/periodo.html", context)
+
+        ### overlap checks ###
+        is_overlap = Periodo.check_overlap(
+            fields.get("desde"), fields.get("hasta"))
+
+        if is_overlap:
+            messages.error(request, "El periodo se solapa con uno ya creado.")
+            return render(request, "apps/scg_app/create/periodo.html", context)
+
+        
+        ### after of all security checks ###
+        new_period = Periodo.objects.create(
+            desde=fields.get("desde"),
+            hasta=fields.get("hasta"),
+            bloqueado=form.cleaned_data.get("bloqueado"),
+        )
+
+        ### TO DO ###
+        # block all models if "blocked" is selected
+        # redirect to "update_view"
+
+        messages.success(request, "Periodo creado correctamente.")
+        context = {"form": form}
+
+    return render(request, "apps/scg_app/create/periodo.html", context)
 
 @login_required
 def confirm_delete(request, model, pk, context=None):
@@ -1075,6 +1134,9 @@ def get_nt_marcajes(request, context=None):
 
     return redirect('clases_view')
 
+###################
+### tasks  mgmt ###
+###################
 
 @csrf_exempt
 @user_passes_test(check_admin)

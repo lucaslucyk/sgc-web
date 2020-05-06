@@ -30,6 +30,10 @@
 {% endblock %}
 
 {% block extra_js %}
+	{% load static %}
+	<!-- Bootstrap Switch -->
+	<script src="{%  static 'plugins/bootstrap-switch/js/bootstrap-switch.min.js' %}"></script>
+
 	<script>
 		(function() {
 		  'use strict';
@@ -47,7 +51,15 @@
 		      }, false);
 		    });
 		  }, false);
+
 		})();
+	</script>
+	<script>
+		$(function(){
+			$("input[data-bootstrap-switch]").each(function(){
+				$(this).bootstrapSwitch('state', $(this).prop('checked'));
+			});
+		});
 	</script>
 {% endblock %}
 

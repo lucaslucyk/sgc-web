@@ -245,6 +245,12 @@
                   <p>Saldos</p>
                 </a>
               </li>
+              <li class="nav-item">
+                <a href="{% url 'periodos_view'%}" class="nav-link {% block active_ver_periodos %}{% endblock %}">
+                  <i class="fas fa-calendar-check nav-icon"></i>
+                  <p>Periodos</p>
+                </a>
+              </li>
             </ul>
           </li>
           <li class="nav-item has-treeview {% block open_crear %}{% endblock %}">
@@ -266,6 +272,12 @@
                 <a href="{% url 'generar_saldo'%}" class="nav-link {% block active_saldo %}{% endblock %}">
                   <i class="fas fa-balance-scale nav-icon"></i>
                   <p>Saldo</p>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="{% url 'periodo_create'%}" class="nav-link {% block active_periodo %}{% endblock %}">
+                  <i class="fas fa-calendar-check nav-icon"></i>
+                  <p>Periodo</p>
                 </a>
               </li>
             </ul>
