@@ -28,7 +28,7 @@ import scg_app.tasks as task_mgmt
 
 
 @login_required
-def certificados_list(request, id_clase:int, context=None):
+def certificados_list(request, id_clase: int, context=None):
     """ Lists all the justifications for which files were 
         attached with their corresponding reasons.
     """
@@ -58,6 +58,15 @@ def clase_edit(request, pk, context=None):
     """
 
     clase = get_object_or_404(Clase, pk=pk)
+
+    if clase.locked:
+        form = ClaseUpdForm(instance=clase)
+        context = context or {'form': form}
+
+        messages.error(
+            request, 
+            "El periodo esta bloqueado y la clase no puede ser editada.")
+        return render(request, 'apps/scg_app/clase_edit.html', context)
 
     if request.method == 'POST':
         form = ClaseUpdForm(request.POST, instance=clase)
@@ -118,7 +127,6 @@ class SafePaginator(Paginator):
                 return self.num_pages
             else:
                 raise
-
 
 class PeriodosList(LoginRequiredMixin, ListView):
     """ List periods providing edit and delete actions. """
@@ -183,8 +191,8 @@ def periodo_create(request, context=None):
             return render(request, "apps/scg_app/create/periodo.html", context)
 
         fields = {
-            "desde": datetime.date.fromisoformat(form.cleaned_data.get("desde")),
-            "hasta": datetime.date.fromisoformat(form.cleaned_data.get("hasta")),
+            "desde":datetime.date.fromisoformat(form.cleaned_data.get("desde")),
+            "hasta":datetime.date.fromisoformat(form.cleaned_data.get("hasta")),
         }
 
         ### security dates check ###
@@ -200,7 +208,6 @@ def periodo_create(request, context=None):
             messages.error(request, "El periodo se solapa con uno ya creado.")
             return render(request, "apps/scg_app/create/periodo.html", context)
 
-        
         ### after of all security checks ###
         new_period = Periodo.objects.create(
             desde=fields.get("desde"),
@@ -208,14 +215,57 @@ def periodo_create(request, context=None):
             bloqueado=form.cleaned_data.get("bloqueado"),
         )
 
-        ### TO DO ###
-        # block all models if "blocked" is selected
-        # redirect to "update_view"
+        #lock or allor related objects
+        affecteds = new_period.update_related()
 
-        messages.success(request, "Periodo creado correctamente.")
-        context = {"form": form}
+        messages.success(
+            request, "Periodo creado. Afecta a {0} clases".format(affecteds))
+        return redirect('periodo_update', pk=new_period.id)
 
     return render(request, "apps/scg_app/create/periodo.html", context)
+
+
+@login_required
+def periodo_update(request, pk, context=None):
+    """ Allows updating the data of a Periodo.
+        It does not allow the overlap with another already generated.
+    """
+    periodo = get_object_or_404(Periodo, pk=pk)
+
+    if request.method == 'POST':
+        form = PeriodoUpdForm(request.POST, instance=periodo)
+        context = context or {'form': form}
+
+        if not form.is_valid():
+            messages.error(request, 'Error de formulario.')
+            return render(request, 'apps/scg_app/create/periodo.html', context)
+
+        periodo = form.save(commit=False)
+
+        if Periodo.check_overlap(
+            _desde=periodo.desde,
+            _hasta=periodo.hasta,
+            id_exclude=periodo.pk
+        ):
+            messages.error(request,
+                           "El periodo se superpone con otro ya creado.")
+            return render(request, "apps/scg_app/create/periodo.html", context)
+
+        #after of all checks
+        periodo.save()
+
+        #lock or allor related objects
+        affecteds = periodo.update_related()
+
+        messages.success(
+            request, 
+            "Periodo actualizado. Afecta a {0} clases.".format(affecteds)
+        )
+
+    form = PeriodoUpdForm(instance=periodo)
+    context = {'form': form}
+
+    return render(request, 'apps/scg_app/create/periodo.html', context)
 
 @login_required
 def confirm_delete(request, model, pk, context=None):
@@ -230,13 +280,34 @@ def confirm_delete(request, model, pk, context=None):
 
     context = {
         "pronoun": obj.pronombre,
-        "model": re.sub(r'([A-Z])', r' \1', obj.__class__.__name__
-                ).replace(' ', '', 1).capitalize(),
+        #convert "ModelName" to "Model name"
+        "model": re.sub(
+            r'([A-Z])', 
+            r' \1', obj.__class__.__name__
+            ).replace(' ', '', 1).capitalize(),
         "object": obj
     }
 
+    #check locked property
+    try:
+        locked = obj.locked
+    except:
+        locked = False
+
+    if locked:
+        messages.error(
+            request,
+            '{0} {1} pertenece a un periodo bloqueado.'.format(
+                context["pronoun"].capitalize(),
+                context["model"],
+            )
+        )
+        return render(request, "apps/scg_app/confirm_delete.html", context)
+
+
     if request.method == "POST":
-        messages.success(request, f'Se ha eliminado {context["pronoun"]} {context["model"]}.')
+        messages.success(request, 'Se ha eliminado {0} {1}.'.format(
+            context["pronoun"], context["model"]))
         try:
             success_url = obj.pos_delete_url()
         except:
@@ -265,13 +336,14 @@ def saldo_update(request, pk, context=None):
         saldo = form.save(commit=False)
 
         if Saldo.check_overlap(
-            _sede = saldo.sede,
-            _actividad = saldo.actividad,
-            _desde = saldo.desde,
-            _hasta = saldo.hasta,
-            id_exclude = saldo.pk
+            _sede=saldo.sede,
+            _actividad=saldo.actividad,
+            _desde=saldo.desde,
+            _hasta=saldo.hasta,
+            id_exclude=saldo.pk
         ):
-            messages.error(request, "El periodo se superpone con otro ya creado.")
+            messages.error(request, 
+                "El periodo se superpone con otro ya creado.")
             return render(request, "apps/scg_app/create/saldo.html", context)
 
         #after of all checks
@@ -303,7 +375,8 @@ def generar_saldo(request, context=None):
             _desde = form.cleaned_data.get("desde"),
             _hasta = form.cleaned_data.get("hasta"),
         ):
-            messages.error(request, "El periodo se superpone con otro ya creado.")
+            messages.error(request, 
+                "El periodo se superpone con otro ya creado.")
             return render(request, "apps/scg_app/create/saldo.html", context)
 
         #after of security checks
@@ -314,7 +387,8 @@ def generar_saldo(request, context=None):
             hasta = form.cleaned_data.get("hasta"), 
             saldo_asignado = form.cleaned_data.get("saldo_asignado"), 
         )
-        messages.success(request, "Se ha generado el saldo para la sede y actividad seleccionada.")
+        messages.success(request, 
+            "Se ha generado el saldo para la sede y actividad seleccionada.")
         return redirect('saldo_update', pk=new_saldo.id)
 
     return render(request, "apps/scg_app/create/saldo.html", context)
@@ -341,9 +415,12 @@ def programar(request, context=None):
 
         try:    #process data geted by API
             fields = {
-                "empleado" : get_object_or_404(Empleado, pk=request.POST.get("empleados-results")),
-                "actividad" : get_object_or_404(Actividad, pk=request.POST.get("actividades-results")),
-                "sede" : get_object_or_404(Sede, pk=request.POST.get("sedes-results")),
+                "empleado": get_object_or_404(
+                    Empleado, pk=request.POST.get("empleados-results")),
+                "actividad": get_object_or_404(
+                    Actividad, pk=request.POST.get("actividades-results")),
+                "sede": get_object_or_404(
+                    Sede, pk=request.POST.get("sedes-results")),
             }
 
             #update selected data
@@ -817,11 +894,7 @@ def action_process(request, context=None):
             return redirect('asignar_reemplazo', id_clase=ids[0])
 
         if _accion == 'confirmar_clases':
-            success, error = confirmar_clases(ids)
-            messages.success(request, f'Se {"confirmaron" if success > 1 else "confirmó"} {success} clase(s).') if success else None
-            messages.error(request, f'No se {"pudieron" if error > 1 else "pudo"} confirmar {error} clase(s) porque esta(n) cancelada(s).') if error else None
-
-            return redirect('clases_view')
+            return confirmar_clases(request, ids)
 
         if _accion == 'gestion_recurrencia':
             if len(ids) != 1:
@@ -846,25 +919,53 @@ def action_process(request, context=None):
     messages.error(request, "Acción o método no soportado.")
     return redirect('clases_view')
 
-def confirmar_clases(_ids):
+def confirmar_clases(request, _ids=None, context=None):
     """ confirm all classes from the ids list """
 
-    clases = Clase.objects.filter(pk__in=_ids)
-    _success, _error = (0, 0)
+    if not _ids:
+        return render(request, "apps/scg_app/clases_confirm.html", context)
 
-    if not clases:
-        return _success, _ids
+    clases = Clase.objects.filter(pk__in=_ids)
+    _success, _error = ([], [])
+
+    # if not clases:
+    #     return _success, _ids
 
     for clase in clases:
         #check if class is not cancelled
-        if clase.is_cancelled:
-            _error += 1
+        if clase.is_cancelled or clase.locked:
+            _error.append(clase)
         else:  
             clase.confirmada = True
             clase.save()
-            _success += 1
+            _success.append(clase)
 
-    return _success, _error
+    if _success:
+        messages.success(
+            request, 
+            'Se {0} {1} {2}.'.format(
+                "confirmaron" if len(_success) > 1 else "confirmó",
+                    len(_success),
+                "clases" if len(_success) > 1 else "clase",
+            )
+        )
+    
+    if _error:
+        messages.error(
+            request, 
+            'No se {0} confirmar {1} clase{2} porque esta{3} bloqueada{2} o cancelada{2}.'.format(
+                "pudieron" if len(_error) > 1 else "pudo",
+                len(_error),
+                "s" if len(_error) > 1 else "",
+                "n" if len(_error) > 1 else "",
+            )
+        )
+
+    context = {
+        "classes_success": _success,
+        "classes_error": _error,
+    }
+    return render(request, "apps/scg_app/clases_confirm.html", context)
 
 @login_required
 def gestion_ausencia(request, ids_clases=None, context=None):
@@ -885,6 +986,25 @@ def gestion_ausencia(request, ids_clases=None, context=None):
     context = context or {'form': form}
 
     clases_to_edit = Clase.objects.filter(pk__in=ids_clases.split('-'))
+
+    #lockeds ignore
+    lockeds = clases_to_edit.filter(locked=True).count()
+    if lockeds:
+        messages.warning(
+            request, 
+            "{0} clase{1} esta{2} bloqueada{1} y fue{3} ignorada{1}.".format(
+                lockeds,
+                "s" if lockeds > 1 else "",
+                "n" if lockeds > 1 else "",
+                "ron" if lockeds > 1 else "",
+            )
+        )
+        clases_to_edit = clases_to_edit.exclude(locked=True)
+
+    #if not exists classes to apply
+    if not clases_to_edit:
+        return render(request, "apps/scg_app/gestion_ausencia.html", context)
+
     context["clases_to_edit"] = clases_to_edit
 
     if request.method == 'POST':

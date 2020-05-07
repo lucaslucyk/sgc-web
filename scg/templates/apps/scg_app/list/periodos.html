@@ -18,6 +18,7 @@
     <th>Liberado</th>
     <th>Desde</th>
     <th>Hasta</th>
+    <th>Acciones</th>
   </tr>
 {% endblock %}
 
@@ -34,6 +35,13 @@
 
       <td class="align-middle">{{periodo.desde}}</td>
       <td class="align-middle">{{periodo.hasta}}</td>
+
+      <td class="py-0 align-middle">
+        <div class="btn-group btn-group-sm">
+          <a href="{{ periodo.get_edit_url|safe }}" class="btn btn-info"><i class="fas fa-pencil-alt"></i></a>
+          <a href="{{ periodo.get_delete_url|safe }}" class="btn btn-danger"><i class="fas fa-trash"></i></a>
+        </div>
+      </td>
     </tr>
   {% endfor %}
 {% endblock %}
@@ -43,5 +51,6 @@
     <th>Liberado</th>
     <th>Desde</th>
     <th>Hasta</th>
+    <th>Acciones</th>
   </tr>
 {% endblock %}

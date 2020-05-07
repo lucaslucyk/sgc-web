@@ -5,6 +5,9 @@ from django.utils import timezone
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.shortcuts import reverse
 
+from django.utils.safestring import mark_safe
+from django.utils.html import escape
+
 import datetime
 from collections import defaultdict
 
@@ -44,6 +47,47 @@ class Periodo(models.Model):
 
         return _periodos.count()
 
+    def update_related(self):
+        """ update 'locked' property of all corresponding items.
+            Return the count affected classes.
+        """
+
+        ### clases ###
+        clases = Clase.objects.filter(
+            fecha__gte=self.desde,
+            fecha__lte=self.hasta,
+            locked=not self.bloqueado
+        )
+        for clase in clases:
+            clase.locked = self.bloqueado
+            clase.save()
+
+        ### marcajes ###
+        marcajes = Marcaje.objects.filter(
+            fecha__gte=self.desde,
+            fecha__lte=self.hasta,
+            locked=not self.bloqueado
+        )
+        for marcaje in marcajes:
+            marcaje.locked = self.bloqueado
+            marcaje.save()
+
+        return clases.count()
+
+    def get_edit_url(self):
+        """ construct edit url from current object """
+        return reverse('periodo_update', kwargs={"pk": self.id})
+
+    def get_delete_url(self):
+        """ construct delete url from current object """
+        return reverse('confirm_delete',
+                       kwargs={"model": self.__class__.__name__, "pk": self.id}
+                       )
+
+    def pos_delete_url(self):
+        """ construct pos delete url from current object """
+        return reverse('periodos_view')
+
     @property
     def pronombre(self):
         return "el"
@@ -70,7 +114,9 @@ class Rol(models.Model):
         ('c', 'Tipo 3'),
     )
 
-    tipo_rol = models.CharField(max_length=1, choices=ROLES, blank=False , help_text="Roles placeholder de los users.")
+    tipo_rol = models.CharField(
+        max_length=1, choices=ROLES,
+        blank=False, help_text="Roles placeholder de los users.")
 
     @property
     def pronombre(self):
@@ -594,6 +640,8 @@ class Clase(models.Model):
     presencia = models.CharField(max_length=12, choices=settings.PRESENCIA_CHOICES, null=True, blank=True, default=settings.PRESENCIA_CHOICES[0][0])
     comentario = models.CharField(max_length=1000, blank=True, help_text="Aclaraciones varias")
 
+    locked = models.BooleanField(blank=True, default=False)
+
     # class ReportBuilder:
     #     #exclude = ()  # Lists or tuple of excluded fields
     #     fields = ('get_dia_semana_display',)   # Explicitly allowed fields
@@ -620,12 +668,12 @@ class Clase(models.Model):
             empleado=self.empleado,
             fecha=self.fecha,
             inicio__hora__lte=utils.get_min_offset(
-                                        _time=self.horario_desde, 
-                                        _mins=settings.MINS_TOLERACIA),
+                _time=self.horario_desde, 
+                _mins=settings.MINS_TOLERACIA),
             fin__hora__gte=utils.get_min_offset(
-                                        _time=self.horario_hasta,
-                                        _mins=settings.MINS_TOLERACIA,
-                                        _sub=True),
+                _time=self.horario_hasta,
+                _mins=settings.MINS_TOLERACIA,
+                _sub=True),
         )
         #
         return True if blocks else False
@@ -691,7 +739,9 @@ class Marcaje(models.Model):
     #salida = models.TimeField(null=True, blank=True)
 
     hora = models.TimeField(null=True, blank=True)
-    
+
+    locked = models.BooleanField(blank=True, default=False)
+
     @classmethod
     def update_from_nettime(cls):
         """ 
@@ -828,14 +878,20 @@ class BloqueDePresencia(models.Model):
             {self.fin.hora.strftime("%H:%M")}'.replace('\t','')
 
 class Certificado(models.Model):
-    """ 
-        Can contain an attachment for one or more classes.
+    """ Can contain an attachment for one or more classes.
         Keep the original motif. 
     """
     
     clases =  models.ManyToManyField('Clase')
     file = models.FileField("Archivo", null=True, blank=True, upload_to='certificados/')
     motivo = models.ForeignKey('MotivoAusencia', blank=True, null=True, on_delete=models.SET_NULL, related_name='motivo')
+
+    #seted in save method and for use in out system (excel, csv, etc)
+    file_url = models.URLField(max_length=200, blank=True, null=True)
+
+    def save(self, *args, **kwargs):
+        self.file_url = f'{settings.BASE_URL}{self.file.url}'
+        super().save(*args, **kwargs)
 
     @property
     def filename(self):

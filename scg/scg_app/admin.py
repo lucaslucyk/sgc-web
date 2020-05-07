@@ -9,10 +9,12 @@ class RolAdmin(admin.ModelAdmin):
 
 @admin.register(Empleado)
 class EmpleadoAdmin(admin.ModelAdmin):
-    fields = ('id_netTime', 'apellido', 'nombre', 'dni', 'legajo', 'empresa', 
+    fields = (
+        'id_netTime', 'apellido', 'nombre', 'dni', 'legajo', 'empresa',
         'escala', 'tipo', 'liquidacion'
     )
-    list_display = ('id_netTime', 'apellido', 'nombre', 'dni', 'legajo', 
+    list_display = (
+        'id_netTime', 'apellido', 'nombre', 'dni', 'legajo',
         'empresa',
     )
     ordering = ('apellido', )
@@ -45,38 +47,42 @@ class MotivoAusenciaAdmin(admin.ModelAdmin):
 
 @admin.register(Saldo)
 class SaldoAdmin(admin.ModelAdmin):
-    list_display = ('actividad', 'sede', 'desde', 'hasta', 'saldo_asignado', 
+    list_display = (
+        'actividad', 'sede', 'desde', 'hasta', 'saldo_asignado', 
         'saldo_disponible'
     )
 
 @admin.register(Recurrencia)
 class RecurrenciaAdmin(admin.ModelAdmin):
     fields = (
-        ('fecha_desde', 'horario_desde'), ('fecha_hasta', 'horario_hasta'), 
+        ('fecha_desde', 'horario_desde'), ('fecha_hasta', 'horario_hasta'),
         'empleado', 'sede', 'actividad', 'weekdays'
     )
-    list_display = ('id', 'empleado', 'fecha_desde', 'fecha_hasta', 
-        'horario_desde', 'horario_hasta', 'sede', 
-        'actividad','get_dias_str'
+    list_display = (
+        'id', 'empleado', 'fecha_desde', 'fecha_hasta',
+        'horario_desde', 'horario_hasta', 'sede',
+        'actividad', 'get_dias_str'
     )
     list_filter = ['empleado', 'sede', 'actividad']
 
 @admin.register(Clase)
-class Clase(admin.ModelAdmin):
-    fields = ('parent_recurrencia', ('dia_semana', 'fecha'), 
-        ('horario_desde', 'horario_hasta'), 'actividad', 'sede', 'empleado', 
+class ClaseAdmin(admin.ModelAdmin):
+    fields = (
+        'parent_recurrencia', ('dia_semana', 'fecha'),
+        ('horario_desde', 'horario_hasta'), 'actividad', 'sede', 'empleado',
         'modificada', 'estado', 'presencia', 'ausencia', 'reemplazo',
-        'confirmada', 'adjunto',
+        'confirmada', 'locked',
     )
 
     list_display = (
         'estado', 'presencia', 'empleado', 'reemplazo', 'sede',
         'actividad', 'dia_semana', 'fecha', 'horario_desde', 'horario_hasta',
-        'modificada', 'ausencia', 'confirmada',
+        'modificada', 'ausencia', 'confirmada', 'locked',
     )
 
-    readonly_fields = ('parent_recurrencia', 'creacion', 'dia_semana', 'fecha',
-        'horario_desde', 'horario_hasta', 'actividad', 'sede', 'empleado', 
+    readonly_fields = (
+        'parent_recurrencia', 'creacion', 'dia_semana', 'fecha',
+        'horario_desde', 'horario_hasta', 'actividad', 'sede', 'empleado',
         'modificada', 'presencia', 'ausencia', 'reemplazo', 'estado',
         #'estado',
     )
@@ -84,7 +90,7 @@ class Clase(admin.ModelAdmin):
     #def has_delete_permission(self, request, obj=None):
     #   return False
 
-    def has_add_permission(self, request, obj=None):
+    def has_add_permission(self, request):
         return False
 
 @admin.register(Marcaje)
@@ -96,11 +102,14 @@ class EscalaAdmin(admin.ModelAdmin):
     list_display = ('nombre', 'monto_hora', )
 
 @admin.register(GrupoActividad)
-class GrupoActividad(admin.ModelAdmin):
+class GrupoActividadAdmin(admin.ModelAdmin):
     list_display = ('nombre', )
 
+@admin.register(Certificado)
+class CertificadoAdmin(admin.ModelAdmin):
+    exclude = ('file_url',)
+
 admin.site.register(BloqueDePresencia)
-admin.site.register(Certificado)
 admin.site.register(TipoLiquidacion)
 admin.site.register(TipoContrato)
 admin.site.register(Periodo)
