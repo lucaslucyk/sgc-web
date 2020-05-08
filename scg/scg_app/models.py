@@ -12,7 +12,7 @@ import datetime
 from collections import defaultdict
 
 from django.db.models import Q
-from . import utils
+from scg_app import utils
 from multiselectfield import MultiSelectField
 
 
@@ -67,34 +67,29 @@ class Periodo(models.Model):
             fecha__lte=self.hasta,
             #locked=not self.bloqueado
         )
-        for clase in clases:
-            clase.locked = self.bloqueado
-            clase.save()
+        clases.update(locked=self.bloqueado)
 
         ### certificados ###
-        for cert in Certificado.objects.filter(clases__in=clases):
-            if cert.clases.filter(locked=True):
-                cert.locked = True
-            else:
-                cert.locked = False
-            cert.save()
+        Certificado.objects.filter(clases__in=clases
+        ).update(locked=self.bloqueado)
+
+        # for cert in Certificado.objects.filter(clases__in=clases):
+        #     if cert.clases.filter(locked=True):
+        #         cert.locked = True
+        #     else:
+        #         cert.locked = False
+        #     cert.save()
 
         ### recurrencias ###
-        recs_ids = set(clases.values_list('parent_recurrencia__id', flat=True))
-        recs = Recurrencia.objects.filter(pk__in=recs_ids)
-        for rec in recs:
-            rec.locked = self.bloqueado
-            rec.save()
+        r_ids = set(clases.values_list('parent_recurrencia__id', flat=True))
+        Recurrencia.objects.filter(pk__in=r_ids).update(locked=self.bloqueado)
 
         ### marcajes ###
-        marcajes = Marcaje.objects.filter(
+        Marcaje.objects.filter(
             fecha__gte=self.desde,
             fecha__lte=self.hasta,
             locked=not self.bloqueado
-        )
-        for marcaje in marcajes:
-            marcaje.locked = self.bloqueado
-            marcaje.save()
+        ).update(locked=self.bloqueado)
 
         return clases.count()
 
@@ -265,7 +260,7 @@ class MotivoAusencia(models.Model):
         return f'{self.nombre}'
 
     class Meta:
-        verbose_name='Motivo de Ausencia'
+        verbose_name = 'Motivo de Ausencia'
         verbose_name_plural = 'Motivos de Ausencia'
         get_latest_by = 'nombre'
 

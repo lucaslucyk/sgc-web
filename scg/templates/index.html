@@ -109,9 +109,24 @@
       options: {
           scales: {
               yAxes: [{
-                  ticks: {
-                      beginAtZero: true
-                  }
+                gridLines: {
+                  display      : true,
+                  lineWidth    : '4px',
+                  color        : 'rgba(0, 0, 0, .2)',
+                  zeroLineColor: 'transparent'
+                },
+                ticks: {
+                  beginAtZero: true
+                }
+              }],
+              xAxes: [{
+                display  : true,
+                gridLines: {
+                  display: false
+                },
+                ticks: {
+                  beginAtZero: true
+                }
               }]
           },
           responsive: true,
