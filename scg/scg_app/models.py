@@ -15,7 +15,6 @@ from django.db.models import Q
 from scg_app import utils
 from multiselectfield import MultiSelectField
 
-
 class Periodo(models.Model):
     """ To manage available and blocked periods """
 
@@ -25,7 +24,8 @@ class Periodo(models.Model):
 
     @classmethod
     def check_overlap(cls, _desde, _hasta, id_exclude=None, locked_only=False):
-        """ informs if a period generates an overlap with one already created """
+        """ informs if a period generates an overlap with one already 
+            created """
 
         start_before = Q()
         start_before.add(Q(desde__lte=_desde), Q.AND)
@@ -48,7 +48,7 @@ class Periodo(models.Model):
             _periodos = _periodos.exclude(bloqueado=False)
 
         return _periodos.count()
-    
+
     @classmethod
     def blocked_day(cls, day):
         """ inform if a day is blocked by an exist period """
@@ -69,7 +69,8 @@ class Periodo(models.Model):
         clases.update(locked=self.bloqueado)
 
         ### certificados ###
-        Certificado.objects.filter(clases__in=clases
+        Certificado.objects.filter(
+            clases__in=clases
         ).update(locked=self.bloqueado)
 
         # for cert in Certificado.objects.filter(clases__in=clases):
@@ -121,7 +122,6 @@ class Periodo(models.Model):
         verbose_name = "Periodo"
         verbose_name_plural = "Periodos"
         get_latest_by = "desde"
-    
 
 class Rol(models.Model):
     """ To manage users in the future """
@@ -151,7 +151,6 @@ class Rol(models.Model):
         verbose_name = "Rol"
         verbose_name_plural = "Roles"
         get_latest_by = "id"
-
 
 class Escala(models.Model):
     nombre = models.CharField(max_length=30)
@@ -267,11 +266,11 @@ class MotivoAusencia(models.Model):
         get_latest_by = 'nombre'
 
 class TipoLiquidacion(models.Model):
-    id_netTime = models.PositiveIntegerField(default=0,
+    id_netTime = models.PositiveIntegerField(
+        default=0,
         validators=[MinValueValidator(1)],
         unique=True,
-        help_text="Para matchear marcajes e importaciones"
-    )
+        help_text="Para matchear marcajes e importaciones")
     nombre = models.CharField(max_length=100, unique=True)
 
     def __str__(self):
@@ -455,14 +454,12 @@ class Sede(models.Model):
 class Saldo(models.Model):
     actividad = models.ForeignKey('Actividad', on_delete=models.CASCADE)
     sede = models.ForeignKey('Sede', on_delete=models.CASCADE)
-    
     desde = models.DateField(default=timezone.now)
     hasta = models.DateField(default=timezone.now)
-
-    saldo_asignado = models.PositiveIntegerField(default=0,
+    saldo_asignado = models.PositiveIntegerField(
+        default=0,
         validators=[MinValueValidator(1)], 
-        help_text="Cantidad de clases que desea disponibilizar"
-    )
+        help_text="Cantidad de clases que desea disponibilizar")
 
     def get_edit_url(self):
         """ construct edit url from current object """
@@ -480,7 +477,8 @@ class Saldo(models.Model):
     
     @classmethod
     def check_overlap(cls, _sede, _actividad, _desde, _hasta, id_exclude=None):
-        """ informs if a period generates an overlap with one already created """
+        """ informs if a period generates an overlap with one already 
+            created """
 
         start_before = Q()
         start_before.add(Q(desde__lte=_desde), Q.AND)
@@ -579,7 +577,8 @@ class Recurrencia(models.Model):
     @classmethod
     def check_overlap(
         cls, employee, weekdays, desde, hasta, hora_ini, hora_end, ignore=None):
-        """ informs if a period generates an overlap with one already created """
+        """ informs if a period generates an overlap with one already 
+            created """
         
         ### dates ###
         start_before = Q()
@@ -763,9 +762,9 @@ class Clase(models.Model):
 
     def get_delete_url(self):
         """ construct delete url from current object """
-        return reverse('confirm_delete',
-            kwargs={"model":self.__class__.__name__, "pk":self.id}
-        )
+        return reverse(
+            'confirm_delete',
+            kwargs={"model":self.__class__.__name__, "pk":self.id})
 
     def pos_delete_url(self):
         """ construct pos delete url from current object """
@@ -796,9 +795,9 @@ class Marcaje(models.Model):
 
     @classmethod
     def update_from_nettime(cls):
-        """ Use pull_clockings() for get all clockings of a employee in a specific period.
-            Recalculate presence blocks and class status.
-        """
+        """ Use pull_clockings() for get all clockings of a employee in a 
+            specific period.
+            Recalculate presence blocks and class status."""
 
         try:
             #hardcoded now
@@ -931,7 +930,7 @@ class BloqueDePresencia(models.Model):
 class Certificado(models.Model):
     """ Can contain an attachment for one or more classes.
         Keep the original motif. """
-    
+
     clases = models.ManyToManyField('Clase')
     file = models.FileField(
         "Archivo", null=True, blank=True, upload_to='certificados/')
@@ -954,15 +953,15 @@ class Certificado(models.Model):
 
     def get_delete_url(self):
         """ construct delete url from current object """
-        return reverse('confirm_delete', 
-            kwargs={"model":self.__class__.__name__, "pk":self.pk}
-        )
+        return reverse(
+            'confirm_delete', 
+            kwargs={"model":self.__class__.__name__, "pk":self.pk})
 
     def pos_delete_url(self):
         """ construct pos delete url from current object """
-        return reverse('certificados_list', 
-            kwargs={"id_clase": self.clases.first().id}
-        )
+        return reverse(
+            'certificados_list', 
+            kwargs={"id_clase": self.clases.first().id})
 
     @property
     def pronombre(self):
