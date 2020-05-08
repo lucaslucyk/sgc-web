@@ -117,7 +117,13 @@
                     <td class="text-left py-0 align-middle">
                       <div class="btn-group btn-group-sm">
                         <a href="{{ certificado.file.url }}" target="_blank" class="btn btn-info"><i class="fas fa-download"></i></a>
-                        <a href="{{ certificado.get_delete_url|safe }}" class="btn btn-danger"><i class="fas fa-trash"></i></a>
+                        <a href="{{ certificado.get_delete_url|safe }}"
+                          {% if certificado.locked %}
+                            class="btn btn-danger disabled" role="button" aria-disabled="true"
+                          {% else %}
+                            class="btn btn-danger"
+                          {% endif %} 
+                          ><i class="fas fa-trash"></i></a>
                       </div>
                     </td>
                   </tr>

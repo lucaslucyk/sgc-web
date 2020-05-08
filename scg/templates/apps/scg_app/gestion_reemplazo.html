@@ -79,6 +79,7 @@
 										<h3 class="card-title">Reemplazo</h3>
 									</div>
 									<div class="card-body">
+										{% if clase_to_edit.locked %}<fieldset disabled>{% endif %}
 										<div class="form-row mt-3">
 											<div class="form-group col-6">
 														<div class="input-group">
@@ -88,8 +89,7 @@
 													<input id="empleados-search" type="text" name="empleados-search" value="{{search_data.empleado}}" 
 														api-model-search="true" model-search="empleados" put-in="empleados-results"
 														class="form-control" placeholder="Algún dato del empleado" 
-														aria-label="Algún dato del empleado" aria-describedby="basic-addon1"
-													>
+														aria-label="Algún dato del empleado" aria-describedby="basic-addon1">
 												</div>
 											</div>
 											<div class="form-group col-6">
@@ -104,28 +104,10 @@
 												</div>
 											</div>
 										</div>
-
-										{% comment %} {% for field in form %}
-											<div class="form-row">
-												<div class="form-group">
-													{{ field.label_tag }}
-													{{ field }}
-
-													{% if field.help_text %}
-														<small class="form-text text-muted">{{ field.help_text }}</small>
-													{% endif %}
-													
-													{% for error in field.errors %}
-														<div style="color: red">{{ error }}</div>
-													{% endfor %}
-
-												</div>
-											</div>
-										{% endfor %} {% endcomment %}
-
+										{% if clase_to_edit.locked %}</fieldset>{% endif %}
 									</div><!-- /.card-body -->
 									<div class="card-footer text-center">
-										<button type="submit" class="btn btn-info">Confirmar</button>
+										<button type="submit" class="btn btn-info" {% if clase_to_edit.locked %}disabled{% endif %} >Confirmar</button>
 										<a class="btn btn-secondary" href="javascript: window.history.back();" role="button">Volver</a>
 									</div>
 									<!-- /.card-footer -->

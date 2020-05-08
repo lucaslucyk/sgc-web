@@ -29,11 +29,13 @@
           <div class="col-md-2 col-xs-1 col-sm-1"></div>
           <div class="col-md-8 col-xs-10 col-sm-10">
             <form method="post">{% csrf_token %}
+              
               <div class="card card-info">
                 <div class="card-header">
                   <h3 class="card-title">Datos de la clase</h3>
                 </div>
                 <div class="card-body">
+                {% if locked %}<fieldset disabled>{% endif %}
                   <div class="row">
                     <div class="col-sm-6">
                       <!-- text input -->
@@ -61,15 +63,17 @@
                       </div>
                     </div>
                   </div>
+                  {% if locked %}</fieldset>{% endif %}
 
                 </div><!-- /.card-body -->
                 <div class="card-footer text-center">
-                  <button type="submit" class="btn btn-info">Confirmar</button>
+                  <button type="submit" class="btn btn-info" {% if locked %}disabled{% endif %}>Confirmar</button>
                   <a class="btn btn-secondary" href="javascript: window.history.back();" role="button">Volver</a>
                 </div>
                 <!-- /.card-footer -->
 
               </div><!-- /.card -->
+              
             </form>
           </div><!-- /.col -->
           <div class="col-md-2 col-xs-1 col-sm-1"></div>

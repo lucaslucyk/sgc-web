@@ -6,6 +6,9 @@ import datetime
 import re
 import math
 
+### third ###
+#...
+
 ### django ###
 from django.conf import settings
 from django.contrib.auth import login, authenticate
@@ -62,6 +65,7 @@ def clase_edit(request, pk, context=None):
     if clase.locked:
         form = ClaseUpdForm(instance=clase)
         context = context or {'form': form}
+        context["locked"] = True
 
         messages.error(
             request, 
@@ -294,7 +298,13 @@ def confirm_delete(request, model, pk, context=None):
     except:
         locked = False
 
-    if locked:
+    #check bloqueado property
+    try:
+        bloqueado = obj.bloqueado
+    except:
+        bloqueado = False
+
+    if locked or bloqueado:
         messages.error(
             request,
             '{0} {1} pertenece a un periodo bloqueado.'.format(
@@ -460,8 +470,8 @@ def programar(request, context=None):
 
         if not settings.DEBUG:
             if not Saldo.objects.filter(
-                actividad=fields["actividad"], 
-                sede=fields["sede"], 
+                actividad=fields["actividad"],
+                sede=fields["sede"],
                 desde__lte=fields["fecha_desde"],
                 hasta__gte=fields["fecha_hasta"]
             ).exists():
@@ -480,6 +490,18 @@ def programar(request, context=None):
         if overlays:
             messages.error(request, f'La programación se superpone con {overlays} ya creada/s.')
             return render(request, "apps/scg_app/create/programacion.html", context)
+
+        ### check if period is locked
+        period_locked = Periodo.check_overlap(
+            desde=fields.get("fecha_desde"),
+            hasta=fields.get("fecha_hasta"),
+            locked_only=True
+        )
+        if period_locked:
+            messages.error(
+                request, f'La programación se solapa con un periodo bloqueado.')
+            return render(
+                request, "apps/scg_app/create/programacion.html", context)
 
         #after of security checks
         rec = Recurrencia.objects.create(
@@ -524,6 +546,8 @@ def programar(request, context=None):
 def programacion_update(request, pk, context=None):
     """ update a Recurrencia and classes with corresponding data """
 
+    template = "apps/scg_app/update/programacion.html"
+
     old_rec = get_object_or_404(Recurrencia, pk=pk)
     rec = get_object_or_404(Recurrencia, pk=pk)
 
@@ -541,14 +565,18 @@ def programacion_update(request, pk, context=None):
 
         if not form.is_valid():
             messages.error(request, 'Error de formulario.')
-            return render(request, 'apps/scg_app/create/programacion.html', context)
+            return render(request, template, context)
 
         ### dates and times validate
         fields = {
-            "fecha_desde": datetime.date.fromisoformat(form.cleaned_data.get("fecha_desde")),
-            "fecha_hasta": datetime.date.fromisoformat(form.cleaned_data.get("fecha_hasta")),
-            "horario_desde": form.cleaned_data.get("horario_desde").replace(second=0, microsecond=0),
-            "horario_hasta": form.cleaned_data.get("horario_hasta").replace(second=0, microsecond=0),
+            "fecha_desde": datetime.date.fromisoformat(
+                form.cleaned_data.get("fecha_desde")),
+            "fecha_hasta": datetime.date.fromisoformat(
+                form.cleaned_data.get("fecha_hasta")),
+            "horario_desde": form.cleaned_data.get(
+                "horario_desde").replace(second=0, microsecond=0),
+            "horario_hasta": form.cleaned_data.get(
+                "horario_hasta").replace(second=0, microsecond=0),
             "weekdays": form.cleaned_data.get("weekdays"),
             "empleado": rec.empleado,
             "actividad": rec.actividad,
@@ -557,19 +585,19 @@ def programacion_update(request, pk, context=None):
         
         if fields.get("fecha_hasta") < datetime.date.today() and not settings.DEBUG:
             messages.error(request, "No se pueden programar clases para fechas pasadas.")
-            return render(request, "apps/scg_app/update/programacion.html", context)
+            return render(request, template, context)
 
         if fields.get("fecha_desde") >= fields.get("fecha_hasta"):
             messages.error(request, "La fecha de fin debe ser mayor a la de inicio.")
-            return render(request, "apps/scg_app/update/programacion.html", context)
+            return render(request, template, context)
 
         if fields.get("horario_desde") >= fields.get("horario_hasta"):
             messages.error(request, "La hora de fin debe ser mayor a la de inicio.")
-            return render(request, "apps/scg_app/update/programacion.html", context)
+            return render(request, template, context)
 
         if fields.get("fecha_desde") < old_rec.fecha_desde:
             messages.error(request, "No se puede extender una programación hacia atrás.")
-            return render(request, "apps/scg_app/update/programacion.html", context)
+            return render(request, template, context)
 
         overlays = Recurrencia.check_overlap(
             employee = rec.empleado,
@@ -583,18 +611,36 @@ def programacion_update(request, pk, context=None):
 
         if overlays:
             messages.error(request, f'La programación se superpone con {overlays} ya creada/s.')
-            return render(request, "apps/scg_app/update/programacion.html", context)
+            return render(request, template, context)
 
         ### dates actions ###
         if fields.get("fecha_hasta") < old_rec.fecha_hasta: #delete end differences
-            Clase.objects.filter(parent_recurrencia=old_rec, 
-                fecha__gt=fields.get("fecha_hasta")
-            ).delete()
+            classes_to_delete = Clase.objects.filter(
+                parent_recurrencia=old_rec, 
+                fecha__gt=fields.get("fecha_hasta"))
+
+            #prevent blocked delete
+            if classes_to_delete.filter(locked=True):
+                messages.error(
+                    request, "No se pueden eliminar clases bloqueadas.")
+                return render(request, template, context)
+            
+            #delete after of checks
+            classes_to_delete.delete()
 
         if fields.get("fecha_desde") > old_rec.fecha_desde: #delete coming differences
-            Clase.objects.filter(parent_recurrencia=old_rec, 
-                fecha__lt=fields.get("fecha_desde")
-            ).delete()
+            classes_to_delete = Clase.objects.filter(
+                parent_recurrencia=old_rec,
+                fecha__lt=fields.get("fecha_desde"))
+            
+            #prevent blocked delete
+            if classes_to_delete.filter(locked=True):
+                messages.error(
+                    request, "No se pueden eliminar clases bloqueadas.")
+                return render(request, template, context)
+            
+            #delete after of checks
+            classes_to_delete.delete()
 
         ### weekdays actions ###
         if fields.get("weekdays") != old_rec.weekdays:
@@ -603,10 +649,16 @@ def programacion_update(request, pk, context=None):
 
         ### time actions ###
         exis_overlaps_classes = False
-        if (fields.get("horario_desde") != old_rec.horario_desde 
-            or fields.get("horario_hasta") != old_rec.horario_hasta
-        ):
+        if (fields.get("horario_desde") != old_rec.horario_desde or
+            fields.get("horario_hasta") != old_rec.horario_hasta):
+
             clases_to_edit = Clase.objects.filter(parent_recurrencia=old_rec)
+
+            if clases_to_edit.filter(locked=True):
+                messages.error(
+                    request, "No se pueden editar clases bloqueadas.")
+                return render(request, template, context)
+            
             for clase in clases_to_edit:
                 if not clase.empleado.is_busy(
                     clase.fecha, clase.horario_desde, 
@@ -617,8 +669,13 @@ def programacion_update(request, pk, context=None):
                     clase.save()
                 else:
                     exis_overlaps_classes = True
+
+        #if employee is busy in specific days or times
         if exis_overlaps_classes:
-            messages.warning(request, "No se pudo editar una o más clases por falta de disponibilidad")
+            messages.warning(
+                request, 
+                "No se pudo editar una o más clases por falta de disponibilidad"
+            )
 
         ### create differences ###
         _not_success, _rejecteds, _creadas = False, False, 0
@@ -649,7 +706,7 @@ def programacion_update(request, pk, context=None):
         #saldo.save()
         messages.success(request, "Programación actualizada.")
 
-    return render(request, "apps/scg_app/update/programacion.html", context)
+    return render(request, template, context)
 
 def generar_clases(_fields, _dia, _recurrencia, editing=None):
     """ create, if possible, all classes in the indicated period """
@@ -659,15 +716,16 @@ def generar_clases(_fields, _dia, _recurrencia, editing=None):
     try:
         #+1 for process all days
         num_dias = (_fields["fecha_hasta"] - _fields["fecha_desde"]).days + 1
-        #print(num_dias)
 
         for i in range(num_dias):
             dia_actual = _fields["fecha_desde"] + datetime.timedelta(days=i)
 
-            #print(str(dia_actual.weekday()), str(_dia))
-
             if str(dia_actual.weekday()) == str(_dia):
-                if not _fields["empleado"].is_busy(
+
+                if Periodo.blocked_day(dia_actual):
+                    rejected += 1
+
+                elif not _fields["empleado"].is_busy(
                     dia_actual, 
                     _fields["horario_desde"], 
                     _fields["horario_hasta"],
@@ -685,6 +743,7 @@ def generar_clases(_fields, _dia, _recurrencia, editing=None):
                         empleado = _fields["empleado"],
                     )
                     cant_creadas += 1
+
                 else:
                     rejected += 1
     except:
@@ -928,9 +987,6 @@ def confirmar_clases(request, _ids=None, context=None):
     clases = Clase.objects.filter(pk__in=_ids)
     _success, _error = ([], [])
 
-    # if not clases:
-    #     return _success, _ids
-
     for clase in clases:
         #check if class is not cancelled
         if clase.is_cancelled or clase.locked:
@@ -945,7 +1001,7 @@ def confirmar_clases(request, _ids=None, context=None):
             request, 
             'Se {0} {1} {2}.'.format(
                 "confirmaron" if len(_success) > 1 else "confirmó",
-                    len(_success),
+                len(_success),
                 "clases" if len(_success) > 1 else "clase",
             )
         )
@@ -1003,6 +1059,7 @@ def gestion_ausencia(request, ids_clases=None, context=None):
 
     #if not exists classes to apply
     if not clases_to_edit:
+        context["locked"] = True
         return render(request, "apps/scg_app/gestion_ausencia.html", context)
 
     context["clases_to_edit"] = clases_to_edit
@@ -1041,6 +1098,12 @@ def asignar_reemplazo(request, id_clase=None, context=None):
 
     clase_to_edit = get_object_or_404(Clase, pk=id_clase)
     context["clase_to_edit"] = clase_to_edit
+
+    if clase_to_edit.locked:
+        messages.error(
+            request,
+            "El periodo esta bloqueado y la clase no puede ser editada.")
+        return render(request, 'apps/scg_app/gestion_reemplazo.html', context)
 
     if request.method == 'POST':
         
@@ -1119,6 +1182,11 @@ def gestion_marcajes(request, id_empleado=None, fecha=None, context=None):
     context["day_classes"] = day_classes
     context["day_blocks"] = day_blocks
     #context["day_clockings"] = day_clockings
+
+    if Periodo.blocked_day(fecha):
+        messages.error(request, "El día esta bloqueado y no puede ser editado.")
+        context["day_locked"] = True
+        return render(request, "apps/scg_app/gestion_marcajes.html", context)
 
     if request.method == 'POST':
 

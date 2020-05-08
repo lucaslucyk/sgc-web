@@ -25,7 +25,7 @@ class Periodo(models.Model):
     bloqueado = models.BooleanField(blank=True, default=True)
 
     @classmethod
-    def check_overlap(cls, _desde, _hasta, id_exclude=None):
+    def check_overlap(cls, _desde, _hasta, id_exclude=None, locked_only=False):
         """ informs if a period generates an overlap with one already created """
 
         start_before = Q()
@@ -45,7 +45,16 @@ class Periodo(models.Model):
         if id_exclude:
             _periodos = _periodos.exclude(pk=id_exclude)
 
+        if locked_only:
+            _periodos = _periodos.exclude(bloqueado=False)
+
         return _periodos.count()
+    
+    @classmethod
+    def blocked_day(cls, day):
+        """ inform if a day is blocked by an exist period """
+
+        return cls.check_overlap(day, day, locked_only=True)
 
     def update_related(self):
         """ update 'locked' property of all corresponding items.
@@ -56,11 +65,26 @@ class Periodo(models.Model):
         clases = Clase.objects.filter(
             fecha__gte=self.desde,
             fecha__lte=self.hasta,
-            locked=not self.bloqueado
+            #locked=not self.bloqueado
         )
         for clase in clases:
             clase.locked = self.bloqueado
             clase.save()
+
+        ### certificados ###
+        for cert in Certificado.objects.filter(clases__in=clases):
+            if cert.clases.filter(locked=True):
+                cert.locked = True
+            else:
+                cert.locked = False
+            cert.save()
+
+        ### recurrencias ###
+        recs_ids = set(clases.values_list('parent_recurrencia__id', flat=True))
+        recs = Recurrencia.objects.filter(pk__in=recs_ids)
+        for rec in recs:
+            rec.locked = self.bloqueado
+            rec.save()
 
         ### marcajes ###
         marcajes = Marcaje.objects.filter(
@@ -533,6 +557,8 @@ class Recurrencia(models.Model):
 
     weekdays = MultiSelectField('Días de la semana', choices=settings.DIA_SEMANA_CHOICES, null=True, blank=True)
 
+    locked = models.BooleanField(null=True, blank=True, default=False)
+
     def get_dias_str(self):
         return ', '.join(utils.get_dia_display(*self.weekdays))
     get_dias_str.short_description = "Días"
@@ -879,12 +905,16 @@ class BloqueDePresencia(models.Model):
 
 class Certificado(models.Model):
     """ Can contain an attachment for one or more classes.
-        Keep the original motif. 
-    """
+        Keep the original motif. """
     
-    clases =  models.ManyToManyField('Clase')
-    file = models.FileField("Archivo", null=True, blank=True, upload_to='certificados/')
-    motivo = models.ForeignKey('MotivoAusencia', blank=True, null=True, on_delete=models.SET_NULL, related_name='motivo')
+    clases = models.ManyToManyField('Clase')
+    file = models.FileField(
+        "Archivo", null=True, blank=True, upload_to='certificados/')
+    motivo = models.ForeignKey(
+        'MotivoAusencia', blank=True, null=True,
+        on_delete=models.SET_NULL, related_name='motivo')
+
+    locked = models.BooleanField(null=True, blank=True, default=False)
 
     #seted in save method and for use in out system (excel, csv, etc)
     file_url = models.URLField(max_length=200, blank=True, null=True)
