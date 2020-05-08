@@ -59,7 +59,7 @@ def clase_edit(request, pk, context=None):
         their corresponding reasons.
         Does not allow overlap with a different class.
     """
-
+    template = 'apps/scg_app/clase_edit.html'
     clase = get_object_or_404(Clase, pk=pk)
 
     if clase.locked:
@@ -70,30 +70,34 @@ def clase_edit(request, pk, context=None):
         messages.error(
             request, 
             "El periodo esta bloqueado y la clase no puede ser editada.")
-        return render(request, 'apps/scg_app/clase_edit.html', context)
+        return render(request, template, context)
 
     if request.method == 'POST':
         form = ClaseUpdForm(request.POST, instance=clase)
         if not form.is_valid():
             messages.error(request, f'Error de formulario.')
             context = context or {'form': ClaseUpdForm(instance=clase)}
-            return render(request, 'apps/scg_app/clase_edit.html', context)
+            return render(request, template, context)
 
         clase = form.save(commit=False)
 
         if clase.parent_recurrencia:
-            if (clase.horario_desde != clase.parent_recurrencia.horario_desde 
-                or clase.horario_hasta != clase.parent_recurrencia.horario_hasta
-            ):    
-                if Empleado.is_busy(clase.empleado, clase.fecha, 
+            if (clase.horario_desde != clase.parent_recurrencia.horario_desde or
+                clase.horario_hasta != clase.parent_recurrencia.horario_hasta):
+
+                if Empleado.is_busy(
+                    clase.empleado, clase.fecha, 
                     clase.horario_desde, clase.horario_hasta, 
-                    rec_ignore=clase.parent_recurrencia
-                ):
-                    messages.error(request, "La edición se superpone con otra clase.")
-                    return render(request, 'apps/scg_app/clase_edit.html', context)
+                    rec_ignore=clase.parent_recurrencia):
+
+                    messages.error(
+                        request, "La edición se superpone con otra clase.")
+                    return render(request, template, context)
 
                 clase.modificada = True
-                messages.success(request, f'La clase ha sido modificada como excepción a la serie.')
+                messages.success(
+                    request,
+                    f'La clase ha sido modificada como excepción a la serie.')
             else:
                 clase.modificada = False
                 messages.success(request, f'La clase ha sido modificada.')
@@ -101,12 +105,12 @@ def clase_edit(request, pk, context=None):
         clase.save()
 
         context = context or {'form': form}
-        return render(request, 'apps/scg_app/clase_edit.html', context)
+        return render(request, template, context)
 
     form = ClaseUpdForm(instance=clase)
     context = context or {'form': form}
 
-    return render(request, 'apps/scg_app/clase_edit.html', context)
+    return render(request, template, context)
 
 # Create your views here.
 def check_admin(user):
@@ -407,6 +411,7 @@ def generar_saldo(request, context=None):
 def programar(request, context=None):
     """ create a Recurrencia and classes with corresponding data """
 
+    template = "apps/scg_app/create/programacion.html"
     form = RecurrenciaForm(request.POST if request.method == 'POST' else None)
     context = context or {'form': form, 'search_data': {}}
 
@@ -419,9 +424,11 @@ def programar(request, context=None):
         }
         context["search_data"] = search_data
 
-        if "empleados-results" and "actividades-results" and "sedes-results" not in request.POST.keys():
-                messages.warning(request, "Busque y seleccione los datos en desplegables.")
-                return render(request, "apps/scg_app/create/programacion.html", context)
+        if ("empleados-results" and "actividades-results" and 
+                "sedes-results" not in request.POST.keys()):
+            messages.warning(
+                request, "Busque y seleccione los datos en desplegables.")
+            return render(request, template, context)
 
         try:    #process data geted by API
             fields = {
@@ -439,34 +446,41 @@ def programar(request, context=None):
             context["sede_selected"] = fields.get("sede")
         except:
             messages.error(request, "Error en campos de búsqueda.")
-            return render(request, "apps/scg_app/create/programacion.html", context)
+            return render(request, template, context)
 
         ###validate info and process more data
         if not form.is_valid():
             messages.error(request, "Error en datos del formulario.")
-            return render(request, "apps/scg_app/create/programacion.html", context)
+            return render(request, template, context)
 
         fields.update({
             #"dia_semana": form.cleaned_data["dia_semana"],
             "weekdays": form.cleaned_data["weekdays"],
-            "fecha_desde": datetime.date.fromisoformat(form.cleaned_data["fecha_desde"]), 
-            "fecha_hasta": datetime.date.fromisoformat(form.cleaned_data["fecha_hasta"]), 
-            "horario_desde": form.cleaned_data["horario_desde"].replace(second=0, microsecond=0),
-            "horario_hasta": form.cleaned_data["horario_hasta"].replace(second=0, microsecond=0),
+            "fecha_desde": datetime.date.fromisoformat(
+                form.cleaned_data["fecha_desde"]),
+            "fecha_hasta": datetime.date.fromisoformat(
+                form.cleaned_data["fecha_hasta"]),
+            "horario_desde": form.cleaned_data["horario_desde"].replace(
+                second=0, microsecond=0),
+            "horario_hasta": form.cleaned_data["horario_hasta"].replace(
+                second=0, microsecond=0),
         })
 
         ### dates validate
         if fields["fecha_hasta"] < datetime.date.today() and not settings.DEBUG:
-            messages.error(request, "No se pueden programar clases para fechas pasadas.")
-            return render(request, "apps/scg_app/create/programacion.html", context)
+            messages.error(
+                request, "No se pueden programar clases para fechas pasadas.")
+            return render(request, template, context)
 
         if fields["fecha_desde"] >= fields["fecha_hasta"]:
-            messages.error(request, "La fecha de fin debe ser mayor a la de inicio.")
-            return render(request, "apps/scg_app/create/programacion.html", context)
+            messages.error(
+                request, "La fecha de fin debe ser mayor a la de inicio.")
+            return render(request, template, context)
 
         if fields["horario_desde"] >= fields["horario_hasta"]:
-            messages.error(request, "La hora de fin debe ser mayor a la de inicio.")
-            return render(request, "apps/scg_app/create/programacion.html", context)
+            messages.error(
+                request, "La hora de fin debe ser mayor a la de inicio.")
+            return render(request, template, context)
 
         if not settings.DEBUG:
             if not Saldo.objects.filter(
@@ -475,8 +489,10 @@ def programar(request, context=None):
                 desde__lte=fields["fecha_desde"],
                 hasta__gte=fields["fecha_hasta"]
             ).exists():
-                messages.error(request, f'No hay saldos para la actividad en la sede seleccionada.')
-                return render(request, "apps/scg_app/create/programacion.html", context)
+                messages.error(
+                    request,
+                    f'No hay saldos para la actividad en la sede seleccionada.')
+                return render(request, template, context)
 
         #check if overlaps with another exist rec
         overlays = Recurrencia.check_overlap(
@@ -488,8 +504,10 @@ def programar(request, context=None):
             hora_end = fields["horario_hasta"]
         )
         if overlays:
-            messages.error(request, f'La programación se superpone con {overlays} ya creada/s.')
-            return render(request, "apps/scg_app/create/programacion.html", context)
+            messages.error(
+                request,
+                f'La programación se superpone con {overlays} ya creada/s.')
+            return render(request, template, context)
 
         ### check if period is locked
         period_locked = Periodo.check_overlap(
@@ -501,7 +519,7 @@ def programar(request, context=None):
             messages.error(
                 request, f'La programación se solapa con un periodo bloqueado.')
             return render(
-                request, "apps/scg_app/create/programacion.html", context)
+                request, template, context)
 
         #after of security checks
         rec = Recurrencia.objects.create(
@@ -526,21 +544,25 @@ def programar(request, context=None):
 
         #checks saldos
         if not Saldo.check_saldos(
-            fields["sede"], fields["actividad"], 
-            fields["fecha_desde"], fields["fecha_hasta"]
-        ):
-            messages.warning(request, 'Ya no dispone de saldo en periodos puntuales.')
+                fields["sede"], fields["actividad"], 
+                fields["fecha_desde"], fields["fecha_hasta"]):
+            messages.warning(
+                request, 'Ya no dispone de saldo en periodos puntuales.')
 
         if _not_success:
-            messages.warning(request, 'Programación creada pero no se crearon clases puntuales.')
+            messages.warning(
+                request,
+                'Programación creada pero no se crearon clases puntuales.')
         elif _rejecteds:
-            messages.warning(request, 
-                'No se crearon algunas clases porque el empleado no estaba disponible ciertos días y horarios.'
+            messages.warning(
+                request, 
+                'No se crearon algunas clases porque el empleado no estaba \
+                disponible ciertos días y horarios.'.replace('\t', '')
             )
 
         messages.success(request, "Programación generada!")
 
-    return render(request, "apps/scg_app/create/programacion.html", context)
+    return render(request, template, context)
 
 @login_required
 def programacion_update(request, pk, context=None):
@@ -584,19 +606,23 @@ def programacion_update(request, pk, context=None):
         }
         
         if fields.get("fecha_hasta") < datetime.date.today() and not settings.DEBUG:
-            messages.error(request, "No se pueden programar clases para fechas pasadas.")
+            messages.error(
+                request, "No se pueden programar clases para fechas pasadas.")
             return render(request, template, context)
 
         if fields.get("fecha_desde") >= fields.get("fecha_hasta"):
-            messages.error(request, "La fecha de fin debe ser mayor a la de inicio.")
+            messages.error(
+                request, "La fecha de fin debe ser mayor a la de inicio.")
             return render(request, template, context)
 
         if fields.get("horario_desde") >= fields.get("horario_hasta"):
-            messages.error(request, "La hora de fin debe ser mayor a la de inicio.")
+            messages.error(
+                request, "La hora de fin debe ser mayor a la de inicio.")
             return render(request, template, context)
 
         if fields.get("fecha_desde") < old_rec.fecha_desde:
-            messages.error(request, "No se puede extender una programación hacia atrás.")
+            messages.error(
+                request, "No se puede extender una programación hacia atrás.")
             return render(request, template, context)
 
         overlays = Recurrencia.check_overlap(
@@ -610,7 +636,9 @@ def programacion_update(request, pk, context=None):
         )
 
         if overlays:
-            messages.error(request, f'La programación se superpone con {overlays} ya creada/s.')
+            messages.error(
+                request,
+                f'La programación se superpone con {overlays} ya creada/s.')
             return render(request, template, context)
 
         ### dates actions ###
@@ -644,13 +672,15 @@ def programacion_update(request, pk, context=None):
 
         ### weekdays actions ###
         if fields.get("weekdays") != old_rec.weekdays:
-            to_delete = list(set(old_rec.weekdays) - set(fields.get("weekdays")))
-            Clase.objects.filter(parent_recurrencia=old_rec, dia_semana__in=to_delete).delete()
+            to_delete = set(old_rec.weekdays) - set(fields.get("weekdays"))
+            Clase.objects.filter(
+                parent_recurrencia=old_rec, dia_semana__in=list(to_delete)
+            ).delete()
 
         ### time actions ###
         exis_overlaps_classes = False
         if (fields.get("horario_desde") != old_rec.horario_desde or
-            fields.get("horario_hasta") != old_rec.horario_hasta):
+                fields.get("horario_hasta") != old_rec.horario_hasta):
 
             clases_to_edit = Clase.objects.filter(parent_recurrencia=old_rec)
 
@@ -680,7 +710,8 @@ def programacion_update(request, pk, context=None):
         ### create differences ###
         _not_success, _rejecteds, _creadas = False, False, 0
         for dia in fields["weekdays"]:
-            success, rejected, cant_creadas = generar_clases(fields, dia, rec, editing=True)
+            success, rejected, cant_creadas = generar_clases(
+                fields, dia, rec, editing=True)
 
             #update status vars
             _not_success = True if not success else _not_success
@@ -691,7 +722,8 @@ def programacion_update(request, pk, context=None):
             fields["sede"], fields["actividad"], 
             fields["fecha_desde"], fields["fecha_hasta"]
         ):
-            messages.warning(request, 'Ya no dispone de saldo en periodos puntuales.')
+            messages.warning(
+                request, 'Ya no dispone de saldo en periodos puntuales.')
 
         ### Recurrencia update ###
         ### after of all security checks
@@ -760,13 +792,12 @@ class ClasesView(LoginRequiredMixin, ListView):
     paginate_by = 10
 
     #ordering = ['fecha']
-    results_per_page = 10
+    results_pp = 10 #results per page
 
     def post(self, request, *args, **kwargs):
         """ return json format for ajax request """
 
-        self.results_per_page = int(request.POST.get('rpp')) or self.results_per_page
-        #print(request.POST.get('rpp'))
+        self.results_pp = int(request.POST.get('rpp')) or self.results_pp
 
         form = FiltroForm(request.POST)
         if not form.is_valid():
@@ -852,7 +883,9 @@ class ClasesView(LoginRequiredMixin, ListView):
 
         #get ordering data
         order_by = request.POST.get('order_by', None)
-        order_by = [_order.replace("order_", "", 1) for _order in order_by.split(",")] if order_by else None
+        order_by = [
+            _order.replace("order_", "", 1) for _order in order_by.split(",")
+        ] if order_by else None
         order_by = order_by if order_by else ('fecha',)
 
         #add all the filters with and critery
@@ -868,8 +901,8 @@ class ClasesView(LoginRequiredMixin, ListView):
         except:
             page = 1
 
-        reg_ini = (page - 1) * self.results_per_page
-        reg_end = page * self.results_per_page
+        reg_ini = (page - 1) * self.results_pp
+        reg_end = page * self.results_pp
 
         #security validate
         reg_ini = 0 if reg_ini > total_regs else reg_ini
@@ -898,18 +931,20 @@ class ClasesView(LoginRequiredMixin, ListView):
 
         return JsonResponse({
             "results": results,
-            "pages": math.ceil(total_regs/self.results_per_page),
+            "pages": math.ceil(total_regs/self.results_pp),
             "page": page
         })
 
 
     def get_queryset(self):
-        qs = Clase.objects.filter(fecha__gte=datetime.date.today()).order_by('fecha')
+        qs = Clase.objects.filter(
+            fecha__gte=datetime.date.today()).order_by('fecha')
         return qs
 
     def get_context_data(self, *args, **kwargs):     
         context = super().get_context_data(*args, **kwargs)
-        context["form"] = context.get("form") or FiltroForm(self.request.POST if self.request.method == 'POST' else None)
+        context["form"] = context.get("form") or FiltroForm(
+            self.request.POST if self.request.method == 'POST' else None)
         return context
 
 @login_required
@@ -927,19 +962,23 @@ def action_process(request, context=None):
         ids = get_ids(request.POST.keys())
 
         if not ids:
-            messages.error(request, "Debe seleccionar uno o más registros para ejecutar una acción.")
+            messages.error(
+                request,
+                "Seleccione uno o más registros para ejecutar una acción.")
             return redirect('clases_view')
 
         ### actions ###
         if _accion == 'ver_certificados':
             if len(ids) != 1: 
-                messages.error(request, "Debe seleccionar solo un registro para editarlo.")
+                messages.error(
+                    request, "Debe seleccionar solo un registro para editarlo.")
                 return redirect('clases_view')
             return redirect('certificados_list', id_clase=ids[0])
 
         if _accion == 'editar_clases':
             if len(ids) != 1: 
-                messages.error(request, "Debe seleccionar solo un registro para editarlo.")
+                messages.error(
+                    request, "Debe seleccionar solo un registro para editarlo.")
                 return redirect('clases_view')
             return redirect('clase_update', pk=ids[0])
 
@@ -948,7 +987,9 @@ def action_process(request, context=None):
 
         if _accion == 'asignar_reemplazo':
             if len(ids) != 1: 
-                messages.error(request, "Debe seleccionar solo un registro para asignar un reemplazo.")
+                messages.error(
+                    request,
+                    "Seleccione solo un registro para asignar un reemplazo.")
                 return redirect('clases_view')
             return redirect('asignar_reemplazo', id_clase=ids[0])
 
@@ -957,7 +998,9 @@ def action_process(request, context=None):
 
         if _accion == 'gestion_recurrencia':
             if len(ids) != 1:
-                messages.error(request, "Debe seleccionar solo una clase para gestionar su programación.")
+                messages.error(
+                    request,
+                    "Seleccione solo una clase para gestionar su programación.")
                 return redirect('clases_view')
 
             # get the class if all verifications were correct
@@ -967,12 +1010,18 @@ def action_process(request, context=None):
 
         if _accion == 'gestion_marcajes':
             if len(ids) != 1:
-                messages.error(request, "Debe seleccionar solo una clase para ver los marcajes del día.")
+                messages.error(
+                    request,
+                    "Seleccione solo una clase para ver los marcajes del día.")
                 return redirect('clases_view')
 
             # get the class if all verifications were correct
             clase = get_object_or_404(Clase, pk=ids[0])
-            return redirect('gestion_marcajes', id_empleado=clase.empleado.id, fecha=clase.fecha)
+            return redirect(
+                'gestion_marcajes',
+                id_empleado=clase.empleado.id,
+                fecha=clase.fecha
+            )
 
     # if accessed by url or method is not POST
     messages.error(request, "Acción o método no soportado.")
@@ -1009,11 +1058,13 @@ def confirmar_clases(request, _ids=None, context=None):
     if _error:
         messages.error(
             request, 
-            'No se {0} confirmar {1} clase{2} porque esta{3} bloqueada{2} o cancelada{2}.'.format(
+            'No se {} confirmar {} {} porque {} {} o {}.'.format(
                 "pudieron" if len(_error) > 1 else "pudo",
                 len(_error),
-                "s" if len(_error) > 1 else "",
-                "n" if len(_error) > 1 else "",
+                "clases" if len(_error) > 1 else "clase",
+                "estan" if len(_error) > 1 else "esta",
+                "bloqueadas" if len(_error) > 1 else "bloqueada",
+                "canceladas" if len(_error) > 1 else "cancelada",
             )
         )
 
@@ -1027,12 +1078,15 @@ def confirmar_clases(request, _ids=None, context=None):
 def gestion_ausencia(request, ids_clases=None, context=None):
     """
         Permite asignar un motivo, adjunto y un comentario para una clase.
-        Si éste recibe un adjunto, crea un Certificado con el archivo y motivo seleccionado.
+        Si éste recibe un adjunto, crea un Certificado con el archivo y motivo 
+        seleccionado.
     """
+
+    template = "apps/scg_app/gestion_ausencia.html"
 
     #in errors only
     if not ids_clases:
-        return render(request, "apps/scg_app/gestion_ausencia.html", context)
+        return render(request, template, context)
 
     if request.method == 'POST':
         form = MotivoAusenciaForm(request.POST, request.FILES)
@@ -1060,21 +1114,22 @@ def gestion_ausencia(request, ids_clases=None, context=None):
     #if not exists classes to apply
     if not clases_to_edit:
         context["locked"] = True
-        return render(request, "apps/scg_app/gestion_ausencia.html", context)
+        return render(request, template, context)
 
     context["clases_to_edit"] = clases_to_edit
 
     if request.method == 'POST':
         if not form.is_valid():
             messages.error(request, "Error de formulario.")
-            return render(request, "apps/scg_app/gestion_ausencia.html", context)
+            return render(request, template, context)
 
         motivo_ausencia = form.cleaned_data["motivo"]
         adjunto = form.cleaned_data["adjunto"]
 
         #if a file was added
         if adjunto:
-            certif = Certificado.objects.create(file=adjunto, motivo=motivo_ausencia)
+            certif = Certificado.objects.create(
+                file=adjunto, motivo=motivo_ausencia)
             certif.clases.set(clases_to_edit)
 
         #assign absence for each class
@@ -1085,14 +1140,16 @@ def gestion_ausencia(request, ids_clases=None, context=None):
 
         messages.success(request, "Acción finalizada.")
 
-    return render(request, "apps/scg_app/gestion_ausencia.html", context)
+    return render(request, template, context)
 
 @login_required
 def asignar_reemplazo(request, id_clase=None, context=None):
     """ Allows assign and delete a replacement to a class. """
 
+    template = "apps/scg_app/gestion_reemplazo.html"
+
     if not id_clase:
-        return render(request, "apps/scg_app/gestion_reemplazo.html", context)
+        return render(request, template, context)
 
     context = context or {'search_data': {}}
 
@@ -1103,7 +1160,7 @@ def asignar_reemplazo(request, id_clase=None, context=None):
         messages.error(
             request,
             "El periodo esta bloqueado y la clase no puede ser editada.")
-        return render(request, 'apps/scg_app/gestion_reemplazo.html', context)
+        return render(request, template, context)
 
     if request.method == 'POST':
         
@@ -1119,7 +1176,7 @@ def asignar_reemplazo(request, id_clase=None, context=None):
                 context["reemplazo_selected"] = reemplazante
             except:
                 messages.error(request, "Error en campos de búsqueda.")
-                return render(request, "apps/scg_app/gestion_reemplazo.html", context)
+                return render(request, template, context)
         else:
             reemplazante = None
 
@@ -1128,18 +1185,21 @@ def asignar_reemplazo(request, id_clase=None, context=None):
             clase_to_edit.save()
             clase_to_edit.update_status()
             messages.success(request, "Se ha borrado el reemplazo.")
-            return render(request, "apps/scg_app/gestion_reemplazo.html", context)
+            return render(request, template, context)
 
         if clase_to_edit.empleado == reemplazante:
-            messages.error(request, "El reemplazante no puede ser el empleado asignado.")
-            return render(request, "apps/scg_app/gestion_reemplazo.html", context)
+            messages.error(
+                request, "El reemplazante no puede ser el empleado asignado.")
+            return render(request, template, context)
 
         if reemplazante.is_busy(fecha=clase_to_edit.fecha, 
                                 inicio=clase_to_edit.horario_desde, 
                                 fin=clase_to_edit.horario_hasta
         ):
-            messages.error(request, "El reemplazante no está disponible en el rango horario de esta clase.")
-            return render(request, "apps/scg_app/gestion_reemplazo.html", context)
+            messages.error(
+                request,
+                "El reemplazante no está disponible en este rango horario")
+            return render(request, template, context)
 
         clase_to_edit.reemplazo = reemplazante
         clase_to_edit.save()
@@ -1147,14 +1207,17 @@ def asignar_reemplazo(request, id_clase=None, context=None):
 
         messages.success(request, "Reemplazo cargado con éxito!")
 
-    return render(request, "apps/scg_app/gestion_reemplazo.html", context)
+    return render(request, template, context)
 
 @login_required
 def gestion_marcajes(request, id_empleado=None, fecha=None, context=None):
     """  
-        It shows the classes of the day of an employee and allows adding and removing markings. 
+        It shows the classes of the day of an employee and allows adding and 
+        removing markings. 
         It is also possible to recalculate the managed day.
     """
+
+    template = "apps/scg_app/gestion_marcajes.html"
 
     form = MarcajeForm(request.POST if request.method == "POST" else None)
     context = context or {'form': form}
@@ -1164,12 +1227,12 @@ def gestion_marcajes(request, id_empleado=None, fecha=None, context=None):
         fecha = datetime.date.fromisoformat(fecha)
     except:
         messages.error(request, "Error en parámetros recibidos")
-        return render(request, "apps/scg_app/gestion_marcajes.html", context)
+        return render(request, template, context)
 
     empleado = Empleado.objects.filter(pk=id_empleado)
     if not empleado:
         messages.error(request, "El empleado no existe")
-        return render(request, "apps/scg_app/gestion_marcajes.html", context)
+        return render(request, template, context)
 
     empleado = empleado.first() #checked what exists
     day_classes = Clase.objects.filter(
@@ -1186,7 +1249,7 @@ def gestion_marcajes(request, id_empleado=None, fecha=None, context=None):
     if Periodo.blocked_day(fecha):
         messages.error(request, "El día esta bloqueado y no puede ser editado.")
         context["day_locked"] = True
-        return render(request, "apps/scg_app/gestion_marcajes.html", context)
+        return render(request, template, context)
 
     if request.method == 'POST':
 
@@ -1194,7 +1257,7 @@ def gestion_marcajes(request, id_empleado=None, fecha=None, context=None):
             # recalculate blocks
             if not BloqueDePresencia.recalcular_bloques(empleado, fecha):
                 messages.error(request, "Hubo un error recalculando el día.")
-                return render(request, "apps/scg_app/gestion_marcajes.html", context)
+                return render(request, template, context)
 
             #update status
             [clase.update_status() for clase in day_classes]
@@ -1203,24 +1266,27 @@ def gestion_marcajes(request, id_empleado=None, fecha=None, context=None):
                 empleado__pk=id_empleado, fecha=fecha
             ).order_by('inicio')
             context["day_blocks"] = day_blocks
-            messages.success(request, "Se recalcularon las clases y bloques del día.")
-            return render(request, "apps/scg_app/gestion_marcajes.html", context)
+            messages.success(
+                request, "Se recalcularon las clases y bloques del día.")
+            return render(request, template, context)
 
         #check valid form
         if not form.is_valid():
             messages.error(request, "Error de formulario.")
-            return render(request, "apps/scg_app/gestion_marcajes.html", context)
+            return render(request, template, context)
 
         if not form.cleaned_data["hora_marcaje"]:
-            messages.error(request, "Ingrese un horario para agregar el marcaje.")
-            return render(request, "apps/scg_app/gestion_marcajes.html", context)
+            messages.error(
+                request, "Ingrese un horario para agregar el marcaje.")
+            return render(request, template, context)
 
         hora_marcaje = form.cleaned_data["hora_marcaje"].replace(second=0)
 
-        #marc_exists = Marcaje.objects.filter(hora=hora_marcaje)
-        if Marcaje.objects.filter(fecha=fecha, hora=hora_marcaje, empleado=empleado):   #clocking exists
+        #clocking exists
+        if Marcaje.objects.filter(
+                fecha=fecha, hora=hora_marcaje, empleado=empleado):
             messages.error(request, "Ya existe un marcaje en este horario.")
-            return render(request, "apps/scg_app/gestion_marcajes.html", context)
+            return render(request, template, context)
 
         
         try:    #trying save cloocking
@@ -1231,22 +1297,23 @@ def gestion_marcajes(request, id_empleado=None, fecha=None, context=None):
             nuevo_marcaje.save()
         except:
             messages.error(request, "Hubo un error agregando el marcaje.")
-            return render(request, "apps/scg_app/gestion_marcajes.html", context)
+            return render(request, template, context)
 
         # recalculate blocks
         if not BloqueDePresencia.recalcular_bloques(empleado, fecha):
             messages.error(request, "Hubo un error recalculando el día.")
-            return render(request, "apps/scg_app/gestion_marcajes.html", context)
+            return render(request, template, context)
 
         #update status
         [clase.update_status() for clase in day_classes]
 
         #refresh context
-        day_blocks = BloqueDePresencia.objects.filter(empleado__pk=id_empleado, fecha=fecha).order_by('inicio')
+        day_blocks = BloqueDePresencia.objects.filter(
+            empleado__pk=id_empleado, fecha=fecha).order_by('inicio')
         context["day_blocks"] = day_blocks
-        messages.success(request, "El marcaje se ha agregado y el día se ha recalculado correctamente.")
+        messages.success(request, "Marcaje agregado y día recalculado.")
 
-    return render(request, "apps/scg_app/gestion_marcajes.html", context)
+    return render(request, template, context)
 
 ###################
 ### front pulls ###
@@ -1258,10 +1325,12 @@ def get_nt_empleados(request, context=None):
 
     try: 
         Empleado.update_from_nettime()  # internal method
-        messages.success(request, "Se actualizaron los empleados desde netTime.")
+        messages.success(request, "Se actualizaron empleados desde netTime.")
 
     except ConnectionError:
-        messages.error(request, "No se pudo establecer conexión con el servidor de netTime.")
+        messages.error(
+            request,
+            "No se pudo establecer conexión con el servidor de netTime.")
 
     except Exception as error:
         messages.error(request, f"{error}")
@@ -1277,7 +1346,9 @@ def get_nt_sedes(request, context=None):
         messages.success(request, "Se actualizaron las sedes desde NetTime.")
 
     except ConnectionError:
-        messages.error(request, "No se pudo establecer conexión con el servidor de netTime.")
+        messages.error(
+            request,
+            "No se pudo establecer conexión con el servidor de netTime.")
 
     except Exception as error:
         messages.error(request, f"{error}")
@@ -1287,15 +1358,18 @@ def get_nt_sedes(request, context=None):
 
 @user_passes_test(check_admin)
 def get_nt_incidencias(request, context=None):
-    """ use pull_netTime() for get all MotivoAusencia's from netTime webservice """
+    """ use pull_netTime() for get all MotivoAusencia's from netTime 
+        webservice """
 
     try:
         MotivoAusencia.update_from_nettime()
-        messages.success(request, "Se actualizaron los motivos de ausencia desde NetTime.")
+        messages.success(
+            request, "Se actualizaron los motivos de ausencia desde NetTime.")
 
     except ConnectionError:
         messages.error(
-            request, "No se pudo establecer conexión con el servidor de netTime.")
+            request,
+            "No se pudo establecer conexión con el servidor de netTime.")
 
     except Exception as error:
         messages.error(request, f"{error}")

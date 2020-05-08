@@ -21,7 +21,6 @@ class Periodo(models.Model):
 
     desde = models.DateField(blank=True)
     hasta = models.DateField(blank=True)
-
     bloqueado = models.BooleanField(blank=True, default=True)
 
     @classmethod
@@ -156,7 +155,8 @@ class Rol(models.Model):
 
 class Escala(models.Model):
     nombre = models.CharField(max_length=30)
-    grupo = models.ForeignKey('GrupoActividad', on_delete=models.SET_NULL, null=True, blank=True)
+    grupo = models.ForeignKey(
+        'GrupoActividad', on_delete=models.SET_NULL, null=True, blank=True)
     monto_hora = models.CharField(max_length=10)
 
     @property
@@ -196,7 +196,8 @@ class GrupoActividad(models.Model):
 
 class Actividad(models.Model):
     nombre = models.CharField(max_length=100)
-    grupo = models.ForeignKey('GrupoActividad', on_delete=models.SET(''), null=True, blank=True)
+    grupo = models.ForeignKey(
+        'GrupoActividad', on_delete=models.SET(''), null=True, blank=True)
 
     @property
     def pronombre(self):
@@ -220,7 +221,8 @@ class MotivoAusencia(models.Model):
         validators=[MinValueValidator(1)],
         unique=True,
     )
-    nombre = models.CharField(max_length=50, unique=True, blank=False, null=False)
+    nombre = models.CharField(
+        max_length=50, unique=True, blank=False, null=False)
     genera_pago = models.BooleanField(blank=True, default=False)
 
     @classmethod
@@ -310,8 +312,10 @@ class Empleado(models.Model):
     legajo = models.CharField(max_length=10, null=True, blank=True)
     empresa = models.CharField(max_length=10, null=True, blank=True)
 
-    tipo = models.ForeignKey('TipoContrato', on_delete=models.CASCADE, null=True, blank=True)
-    liquidacion = models.ForeignKey('TipoLiquidacion', on_delete=models.CASCADE, null=True, blank=True)
+    tipo = models.ForeignKey(
+        'TipoContrato', on_delete=models.CASCADE, null=True, blank=True)
+    liquidacion = models.ForeignKey(
+        'TipoLiquidacion', on_delete=models.CASCADE, null=True, blank=True)
 
     escala = models.ManyToManyField('Escala')
 
@@ -387,7 +391,10 @@ class Empleado(models.Model):
         return self.__str__()
 
     def __str__(self):
-        return f'{self.apellido}, {self.nombre}' if {self.nombre} else f'{self.apellido}'
+        return '{}, {}'.format(
+            self.apellido,
+            self.nombre if self.nombre else ''
+        )
 
     class Meta:
         verbose_name = "Empleado"
@@ -395,11 +402,11 @@ class Empleado(models.Model):
         get_latest_by = "id"
 
 class Sede(models.Model):
-    id_netTime = models.PositiveIntegerField(default=0,
+    id_netTime = models.PositiveIntegerField(
+        default=0,
         validators=[MinValueValidator(1)],
         unique=True,
-        help_text="Para matchear marcajes e importaciones"
-    )
+        help_text="Para matchear marcajes e importaciones")
     nombre = models.CharField(max_length=40)
     tipo = models.CharField(max_length=30, default="Física", blank=True)
 
@@ -513,17 +520,18 @@ class Saldo(models.Model):
     @classmethod
     def check_saldos(cls, _sede, _actividad, _desde, _hasta):
         _saldos = cls.objects.filter(
-            sede = _sede,
-            actividad = _actividad,
-            desde__gte = _desde,
-            hasta__lte = _hasta,
-        )
-        saldo_a_favor = True if _saldos else False
+            sede=_sede,
+            actividad=_actividad,
+            desde__gte=_desde,
+            hasta__lte=_hasta)
+        
+        #saldo_a_favor
+        saf = True if _saldos else False
 
         for _saldo in _saldos:
-            saldo_a_favor = False if _saldo.saldo_disponible < 1 else saldo_a_favor
+            saf = False if _saldo.saldo_disponible < 1 else saf
 
-        return saldo_a_favor
+        return saf
 
     @property
     def pronombre(self):
@@ -534,7 +542,12 @@ class Saldo(models.Model):
         return self.__str__()
 
     def __str__(self):
-        return f'{self.saldo_disponible} de {self.saldo_asignado} para {self.actividad.nombre} en {self.sede.nombre}'
+        return '{} de {} para {} en {}'.format(
+            self.saldo_disponible,
+            self.saldo_asignado,
+            self.actividad.nombre,
+            self.sede.nombre
+        )
 
     class Meta:
         verbose_name = "Saldo"
@@ -546,12 +559,14 @@ class Recurrencia(models.Model):
     fecha_hasta = models.DateField(blank=True)
     horario_desde = models.TimeField(default=timezone.now)
     horario_hasta = models.TimeField(blank=True)
-    empleado = models.ForeignKey('Empleado', on_delete=models.SET(''), null=True)
-    actividad = models.ForeignKey('Actividad', on_delete=models.SET(''), null=True)
+    empleado = models.ForeignKey(
+        'Empleado', on_delete=models.SET(''), null=True)
+    actividad = models.ForeignKey(
+        'Actividad', on_delete=models.SET(''), null=True)
     sede = models.ForeignKey('Sede', on_delete=models.SET(''), null=True)
-
-    weekdays = MultiSelectField('Días de la semana', choices=settings.DIA_SEMANA_CHOICES, null=True, blank=True)
-
+    weekdays = MultiSelectField(
+        'Días de la semana', choices=settings.DIA_SEMANA_CHOICES,
+        null=True, blank=True)
     locked = models.BooleanField(null=True, blank=True, default=False)
 
     def get_dias_str(self):
@@ -562,7 +577,8 @@ class Recurrencia(models.Model):
         return utils.get_dia_display(*self.weekdays)
 
     @classmethod
-    def check_overlap(cls, employee, weekdays, desde, hasta, hora_ini, hora_end, ignore=None):
+    def check_overlap(
+        cls, employee, weekdays, desde, hasta, hora_ini, hora_end, ignore=None):
         """ informs if a period generates an overlap with one already created """
         
         ### dates ###
@@ -630,11 +646,13 @@ class Recurrencia(models.Model):
         return self.__str__()
 
     def __str__(self):
-        return f'Los {self.get_dias_str()} \
-            de {self.horario_desde.strftime("%H:%M")} a \
-            {self.horario_hasta.strftime("%H:%M")}, \
-            desde el {self.fecha_desde} hasta el \
-            {self.fecha_hasta} para el empleado {self.empleado}'.replace("\t", "")
+        return 'Los {} de {} a {}, desde {} hasta {} para {}'.format(
+            self.get_dias_str(),
+            self.horario_desde.strftime("%H:%M"),
+            self.horario_hasta.strftime("%H:%M"),
+            self.fecha_desde, self.fecha_hasta,
+            self.empleado
+        )
 
     class Meta:
         verbose_name = "Recurrencia"
@@ -642,33 +660,47 @@ class Recurrencia(models.Model):
         get_latest_by = "id"
 
 class Clase(models.Model):
-    parent_recurrencia = models.ForeignKey('Recurrencia', on_delete=models.CASCADE, null=True)
+    parent_recurrencia = models.ForeignKey(
+        'Recurrencia', on_delete=models.CASCADE, null=True)
     creacion = models.DateTimeField(default=timezone.now)
-    dia_semana = models.CharField(max_length=9, choices=settings.DIA_SEMANA_CHOICES, blank=True)
+    dia_semana = models.CharField(
+        max_length=9, choices=settings.DIA_SEMANA_CHOICES, blank=True)
     fecha = models.DateField(blank=True, default=timezone.now)
     horario_desde = models.TimeField(blank=True, default=timezone.now)
     horario_hasta = models.TimeField(blank=True, default=timezone.now)
     actividad = models.ForeignKey('Actividad', on_delete=models.SET(''))
     sede = models.ForeignKey('Sede', on_delete=models.SET(''))
 
-    empleado = models.ForeignKey('Empleado', on_delete=models.SET(''), related_name='empleado')
-    reemplazo = models.ForeignKey('Empleado', blank=True, null=True, on_delete=models.SET(''), related_name='reemplazo')
-    ausencia = models.ForeignKey('MotivoAusencia', blank=True, null=True, on_delete=models.SET(''), related_name='ausencia')
+    empleado = models.ForeignKey(
+        'Empleado', on_delete=models.SET(''), related_name='empleado')
+    reemplazo = models.ForeignKey(
+        'Empleado', blank=True, null=True,
+        on_delete=models.SET(''),
+        related_name='reemplazo')
+    ausencia = models.ForeignKey(
+        'MotivoAusencia', blank=True, null=True, on_delete=models.SET(''),
+        related_name='ausencia')
     confirmada = models.BooleanField(blank=True, default=False)
 
     modificada = models.BooleanField(blank=True, default=False)
-    estado = models.CharField(max_length=1, choices=settings.ESTADOS_CHOICES, null=True, blank=True, default=settings.ESTADOS_CHOICES[0][0])
-    presencia = models.CharField(max_length=12, choices=settings.PRESENCIA_CHOICES, null=True, blank=True, default=settings.PRESENCIA_CHOICES[0][0])
-    comentario = models.CharField(max_length=1000, blank=True, help_text="Aclaraciones varias")
+    estado = models.CharField(
+        max_length=1, choices=settings.ESTADOS_CHOICES, null=True, blank=True,
+        default=settings.ESTADOS_CHOICES[0][0])
+    presencia = models.CharField(
+        max_length=12, choices=settings.PRESENCIA_CHOICES, null=True,
+        blank=True, default=settings.PRESENCIA_CHOICES[0][0])
+    comentario = models.CharField(
+        max_length=1000, blank=True, help_text="Aclaraciones varias")
 
     locked = models.BooleanField(blank=True, default=False)
 
     # class ReportBuilder:
-    #     #exclude = ()  # Lists or tuple of excluded fields
-    #     fields = ('get_dia_semana_display',)   # Explicitly allowed fields
-    #     #extra = ('get_dia_semana_display',)    # List extra fields (useful for methods)
-
-    #adjunto = models.FileField("Adjunto", null=True, blank=True, upload_to='clases/')
+    #     # Lists or tuple of excluded fields
+    #     #exclude = ()
+    #     # Explicitly allowed fields
+    #     fields = ('get_dia_semana_display',)
+    #     # List extra fields (useful for methods)
+    #     #extra = ('get_dia_semana_display',)
 
     @property
     def certificados(self):
@@ -698,9 +730,6 @@ class Clase(models.Model):
         )
         #
         return True if blocks else False
-    #was_made.boolean = True
-    #was_made.short_description = "Realizada"
-    #was_made = property(was_made)
 
     def update_status(self):
         """ update the class status according to all its variables  """
@@ -734,7 +763,7 @@ class Clase(models.Model):
 
     def get_delete_url(self):
         """ construct delete url from current object """
-        return reverse('confirm_delete', 
+        return reverse('confirm_delete',
             kwargs={"model":self.__class__.__name__, "pk":self.id}
         )
 
@@ -743,9 +772,15 @@ class Clase(models.Model):
         return reverse('clases_view')
 
     def __str__(self):
-        return f'{self.actividad.nombre}: el {self.get_dia_semana_display()} {self.fecha} \
-            de {self.horario_desde.strftime("%H:%M")} a {self.horario_hasta.strftime("%H:%M")} \
-            para {self.empleado}'.replace("\t", "")
+
+        return '{}, el {} {} de {} a {} para {}'.format(
+            self.actividad.nombre,
+            self.get_dia_semana_display(),
+            self.fecha,
+            self.horario_desde.strftime("%H:%M"),
+            self.horario_hasta.strftime("%H:%M"),
+            self.empleado
+        )
 
     class Meta:
         verbose_name = "Clase"
@@ -756,17 +791,12 @@ class Clase(models.Model):
 class Marcaje(models.Model):
     empleado = models.ForeignKey('Empleado', on_delete=models.SET(''))
     fecha = models.DateField(blank=True, default=timezone.now)
-    #entrada = models.TimeField(null=True, blank=True)
-    #salida = models.TimeField(null=True, blank=True)
-
     hora = models.TimeField(null=True, blank=True)
-
     locked = models.BooleanField(blank=True, default=False)
 
     @classmethod
     def update_from_nettime(cls):
-        """ 
-            Use pull_clockings() for get all clockings of a employee in a specific period.
+        """ Use pull_clockings() for get all clockings of a employee in a specific period.
             Recalculate presence blocks and class status.
         """
 
@@ -832,27 +862,24 @@ class Marcaje(models.Model):
         )
 
     def __str__(self):
-        return f'{self.empleado} el {self.fecha} a las {self.hora}'
+        return f'{self.empleado}, el {self.fecha} a las {self.hora}'
     class Meta:
         verbose_name = "Marcaje"
         verbose_name_plural = "Marcajes"
         get_latest_by = "hora"
 
 class BloqueDePresencia(models.Model):
-    empleado = models.ForeignKey('Empleado', blank=True, null=True,
-        on_delete=models.CASCADE,
-    )
+    empleado = models.ForeignKey(
+        'Empleado', blank=True, null=True, on_delete=models.CASCADE)
 
     fecha = models.DateField(blank=True, default=timezone.now)
 
-    inicio = models.ForeignKey('Marcaje', 
-        blank=True, null=True, on_delete=models.SET(''),
-        related_name='inicio',
-    )
-    fin = models.ForeignKey('Marcaje', 
-        blank=True, null=True, on_delete=models.SET(''),
-        related_name='fin',
-    )
+    inicio = models.ForeignKey(
+        'Marcaje', blank=True, null=True, on_delete=models.SET(''),
+        related_name='inicio')
+    fin = models.ForeignKey(
+        'Marcaje', blank=True, null=True, on_delete=models.SET(''),
+        related_name='fin')
     
     @classmethod
     def recalcular_bloques(cls, empleado, fecha):
@@ -860,7 +887,8 @@ class BloqueDePresencia(models.Model):
         cls.objects.filter(empleado=empleado, fecha=fecha).delete()
 
         #grouped
-        _day_clockings = Marcaje.objects.filter(empleado=empleado, fecha=fecha).order_by('hora')
+        _day_clockings = Marcaje.objects.filter(
+            empleado=empleado, fecha=fecha).order_by('hora')
         if not _day_clockings:
             return True
 
@@ -894,9 +922,11 @@ class BloqueDePresencia(models.Model):
         return f'Presencia({self.inicio}, {self.fin})'
 
     def __str__(self):
-        return f'Presencia de {self.empleado} el {self.fecha} de \
-            {self.inicio.hora.strftime("%H:%M")} a \
-            {self.fin.hora.strftime("%H:%M")}'.replace('\t','')
+        return 'Presencia de {} el {} de {} a {}'.format(
+            self.empleado,
+            self.fecha,
+            self.inicio.hora.strftime("%H:%M") if self.inicio else '-',
+            self.fin.hora.strftime("%H:%M") if self.fin else '-')
 
 class Certificado(models.Model):
     """ Can contain an attachment for one or more classes.
@@ -943,4 +973,7 @@ class Certificado(models.Model):
         return self.__str__()
 
     def __str__(self):
-        return f'Certificado por {self.motivo.nombre} para {self.clases.count()} clases.'
+        return 'Certificado por {} para {} clases.'.format(
+            self.moitivo.nombre,
+            self.clases.count()
+        )
