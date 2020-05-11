@@ -10,9 +10,9 @@ import math
 #...
 
 ### django ###
-from django.conf import settings
 from django.contrib.auth import login, authenticate
-from django.contrib.auth.decorators import login_required, permission_required, user_passes_test
+from django.contrib.auth.decorators import login_required, \
+    permission_required, user_passes_test
 from django.shortcuts import render, redirect, get_object_or_404
 from requests.exceptions import ConnectionError, HTTPError
 from django.core.paginator import EmptyPage, Paginator
@@ -21,18 +21,19 @@ from django.views.generic.edit import UpdateView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import JsonResponse, Http404
 from django.views.decorators.csrf import csrf_exempt
-
-### own ###
-from scg_app.forms import *
-from scg_app.models import *
 from django.contrib import messages
 from django.apps import apps
+
+### own ###
+from django.conf import settings
+from scg_app.forms import *
+from scg_app.models import *
 import scg_app.tasks as task_mgmt
 
 
 @login_required
 def certificados_list(request, id_clase: int, context=None):
-    """ Lists all the justifications for which files were 
+    """ Lists all the justifications for which files were
         attached with their corresponding reasons.
     """
 
@@ -55,7 +56,7 @@ def certificados_list(request, id_clase: int, context=None):
 
 @login_required
 def clase_edit(request, pk, context=None):
-    """ It lists all the justifications for which files were attached with 
+    """ It lists all the justifications for which files were attached with
         their corresponding reasons.
         Does not allow overlap with a different class.
     """
@@ -86,9 +87,9 @@ def clase_edit(request, pk, context=None):
                 clase.horario_hasta != clase.parent_recurrencia.horario_hasta):
 
                 if Empleado.is_busy(
-                    clase.empleado, clase.fecha, 
-                    clase.horario_desde, clase.horario_hasta, 
-                    rec_ignore=clase.parent_recurrencia):
+                        clase.empleado, clase.fecha, 
+                        clase.horario_desde, clase.horario_hasta,
+                        rec_ignore=clase.parent_recurrencia):
 
                     messages.error(
                         request, "La edición se superpone con otra clase.")
@@ -177,7 +178,7 @@ class RecurrenciasList(LoginRequiredMixin, ListView):
 
 class MotivosAusenciaList(LoginRequiredMixin, ListView):
     """ List MotivosDeAusencia without providing any available action. """
-    
+
     model = MotivoAusencia
     template_name = 'apps/scg_app/list/motivos_ausencia.html'
     context_object_name = 'motivos_list'
@@ -350,12 +351,11 @@ def saldo_update(request, pk, context=None):
         saldo = form.save(commit=False)
 
         if Saldo.check_overlap(
-            _sede=saldo.sede,
-            _actividad=saldo.actividad,
-            _desde=saldo.desde,
-            _hasta=saldo.hasta,
-            id_exclude=saldo.pk
-        ):
+                _sede=saldo.sede,
+                _actividad=saldo.actividad,
+                _desde=saldo.desde,
+                _hasta=saldo.hasta,
+                id_exclude=saldo.pk):
             messages.error(request, 
                 "El periodo se superpone con otro ya creado.")
             return render(request, "apps/scg_app/create/saldo.html", context)
@@ -384,11 +384,10 @@ def generar_saldo(request, context=None):
             return render(request, "apps/scg_app/create/saldo.html", context)
 
         if Saldo.check_overlap(
-            _sede = form.cleaned_data.get("sede"),
-            _actividad = form.cleaned_data.get("actividad"),
-            _desde = form.cleaned_data.get("desde"),
-            _hasta = form.cleaned_data.get("hasta"),
-        ):
+                _sede=form.cleaned_data.get("sede"),
+                _actividad=form.cleaned_data.get("actividad"),
+                _desde=form.cleaned_data.get("desde"),
+                _hasta=form.cleaned_data.get("hasta")):
             messages.error(request, 
                 "El periodo se superpone con otro ya creado.")
             return render(request, "apps/scg_app/create/saldo.html", context)
@@ -484,11 +483,10 @@ def programar(request, context=None):
 
         if not settings.DEBUG:
             if not Saldo.objects.filter(
-                actividad=fields["actividad"],
-                sede=fields["sede"],
-                desde__lte=fields["fecha_desde"],
-                hasta__gte=fields["fecha_hasta"]
-            ).exists():
+                    actividad=fields["actividad"],
+                    sede=fields["sede"],
+                    desde__lte=fields["fecha_desde"],
+                    hasta__gte=fields["fecha_hasta"]).exists():
                 messages.error(
                     request,
                     f'No hay saldos para la actividad en la sede seleccionada.')
@@ -496,12 +494,12 @@ def programar(request, context=None):
 
         #check if overlaps with another exist rec
         overlays = Recurrencia.check_overlap(
-            employee = fields["empleado"],
-            weekdays = fields["weekdays"],
-            desde = fields["fecha_desde"],
-            hasta = fields["fecha_hasta"],
-            hora_ini = fields["horario_desde"],
-            hora_end = fields["horario_hasta"]
+            employee=fields["empleado"],
+            weekdays=fields["weekdays"],
+            desde=fields["fecha_desde"],
+            hasta=fields["fecha_hasta"],
+            hora_ini=fields["horario_desde"],
+            hora_end=fields["horario_hasta"]
         )
         if overlays:
             messages.error(

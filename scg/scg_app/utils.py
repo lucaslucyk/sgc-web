@@ -4,11 +4,13 @@ import datetime
 from django.conf import settings
 
 def grouped(iterable, n=2):
-    """  Agrupa los elementos de un iterable para obtener conjuntos de n elementos """
+    """ Agrupa los elementos de un iterable para obtener conjuntos
+        de n elementos """
+
     aux = iter(iterable)
     return zip(*[aux] * n)
 
-def get_min_offset(_time:datetime.time, _mins:int, _sub=False) -> datetime.time:
+def get_min_offset(_time: datetime.time, _mins: int, _sub=False) -> datetime.time:
     """ return datetime.time object adding mins to hour received """
     fulldate = datetime.datetime(100, 1, 1, _time.hour, _time.minute, _time.second)
     if _sub:
@@ -22,8 +24,7 @@ def get_dia_display(*args):
     return [to_dict.get(str(char)) for char in args]
 
 def pull_netTime(container, _fields=[], _filter=''):
-    """ 
-        Pull from nettime with listfields method,
+    """ Pull from nettime with listfields method,
         Use args how fields and can use filter parameter for specific cases.
     """
 
@@ -48,10 +49,8 @@ def pull_netTime(container, _fields=[], _filter=''):
 
 
 def pull_nt_clockings(_employee, _start, _end, _type):
-    """ 
-        Pull clockings from nettime with Clockings method,
-        Use parameters for get data.
-    """
+    """ Pull clockings from nettime with Clockings method,
+        Use parameters for get data. """
     
     response = []
     try:

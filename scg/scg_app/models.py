@@ -1,19 +1,24 @@
+# -*- coding: utf-8 -*-
+
+### built-in ###
 import os
-from django.conf import settings
-from django.db import models
-from django.utils import timezone
-from django.core.validators import MaxValueValidator, MinValueValidator
-from django.shortcuts import reverse
-
-from django.utils.safestring import mark_safe
-from django.utils.html import escape
-
 import datetime
 from collections import defaultdict
 
-from django.db.models import Q
-from scg_app import utils
+### third ###
 from multiselectfield import MultiSelectField
+#from simple_history.models import HistoricalRecords
+
+### django ###
+from django.db import models
+from django.utils import timezone
+from django.core.validators import MinValueValidator    #, MaxValueValidator
+from django.shortcuts import reverse
+from django.db.models import Q
+
+### own ###
+from scg_app import utils
+from django.conf import settings
 
 class Periodo(models.Model):
     """ To manage available and blocked periods """
@@ -24,7 +29,7 @@ class Periodo(models.Model):
 
     @classmethod
     def check_overlap(cls, _desde, _hasta, id_exclude=None, locked_only=False):
-        """ informs if a period generates an overlap with one already 
+        """ informs if a period generates an overlap with one already
             created """
 
         start_before = Q()
@@ -73,13 +78,6 @@ class Periodo(models.Model):
             clases__in=clases
         ).update(locked=self.bloqueado)
 
-        # for cert in Certificado.objects.filter(clases__in=clases):
-        #     if cert.clases.filter(locked=True):
-        #         cert.locked = True
-        #     else:
-        #         cert.locked = False
-        #     cert.save()
-
         ### recurrencias ###
         r_ids = set(clases.values_list('parent_recurrencia__id', flat=True))
         Recurrencia.objects.filter(pk__in=r_ids).update(locked=self.bloqueado)
@@ -99,9 +97,9 @@ class Periodo(models.Model):
 
     def get_delete_url(self):
         """ construct delete url from current object """
-        return reverse('confirm_delete',
-                       kwargs={"model": self.__class__.__name__, "pk": self.id}
-                       )
+        return reverse(
+            'confirm_delete',
+            kwargs={"model": self.__class__.__name__, "pk": self.id})
 
     def pos_delete_url(self):
         """ construct pos delete url from current object """
@@ -247,8 +245,6 @@ class MotivoAusencia(models.Model):
         except Exception as error:
             raise error
 
-        #print("Import of Timetypes from nettime has been completed!")
-
     @property
     def pronombre(self):
         return "el"
@@ -282,7 +278,8 @@ class TipoLiquidacion(models.Model):
         get_latest_by = "id_netTime"
 
 class TipoContrato(models.Model):
-    id_netTime = models.PositiveIntegerField(default=0,
+    id_netTime = models.PositiveIntegerField(
+        default=0,
         validators=[MinValueValidator(1)],
         unique=True,
         help_text="Para matchear marcajes e importaciones"
@@ -300,7 +297,8 @@ class TipoContrato(models.Model):
 class Empleado(models.Model):
 
     ### from nettime webservice ###
-    id_netTime = models.PositiveIntegerField(default=0,
+    id_netTime = models.PositiveIntegerField(
+        default=0,
         validators=[MinValueValidator(1)],
         unique=True,
         help_text="Para matchear marcajes e importaciones"
@@ -378,8 +376,6 @@ class Empleado(models.Model):
 
         except Exception as error:
             raise error
-        
-        #print("Import of Employees from nettime has been completed!")
 
     @property
     def pronombre(self):
@@ -433,8 +429,6 @@ class Sede(models.Model):
         except Exception as error:
             raise error
 
-        #print("Import of Sedes from nettime has been completed!")
-
     @property
     def pronombre(self):
         return "la"
@@ -461,15 +455,17 @@ class Saldo(models.Model):
         validators=[MinValueValidator(1)], 
         help_text="Cantidad de clases que desea disponibilizar")
 
+    #history = HistoricalRecords()
+
     def get_edit_url(self):
         """ construct edit url from current object """
         return reverse('saldo_update', kwargs={"pk": self.id})
 
     def get_delete_url(self):
         """ construct delete url from current object """
-        return reverse('confirm_delete', 
-            kwargs={"model":self.__class__.__name__, "pk":self.id}
-        )
+        return reverse(
+            'confirm_delete',
+            kwargs={"model":self.__class__.__name__, "pk":self.id})
 
     def pos_delete_url(self):
         """ construct pos delete url from current object """
@@ -477,8 +473,8 @@ class Saldo(models.Model):
     
     @classmethod
     def check_overlap(cls, _sede, _actividad, _desde, _hasta, id_exclude=None):
-        """ informs if a period generates an overlap with one already 
-            created """
+        """ informs if a period generates an overlap with one already
+            created. """
 
         start_before = Q()
         start_before.add(Q(desde__lte=_desde), Q.AND)
@@ -505,12 +501,12 @@ class Saldo(models.Model):
     @property
     def saldo_disponible(self):
         clases = Clase.objects.filter(
-            actividad = self.actividad,
-            sede = self.sede,
-            fecha__gte = self.desde,
-            fecha__lte = self.hasta,
+            actividad=self.actividad,
+            sede=self.sede,
+            fecha__gte=self.desde,
+            fecha__lte=self.hasta,
         ).exclude(
-            estado = "5"    #canceladas
+            estado="5"    #canceladas
         ).count()
 
         return self.saldo_asignado - clases
@@ -575,9 +571,9 @@ class Recurrencia(models.Model):
         return utils.get_dia_display(*self.weekdays)
 
     @classmethod
-    def check_overlap(
-        cls, employee, weekdays, desde, hasta, hora_ini, hora_end, ignore=None):
-        """ informs if a period generates an overlap with one already 
+    def check_overlap(cls, employee, weekdays, desde, hasta, hora_ini, \
+            hora_end, ignore=None):
+        """ informs if a period generates an overlap with one already
             created """
         
         ### dates ###
@@ -628,9 +624,9 @@ class Recurrencia(models.Model):
 
     def get_delete_url(self):
         """ construct delete url from current object """
-        return reverse('confirm_delete', 
-            kwargs={"model":self.__class__.__name__, "pk":self.id}
-        )
+        return reverse(
+            'confirm_delete',
+            kwargs={"model":self.__class__.__name__, "pk":self.id})
 
     def pos_delete_url(self):
         """ construct pos delete url from current object """
@@ -728,7 +724,7 @@ class Clase(models.Model):
                 _sub=True),
         )
         #
-        return True if blocks else False
+        return bool(blocks)
 
     def update_status(self):
         """ update the class status according to all its variables  """
@@ -805,26 +801,34 @@ class Marcaje(models.Model):
             end = datetime.datetime.now()
             _type = "Attendance"
 
+            #delta between clockings setting
+            _delta = datetime.timedelta(minutes=settings.MINS_BTW_CLOCKS)
+
             #employees = Empleado.objects.values_list('pk', flat=True)
             employees = Empleado.objects.all()
 
             for employee in employees:
                 marcs = utils.pull_nt_clockings(employee.pk, start, end, _type)
+                #hardcoded date
+                marc_ant = datetime.datetime.fromisoformat("2001-01-01 00:00")
 
                 for marc in marcs:
-                    #check if exists
-                    app_marc = cls.objects.filter(
-                        empleado=employee,
-                        fecha=marc["Datetime"].date(),
-                        hora=marc["Datetime"].time(),
-                    )
-                    #create if not exists
-                    if not app_marc:
-                        cls.objects.create(
+                    if marc["Datetime"] - marc_ant >= _delta:
+                        #check if exists
+                        app_marc = cls.objects.filter(
                             empleado=employee,
                             fecha=marc["Datetime"].date(),
                             hora=marc["Datetime"].time(),
                         )
+                        #create if not exists
+                        if not app_marc:
+                            cls.objects.create(
+                                empleado=employee,
+                                fecha=marc["Datetime"].date(),
+                                hora=marc["Datetime"].time(),
+                            )
+                        #update if marc was be processed only
+                        marc_ant = marc["Datetime"]
 
                 #recalculate days
                 for i in range((end - start).days + 1):
@@ -838,8 +842,6 @@ class Marcaje(models.Model):
         except Exception as error:
             raise error
 
-        #print("Import of Clockings from nettime has been completed!")
-
     @property
     def pronombre(self):
         return "el"
@@ -850,15 +852,15 @@ class Marcaje(models.Model):
     
     def get_delete_url(self):
         """ construct delete url from current object """
-        return reverse('confirm_delete', 
-            kwargs={"model":self.__class__.__name__, "pk":self.id}
-        )
+        return reverse(
+            'confirm_delete',
+            kwargs={"model":self.__class__.__name__, "pk":self.id})
 
     def pos_delete_url(self):
         """ construct pos delete url from current object """
-        return reverse('gestion_marcajes', 
-            kwargs={"id_empleado":self.empleado.id, "fecha":self.fecha}
-        )
+        return reverse(
+            'gestion_marcajes',
+            kwargs={"id_empleado":self.empleado.id, "fecha":self.fecha})
 
     def __str__(self):
         return f'{self.empleado}, el {self.fecha} a las {self.hora}'
@@ -944,7 +946,11 @@ class Certificado(models.Model):
     file_url = models.URLField(max_length=200, blank=True, null=True)
 
     def save(self, *args, **kwargs):
-        self.file_url = f'{settings.BASE_URL}{self.file.url}'
+        self.file_url = '{}://{}{}'.format(
+            settings.PROTOCOL,
+            settings.BASE_URL,
+            self.file.url
+        )
         super().save(*args, **kwargs)
 
     @property
@@ -960,7 +966,7 @@ class Certificado(models.Model):
     def pos_delete_url(self):
         """ construct pos delete url from current object """
         return reverse(
-            'certificados_list', 
+            'certificados_list',
             kwargs={"id_clase": self.clases.first().id})
 
     @property
