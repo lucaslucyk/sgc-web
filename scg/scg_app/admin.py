@@ -1,10 +1,18 @@
-from django.contrib import admin
+### own
 from scg_app.models import *
-# Register your models here.
 
-@admin.register(Rol)
-class RolAdmin(admin.ModelAdmin):
-    list_display = ('tipo_rol', )
+### django
+from django.contrib import admin
+from django.contrib.auth.admin import UserAdmin
+
+### user extend ###
+UserAdmin.fieldsets += (
+    ('Perfil', {
+        #'classes': ('collapse',),
+        'fields': ('sedes', ),
+    }),
+)
+UserAdmin.autocomplete_fields += ('sedes',)
 
 @admin.register(Empleado)
 class EmpleadoAdmin(admin.ModelAdmin):
@@ -25,7 +33,7 @@ class EmpleadoAdmin(admin.ModelAdmin):
 class SedeAdmin(admin.ModelAdmin):
     list_display = ('nombre', 'tipo', 'id', )
     readonly_fields = ('nombre', 'tipo', 'id', )
-
+    search_fields = ['nombre']
     # def has_delete_permission(self, request, obj=None):
     #     return False
 
@@ -43,7 +51,7 @@ class MotivoAusenciaAdmin(admin.ModelAdmin):
 @admin.register(Saldo)
 class SaldoAdmin(admin.ModelAdmin):
     list_display = (
-        'actividad', 'sede', 'desde', 'hasta', 'saldo_asignado', 
+        'actividad', 'sede', 'desde', 'hasta', 'saldo_asignado',
         'saldo_disponible')
 
 @admin.register(Recurrencia)
@@ -76,7 +84,7 @@ class ClaseAdmin(admin.ModelAdmin):
         'modificada', 'presencia', 'ausencia', 'reemplazo', 'estado')
 
     search_fields = [
-        'empleado__nombre','empleado__apellido', 'empleado__dni', 
+        'empleado__nombre','empleado__apellido', 'empleado__dni',
         'empleado__legajo', 'empleado__empresa', 
         'reemplazo__nombre', 'reemplazo__apellido', 'reemplazo__dni',
         'reemplazo__legajo', 'reemplazo__empresa',

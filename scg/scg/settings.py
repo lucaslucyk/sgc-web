@@ -90,10 +90,8 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'scg.wsgi.application'
 
-
 # Database
 # https://docs.djangoproject.com/en/3.0/ref/settings/#databases
-
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -104,7 +102,6 @@ DATABASES = {
 
 # Password validation
 # https://docs.djangoproject.com/en/3.0/ref/settings/#auth-password-validators
-
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
@@ -125,55 +122,51 @@ AUTH_PASSWORD_VALIDATORS = [
 # https://docs.djangoproject.com/en/3.0/topics/i18n/
 
 LANGUAGE_CODE = 'es-ar'
-
-TIME_ZONE = 'America/Argentina/Buenos_Aires'#'UTC'
-
+TIME_ZONE = 'America/Argentina/Buenos_Aires'    #'UTC'
 USE_I18N = True
-
 USE_L10N = True
-
 USE_TZ = True
-
-
-#media files
-MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(os.path.dirname(BASE_DIR),'media_uploads')
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.0/howto/static-files/
-
 STATIC_URL = '/static/'
-
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, "static"),
     #'/var/www/static/',
 ]
 STATIC_ROOT = os.path.join(os.path.dirname(BASE_DIR),'statics_pub')
 
-### crons ###
-CRONJOBS = [
-    ('*/5 * * * *', 'scg_app.cron.pull_synchronous')
-]
+#media files
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(os.path.dirname(BASE_DIR), 'media_uploads')
 
 ### reporting ###
 #REPORT_BUILDER_ASYNC_REPORT = True
 REPORT_BUILDER_INCLUDE = [
-    'user', 
+    'user',
     'scg_app.clase', 'scg_app.empleado', 'scg_app.actividad', 'scg_app.escala',
     'scg_app.grupoactividad', 'scg_app.marcaje', 'scg_app.motivoausencia',
-    'scg_app.recurrencia', 'scg_app.saldo', 'scg_app.sede', 'scg_app.tipocontrato',
-    'scg_app.tipoliquidacion', 'scg_app.bloquedepresencia', 'scg_app.certificado',
+    'scg_app.recurrencia', 'scg_app.saldo', 'scg_app.sede', 
+    'scg_app.tipocontrato', 'scg_app.tipoliquidacion',
+    'scg_app.bloquedepresencia', 'scg_app.certificado',
 ] # Allow only the model user to be accessed
 #REPORT_BUILDER_FRONTEND = False
-
 
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/accounts/logout/?next=/'
 
 #para testeo de recuperacion de passwords, borrar despues!
+#EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+### password recovery ###
+EMAIL_USE_TLS = True
+EMAIL_HOST = ''
+EMAIL_PORT = 25
+EMAIL_HOST_USER = ''
+EMAIL_HOST_PASSWORD = ''
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
-#  SCG_APP specifics
+### SCG_APP specifics ###
 SERVER_URL = "http://192.168.1.104:8091/webservice?"
 
 MINS_TOLERACIA = 15
@@ -204,34 +197,3 @@ PRESENCIA_CHOICES = (
     ("Realizada", "Realizada"),  # keep last
 )
 
-# PERIODOS_CHOICES = (
-#         ("1", "16/01 al 15/02"), 
-#         ("2", "16/02 al 15/03"), 
-#         ("3", "16/03 al 15/04"), 
-#         ("4", "16/04 al 15/05"), 
-#         ("5", "16/05 al 15/06"), 
-#         ("6", "16/06 al 15/07"), 
-#         ("7", "16/07 al 15/08"), 
-#         ("8", "16/08 al 15/09"), 
-#         ("9", "16/09 al 15/10"), 
-#         ("10", "16/10 al 15/11"), 
-#         ("11", "16/11 al 15/12"), 
-#         ("12", "16/12 al 15/01"), 
-#     )
-
-# MESES_CHOICES = (
-#     ("01", "Enero"),
-#     ("02", "Febrero"),
-#     ("03", "Marzo"),
-#     ("04", "Abril"),
-#     ("05", "Mayo"),
-#     ("06", "Junio"),
-#     ("07", "Julio"),
-#     ("08", "Agosto"),
-#     ("09", "Septiembre"),
-#     ("10", "Octubre"),
-#     ("11", "Noviembre"),
-#     ("12", "Diciembre"),
-# )
-
-#ANOS_CHOICES = tuple(zip([str(a) for a in range(2020, 2041)], [str(b) for b in range(2020, 2041)]))

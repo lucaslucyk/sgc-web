@@ -10,6 +10,7 @@ from multiselectfield import MultiSelectField
 #from simple_history.models import HistoricalRecords
 
 ### django ###
+from django.contrib.auth.models import User
 from django.db import models
 from django.utils import timezone
 from django.core.validators import MinValueValidator    #, MaxValueValidator
@@ -26,6 +27,11 @@ class Periodo(models.Model):
     desde = models.DateField(blank=True)
     hasta = models.DateField(blank=True)
     bloqueado = models.BooleanField(blank=True, default=True)
+
+    class Meta:
+        verbose_name = "Periodo"
+        verbose_name_plural = "Periodos"
+        ordering = ["-desde"]
 
     @classmethod
     def check_overlap(cls, _desde, _hasta, id_exclude=None, locked_only=False):
@@ -116,45 +122,16 @@ class Periodo(models.Model):
     def __str__(self):
         return f'Desde {self.desde} - Hasta {self.hasta}'
 
-    class Meta:
-        verbose_name = "Periodo"
-        verbose_name_plural = "Periodos"
-        get_latest_by = "desde"
-
-class Rol(models.Model):
-    """ To manage users in the future """
-
-    ROLES = (
-        ('a', 'Tipo 1'),
-        ('b', 'Tipo 2'),
-        ('c', 'Tipo 3'),
-    )
-
-    tipo_rol = models.CharField(
-        max_length=1, choices=ROLES,
-        blank=False, help_text="Roles placeholder de los users.")
-
-    @property
-    def pronombre(self):
-        return "el"
-
-    @property
-    def get_str(self):
-        return self.__str__()
-
-    def __str__(self):
-        return f'{self.tipo_rol}'
-
-    class Meta:
-        verbose_name = "Rol"
-        verbose_name_plural = "Roles"
-        get_latest_by = "id"
-
 class Escala(models.Model):
     nombre = models.CharField(max_length=30)
     grupo = models.ForeignKey(
         'GrupoActividad', on_delete=models.SET_NULL, null=True, blank=True)
     monto_hora = models.CharField(max_length=10)
+
+    class Meta:
+        verbose_name = "Escala"
+        verbose_name_plural = "Escalas"
+        get_latest_by = "id"
 
     @property
     def pronombre(self):
@@ -167,13 +144,13 @@ class Escala(models.Model):
     def __str__(self):
         return f'{self.monto_hora} AR$/h para {self.grupo.nombre}'
 
-    class Meta:
-        verbose_name = "Escala"
-        verbose_name_plural = "Escalas"
-        get_latest_by = "id"
-
 class GrupoActividad(models.Model):
     nombre = models.CharField(max_length=100)
+
+    class Meta:
+        verbose_name = "Grupo de Actividad"
+        verbose_name_plural = "Grupos de Actividad"
+        get_latest_by = "id"
 
     @property
     def pronombre(self):
@@ -186,15 +163,15 @@ class GrupoActividad(models.Model):
     def __str__(self):
         return f'{self.nombre}'
 
-    class Meta:
-        verbose_name = "Grupo de Actividad"
-        verbose_name_plural = "Grupo de Actividades"
-        get_latest_by = "id"
-
 class Actividad(models.Model):
     nombre = models.CharField(max_length=100)
     grupo = models.ForeignKey(
         'GrupoActividad', on_delete=models.SET(''), null=True, blank=True)
+
+    class Meta:
+        verbose_name = "Actividad"
+        verbose_name_plural = "Actividades"
+        get_latest_by = "id"
 
     @property
     def pronombre(self):
@@ -207,11 +184,6 @@ class Actividad(models.Model):
     def __str__(self):
         return f'{self.nombre} | {self.grupo}'
 
-    class Meta:
-        verbose_name = "Actividad"
-        verbose_name_plural = "Actividades"
-        get_latest_by = "id"
-
 class MotivoAusencia(models.Model):
     id_netTime = models.PositiveIntegerField(
         default=0,
@@ -221,6 +193,11 @@ class MotivoAusencia(models.Model):
     nombre = models.CharField(
         max_length=50, unique=True, blank=False, null=False)
     genera_pago = models.BooleanField(blank=True, default=False)
+
+    class Meta:
+        verbose_name = 'Motivo de Ausencia'
+        verbose_name_plural = 'Motivos de Ausencia'
+        get_latest_by = 'nombre'
 
     @classmethod
     def update_from_nettime(cls):
@@ -256,11 +233,6 @@ class MotivoAusencia(models.Model):
     def __str__(self):
         return f'{self.nombre}'
 
-    class Meta:
-        verbose_name = 'Motivo de Ausencia'
-        verbose_name_plural = 'Motivos de Ausencia'
-        get_latest_by = 'nombre'
-
 class TipoLiquidacion(models.Model):
     id_netTime = models.PositiveIntegerField(
         default=0,
@@ -269,13 +241,13 @@ class TipoLiquidacion(models.Model):
         help_text="Para matchear marcajes e importaciones")
     nombre = models.CharField(max_length=100, unique=True)
 
-    def __str__(self):
-        return f'{self.nombre}'
-
     class Meta:
         verbose_name = "Tipo de liquidación"
         verbose_name_plural = "Tipos de liquidación"
         get_latest_by = "id_netTime"
+
+    def __str__(self):
+        return f'{self.nombre}'
 
 class TipoContrato(models.Model):
     id_netTime = models.PositiveIntegerField(
@@ -286,13 +258,13 @@ class TipoContrato(models.Model):
     )
     nombre = models.CharField(max_length=100, unique=True)
 
-    def __str__(self):
-        return f'{self.nombre}'
-
     class Meta:
         verbose_name = "Tipo de contrato"
         verbose_name_plural = "Tipos de contrato"
         get_latest_by = "id_netTime"
+
+    def __str__(self):
+        return f'{self.nombre}'
 
 class Empleado(models.Model):
 
@@ -315,6 +287,11 @@ class Empleado(models.Model):
         'TipoLiquidacion', on_delete=models.CASCADE, null=True, blank=True)
 
     escala = models.ManyToManyField('Escala')
+
+    class Meta:
+        verbose_name = "Empleado"
+        verbose_name_plural = "Empleados"
+        get_latest_by = "id"
 
     def is_busy(self, fecha, inicio, fin, rec_ignore=None):
         """ informs if a person is busy at a certain time range 
@@ -391,11 +368,6 @@ class Empleado(models.Model):
             self.nombre if self.nombre else ''
         )
 
-    class Meta:
-        verbose_name = "Empleado"
-        verbose_name_plural = "Empleados"
-        get_latest_by = "id"
-
 class Sede(models.Model):
     id_netTime = models.PositiveIntegerField(
         default=0,
@@ -404,6 +376,11 @@ class Sede(models.Model):
         help_text="Para matchear marcajes e importaciones")
     nombre = models.CharField(max_length=40)
     tipo = models.CharField(max_length=30, default="Física", blank=True)
+
+    class Meta:
+        verbose_name = "Sede"
+        verbose_name_plural = "Sedes"
+        get_latest_by = "id"
 
     @classmethod
     def update_from_nettime(cls):
@@ -440,11 +417,6 @@ class Sede(models.Model):
     def __str__(self):
         return f'{self.nombre}'
 
-    class Meta:
-        verbose_name = "Sede"
-        verbose_name_plural = "Sedes"
-        get_latest_by = "id"
-
 class Saldo(models.Model):
     actividad = models.ForeignKey('Actividad', on_delete=models.CASCADE)
     sede = models.ForeignKey('Sede', on_delete=models.CASCADE)
@@ -456,6 +428,11 @@ class Saldo(models.Model):
         help_text="Cantidad de clases que desea disponibilizar")
 
     #history = HistoricalRecords()
+
+    class Meta:
+        verbose_name = "Saldo"
+        verbose_name_plural = "Saldos"
+        get_latest_by = "id"
 
     def get_edit_url(self):
         """ construct edit url from current object """
@@ -543,11 +520,6 @@ class Saldo(models.Model):
             self.sede.nombre
         )
 
-    class Meta:
-        verbose_name = "Saldo"
-        verbose_name_plural = "Saldos"
-        get_latest_by = "id"
-
 class Recurrencia(models.Model):
     fecha_desde = models.DateField(default=timezone.now)
     fecha_hasta = models.DateField(blank=True)
@@ -562,6 +534,11 @@ class Recurrencia(models.Model):
         'Días de la semana', choices=settings.DIA_SEMANA_CHOICES,
         null=True, blank=True)
     locked = models.BooleanField(null=True, blank=True, default=False)
+
+    class Meta:
+        verbose_name = "Recurrencia"
+        verbose_name_plural = "Recurrencias"
+        get_latest_by = "id"
 
     def get_dias_str(self):
         return ', '.join(utils.get_dia_display(*self.weekdays))
@@ -649,11 +626,6 @@ class Recurrencia(models.Model):
             self.empleado
         )
 
-    class Meta:
-        verbose_name = "Recurrencia"
-        verbose_name_plural = "Recurrencias"
-        get_latest_by = "id"
-
 class Clase(models.Model):
     parent_recurrencia = models.ForeignKey(
         'Recurrencia', on_delete=models.CASCADE, null=True)
@@ -688,6 +660,12 @@ class Clase(models.Model):
         max_length=1000, blank=True, help_text="Aclaraciones varias")
 
     locked = models.BooleanField(blank=True, default=False)
+
+    class Meta:
+        verbose_name = "Clase"
+        verbose_name_plural = "Clases"
+        get_latest_by = "id"
+        ordering = ["-fecha"]
 
     # class ReportBuilder:
     #     # Lists or tuple of excluded fields
@@ -777,17 +755,16 @@ class Clase(models.Model):
             self.empleado
         )
 
-    class Meta:
-        verbose_name = "Clase"
-        verbose_name_plural = "Clases"
-        get_latest_by = "id"
-        ordering = ["-id"]
-
 class Marcaje(models.Model):
     empleado = models.ForeignKey('Empleado', on_delete=models.SET(''))
     fecha = models.DateField(blank=True, default=timezone.now)
     hora = models.TimeField(null=True, blank=True)
     locked = models.BooleanField(blank=True, default=False)
+
+    class Meta:
+        verbose_name = "Marcaje"
+        verbose_name_plural = "Marcajes"
+        get_latest_by = "hora"
 
     @classmethod
     def update_from_nettime(cls):
@@ -864,10 +841,6 @@ class Marcaje(models.Model):
 
     def __str__(self):
         return f'{self.empleado}, el {self.fecha} a las {self.hora}'
-    class Meta:
-        verbose_name = "Marcaje"
-        verbose_name_plural = "Marcajes"
-        get_latest_by = "hora"
 
 class BloqueDePresencia(models.Model):
     empleado = models.ForeignKey(
@@ -881,7 +854,16 @@ class BloqueDePresencia(models.Model):
     fin = models.ForeignKey(
         'Marcaje', blank=True, null=True, on_delete=models.SET(''),
         related_name='fin')
-    
+
+    class Meta:
+        verbose_name = "Bloque de presencia"
+        verbose_name_plural = "Bloques de presencia"
+        ordering = ["-inicio"]
+
+        permissions = [
+            ("recalculate_blocks", "Can recalculate blocks of a specific day"),
+        ]
+
     @classmethod
     def recalcular_bloques(cls, empleado, fecha):
         #cls.objects.filter(empleado=empleado, inicio__fecha=fecha).delete()
@@ -945,6 +927,11 @@ class Certificado(models.Model):
     #seted in save method and for use in out system (excel, csv, etc)
     file_url = models.URLField(max_length=200, blank=True, null=True)
 
+    class Meta:
+        verbose_name = "Certificado"
+        verbose_name_plural = "Certificados"
+        ordering = ["motivo"]
+
     def save(self, *args, **kwargs):
         self.file_url = '{}://{}{}'.format(
             settings.PROTOCOL,
@@ -960,7 +947,7 @@ class Certificado(models.Model):
     def get_delete_url(self):
         """ construct delete url from current object """
         return reverse(
-            'confirm_delete', 
+            'confirm_delete',
             kwargs={"model":self.__class__.__name__, "pk":self.pk})
 
     def pos_delete_url(self):
@@ -979,6 +966,9 @@ class Certificado(models.Model):
 
     def __str__(self):
         return 'Certificado por {} para {} clases.'.format(
-            self.moitivo.nombre,
+            self.motivo.nombre,
             self.clases.count()
         )
+
+### user extend ###
+User.add_to_class('sedes', models.ManyToManyField(Sede))
