@@ -20,6 +20,7 @@
 						</div><!-- /.card-header -->
 
 						<div class="card-body">
+							{% if locked %}<fieldset disabled>{% endif %}
               <div class="form-row">
                 <div class="form-group col-md-6 col-sm-12">
                   <label for="desde">Desde</label>
@@ -44,10 +45,11 @@
                 	{{form.bloqueado}}
                 </div>
               </div>
-
+							{% if locked %}</fieldset>{% endif %}
 						</div><!-- /.card-body -->
 						<div class="card-footer text-center">
-		          <input class="btn btn-info" type="submit" value="Guardar">
+		          {% comment %} <input class="btn btn-info" type="submit" value="Guardar"> {% endcomment %}
+							<button type="submit" class="btn btn-info" {% if locked %}disabled{% endif %}>Guardar</button>
 		          <a class="btn btn-secondary" href="javascript: window.history.back();" role="button">Atras</a>
 		        </div>
 		        <!-- /.card-footer -->

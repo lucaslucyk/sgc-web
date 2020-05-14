@@ -21,7 +21,7 @@
 						</div><!-- /.card-header -->
 
 						<div class="card-body">
-
+							{% if locked %}<fieldset disabled>{% endif %}
 							<fieldset disabled>
 								<div class="form-row">
 							    <div class="form-group col-md-4">
@@ -73,10 +73,10 @@
 
 								</div>
               </div>
-
+							{% if locked %}</fieldset>{% endif %}
 						</div><!-- /.card-body -->
 						<div class="card-footer text-center">
-		          <input class="btn btn-info" type="submit" value="Guardar">
+		          <button type="submit" class="btn btn-info" {% if locked %}disabled{% endif %}>Guardar</button>
 		          <a class="btn btn-secondary" href="javascript: window.history.back();" role="button">Atras</a>
 		        </div>
 		        <!-- /.card-footer -->

@@ -79,7 +79,7 @@
 										<h3 class="card-title">Reemplazo</h3>
 									</div>
 									<div class="card-body">
-										{% if clase_to_edit.locked %}<fieldset disabled>{% endif %}
+										{% if clase_to_edit.locked or locked %}<fieldset disabled>{% endif %}
 										<div class="form-row mt-3">
 											<div class="form-group col-6">
 														<div class="input-group">
@@ -104,10 +104,10 @@
 												</div>
 											</div>
 										</div>
-										{% if clase_to_edit.locked %}</fieldset>{% endif %}
+										{% if clase_to_edit.locked or locked %}</fieldset>{% endif %}
 									</div><!-- /.card-body -->
 									<div class="card-footer text-center">
-										<button type="submit" class="btn btn-info" {% if clase_to_edit.locked %}disabled{% endif %} >Confirmar</button>
+										<button type="submit" class="btn btn-info" {% if clase_to_edit.locked or locked %}disabled{% endif %} >Confirmar</button>
 										<a class="btn btn-secondary" href="javascript: window.history.back();" role="button">Volver</a>
 									</div>
 									<!-- /.card-footer -->

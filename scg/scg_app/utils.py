@@ -1,7 +1,8 @@
 """ Utils for internal use """
-from zeep import Client
 import datetime
+from zeep import Client
 from django.conf import settings
+from scg_app import models
 
 def grouped(iterable, n=2):
     """ Agrupa los elementos de un iterable para obtener conjuntos
@@ -51,16 +52,47 @@ def pull_netTime(container, _fields=[], _filter=''):
 def pull_nt_clockings(_employee, _start, _end, _type):
     """ Pull clockings from nettime with Clockings method,
         Use parameters for get data. """
-    
+
     response = []
     try:
         client = Client(settings.SERVER_URL)
         response = client.service.Clockings(_employee, _start, _end, _type)
-    
+
     except Exception as error:
         raise error
 
     return response
+
+### permissions ###
+
+def check_admin(user):
+    """ returns if a user is a superuser """
+
+    return user.is_superuser
+
+def sedes_available(user):
+    """ returns the Sedes on which the user has permission """
+
+    if user.is_superuser:
+        return models.Sede.objects.all()
+
+    return user.sedes.all()
+
+def has_sede_permission(user, *sedes, operator: str = "AND"):
+    """ Inform if a user has permission in a sede/s.
+        Can use AND (default) or OR operator for compare if all or any sede \
+        match/es. """
+
+    if user.is_superuser:
+        return True
+
+    if operator == "AND":
+        return all(sede in user.sedes.all() for sede in sedes)
+
+    if operator == "OR":
+        return any(sede in user.sedes.all() for sede in sedes)
+
+    return False
 
 # def handle_uploaded_file(f):
 #     with open('some/file/name.txt', 'wb+') as destination:

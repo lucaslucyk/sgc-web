@@ -30,6 +30,8 @@ from scg_app.forms import *
 from scg_app.models import *
 import scg_app.tasks as task_mgmt
 
+def check_admin(user):
+    return user.is_superuser
 
 @login_required
 def certificados_list(request, id_clase: int, context=None):
@@ -54,23 +56,32 @@ def certificados_list(request, id_clase: int, context=None):
 
     return render(request, "apps/scg_app/certificados.html", context)
 
+#@permission_required('scg_app.change_clase', raise_exception=True)
 @login_required
 def clase_edit(request, pk, context=None):
     """ It lists all the justifications for which files were attached with
         their corresponding reasons.
         Does not allow overlap with a different class.
     """
+
     template = 'apps/scg_app/clase_edit.html'
     clase = get_object_or_404(Clase, pk=pk)
+    form = ClaseUpdForm(instance=clase)
+    context = context or {'form': form}
 
-    if clase.locked:
-        form = ClaseUpdForm(instance=clase)
-        context = context or {'form': form}
+    #check edit permission
+    if clase.locked or not request.user.has_perm('scg_app.change_clase'):
         context["locked"] = True
-
         messages.error(
-            request, 
-            "El periodo esta bloqueado y la clase no puede ser editada.")
+            request,
+            "El periodo esta bloqueado o no tiene permiso para editar esta \
+                clase.")
+        return render(request, template, context)
+
+    #check sede permission
+    if not request.user.has_sede_permission(clase.sede):
+        messages.error(request, "No tiene permisos para esta sede.")
+        context["locked"] = True
         return render(request, template, context)
 
     if request.method == 'POST':
@@ -102,7 +113,7 @@ def clase_edit(request, pk, context=None):
             else:
                 clase.modificada = False
                 messages.success(request, f'La clase ha sido modificada.')
-        
+
         clase.save()
 
         context = context or {'form': form}
@@ -112,10 +123,6 @@ def clase_edit(request, pk, context=None):
     context = context or {'form': form}
 
     return render(request, template, context)
-
-# Create your views here.
-def check_admin(user):
-   return user.is_superuser
 
 @login_required
 def index(request):
@@ -194,6 +201,11 @@ def periodo_create(request, context=None):
     form = PeriodoForm(request.POST if request.method == 'POST' else None)
     context = context or {'form': form}
 
+    if not request.user.has_perm('scg_app.add_periodo'):
+        context["locked"] = True
+        messages.error(request, 'No tiene permisos para crear periodos')
+        return render(request, "apps/scg_app/create/periodo.html", context)
+
     if request.method == 'POST':
         if not form.is_valid():
             messages.error(request, "Error en datos del formulario.")
@@ -241,6 +253,15 @@ def periodo_update(request, pk, context=None):
     """
     periodo = get_object_or_404(Periodo, pk=pk)
 
+    #check edit permission
+    if not request.user.has_perm('scg_app.change_periodo'):
+        messages.error(request, 'No tiene permiso para editar periodos.')
+        form = PeriodoUpdForm(instance=periodo)
+        context = {'form': form}
+        context["locked"] = True
+
+        return render(request, 'apps/scg_app/create/periodo.html', context)
+
     if request.method == 'POST':
         form = PeriodoUpdForm(request.POST, instance=periodo)
         context = context or {'form': form}
@@ -252,10 +273,9 @@ def periodo_update(request, pk, context=None):
         periodo = form.save(commit=False)
 
         if Periodo.check_overlap(
-            _desde=periodo.desde,
-            _hasta=periodo.hasta,
-            id_exclude=periodo.pk
-        ):
+                _desde=periodo.desde,
+                _hasta=periodo.hasta,
+                id_exclude=periodo.pk):
             messages.error(request,
                            "El periodo se superpone con otro ya creado.")
             return render(request, "apps/scg_app/create/periodo.html", context)
@@ -267,7 +287,7 @@ def periodo_update(request, pk, context=None):
         affecteds = periodo.update_related()
 
         messages.success(
-            request, 
+            request,
             "Periodo actualizado. Afecta a {0} clases.".format(affecteds)
         )
 
@@ -338,15 +358,32 @@ def saldo_update(request, pk, context=None):
     """ Allows updating the data of a Saldo.
         It does not allow the overlap with another already generated.
     """
+
+    template = 'apps/scg_app/create/saldo.html'
+
     saldo = get_object_or_404(Saldo, pk=pk)
+    form = SaldoUpdForm(instance=saldo)
+    context = {'form': form}
     
+    #check change permission
+    if not request.user.has_perm('scg_app.change_saldo'):
+        messages.error(request, 'No tiene permiso para editar saldos.')
+        context["locked"] = True
+        return render(request, template, context)
+
+    #check sede permission
+    if not request.user.has_sede_permission(saldo.sede):
+        messages.error(request, "No tiene permisos para esta sede.")
+        context["locked"] = True
+        return render(request, template, context)
+
     if request.method == 'POST':
         form = SaldoUpdForm(request.POST, instance=saldo)
         context = context or {'form': SaldoUpdForm(instance=saldo)}
 
         if not form.is_valid():
             messages.error(request, 'Error de formulario.')
-            return render(request, 'apps/scg_app/create/saldo.html', context)
+            return render(request, template, context)
 
         saldo = form.save(commit=False)
 
@@ -356,9 +393,9 @@ def saldo_update(request, pk, context=None):
                 _desde=saldo.desde,
                 _hasta=saldo.hasta,
                 id_exclude=saldo.pk):
-            messages.error(request, 
+            messages.error(request,
                 "El periodo se superpone con otro ya creado.")
-            return render(request, "apps/scg_app/create/saldo.html", context)
+            return render(request, template, context)
 
         #after of all checks
         saldo.save()
@@ -367,7 +404,7 @@ def saldo_update(request, pk, context=None):
     form = SaldoUpdForm(instance=saldo)
     context = {'form': form}
 
-    return render(request, 'apps/scg_app/create/saldo.html', context)
+    return render(request, template, context)
 
 @login_required
 def generar_saldo(request, context=None):
@@ -375,22 +412,35 @@ def generar_saldo(request, context=None):
         It does not allow the overlap with another already generated.
     """
 
+    template = "apps/scg_app/create/saldo.html"
+
     form = SaldoForm(request.POST if request.method == 'POST' else None)
     context = context or {'form': form}
+
+    #check add permission
+    if not request.user.has_perm('scg_app.add_saldo'):
+        context["locked"] = True
+        messages.error(request, 'No tiene permisos para crear saldos')
+        return render(request, template, context)
 
     if request.method == 'POST':
         if not form.is_valid():
             messages.error(request, "Error en datos del formulario.")
-            return render(request, "apps/scg_app/create/saldo.html", context)
+            return render(request, template, context)
+
+        #check sede permission
+        if not request.user.has_sede_permission(form.cleaned_data.get("sede")):
+            messages.error(request, "No tiene permisos para esta sede.")
+            return render(request, template, context)
 
         if Saldo.check_overlap(
                 _sede=form.cleaned_data.get("sede"),
                 _actividad=form.cleaned_data.get("actividad"),
                 _desde=form.cleaned_data.get("desde"),
                 _hasta=form.cleaned_data.get("hasta")):
-            messages.error(request, 
+            messages.error(request,
                 "El periodo se superpone con otro ya creado.")
-            return render(request, "apps/scg_app/create/saldo.html", context)
+            return render(request, template, context)
 
         #after of security checks
         new_saldo = Saldo.objects.create(
@@ -404,7 +454,7 @@ def generar_saldo(request, context=None):
             "Se ha generado el saldo para la sede y actividad seleccionada.")
         return redirect('saldo_update', pk=new_saldo.id)
 
-    return render(request, "apps/scg_app/create/saldo.html", context)
+    return render(request, template, context)
 
 @login_required
 def programar(request, context=None):
@@ -413,6 +463,11 @@ def programar(request, context=None):
     template = "apps/scg_app/create/programacion.html"
     form = RecurrenciaForm(request.POST if request.method == 'POST' else None)
     context = context or {'form': form, 'search_data': {}}
+
+    if not request.user.has_perm('scg_app.add_recurrencia'):
+        context["locked"] = True
+        messages.error(request, 'No tiene permisos para crear programaciones')
+        return render(request, template, context)
 
     if request.method == 'POST':
 
@@ -450,6 +505,12 @@ def programar(request, context=None):
         ###validate info and process more data
         if not form.is_valid():
             messages.error(request, "Error en datos del formulario.")
+            return render(request, template, context)
+
+        #check sede permission
+        if not request.user.has_sede_permission(fields.get('sede')):
+            messages.error(
+                request, "No tiene permisos para la sede seleccionada.")
             return render(request, template, context)
 
         fields.update({
@@ -578,7 +639,19 @@ def programacion_update(request, pk, context=None):
         "actividad": rec.actividad,
         "sede": rec.sede,
     }
-    
+
+    #check change permission
+    if not request.user.has_perm('scg_app.change_recurrencia'):
+        messages.error(request, 'No tiene permiso para editar programaciones.')
+        context["locked"] = True
+        return render(request, template, context)
+
+    #check sede permission
+    if not request.user.has_sede_permission(rec.sede):
+        messages.error(request, "No tiene permisos para esta sede.")
+        context["locked"] = True
+        return render(request, template, context)
+
     if request.method == 'POST':
         form = RecurrenciaUpdForm(request.POST, instance=rec)
         context["form"] = form
@@ -602,7 +675,7 @@ def programacion_update(request, pk, context=None):
             "actividad": rec.actividad,
             "sede": rec.sede,
         }
-        
+
         if fields.get("fecha_hasta") < datetime.date.today() and not settings.DEBUG:
             messages.error(
                 request, "No se pueden programar clases para fechas pasadas.")
@@ -624,13 +697,13 @@ def programacion_update(request, pk, context=None):
             return render(request, template, context)
 
         overlays = Recurrencia.check_overlap(
-            employee = rec.empleado,
-            weekdays = form.cleaned_data.get("weekdays"),
-            desde = form.cleaned_data.get("fecha_desde"),
-            hasta = form.cleaned_data.get("fecha_hasta"),
-            hora_ini = form.cleaned_data.get("horario_desde"),
-            hora_end = form.cleaned_data.get("horario_hasta"),
-            ignore = rec.id,
+            employee=rec.empleado,
+            weekdays=form.cleaned_data.get("weekdays"),
+            desde=form.cleaned_data.get("fecha_desde"),
+            hasta=form.cleaned_data.get("fecha_hasta"),
+            hora_ini=form.cleaned_data.get("horario_desde"),
+            hora_end=form.cleaned_data.get("horario_hasta"),
+            ignore=rec.id,
         )
 
         if overlays:
@@ -756,11 +829,11 @@ def generar_clases(_fields, _dia, _recurrencia, editing=None):
                     rejected += 1
 
                 elif not _fields["empleado"].is_busy(
-                    dia_actual, 
-                    _fields["horario_desde"], 
-                    _fields["horario_hasta"],
-                    rec_ignore=_recurrencia if editing else None
-                    ):
+                        dia_actual,
+                        _fields["horario_desde"],
+                        _fields["horario_hasta"],
+                        rec_ignore=_recurrencia if editing else None
+                        ):
 
                     Clase.objects.create(
                         parent_recurrencia = _recurrencia,
@@ -1025,38 +1098,51 @@ def action_process(request, context=None):
     messages.error(request, "Acción o método no soportado.")
     return redirect('clases_view')
 
+@login_required
 def confirmar_clases(request, _ids=None, context=None):
     """ confirm all classes from the ids list """
 
+    template = "apps/scg_app/clases_confirm.html"
+
     if not _ids:
-        return render(request, "apps/scg_app/clases_confirm.html", context)
+        return render(request, template, context)
 
     clases = Clase.objects.filter(pk__in=_ids)
-    _success, _error = ([], [])
+    
+    #check confirm permission
+    if not request.user.has_perm('scg_app.confirm_classes'):
+        messages.error(request, "No tiene permiso para confirmar clases.")
+        context = {
+            "classes_error": clases,
+        }
+        return render(request, template, context)
 
+    _success, _error = ([], [])
     for clase in clases:
         #check if class is not cancelled
-        if clase.is_cancelled or clase.locked:
+        if (clase.is_cancelled or clase.locked or
+                not request.user.has_sede_permission(clase.sede)):
             _error.append(clase)
-        else:  
+        else:
             clase.confirmada = True
             clase.save()
             _success.append(clase)
 
     if _success:
         messages.success(
-            request, 
+            request,
             'Se {0} {1} {2}.'.format(
                 "confirmaron" if len(_success) > 1 else "confirmó",
                 len(_success),
                 "clases" if len(_success) > 1 else "clase",
             )
         )
-    
+
     if _error:
         messages.error(
             request, 
-            'No se {} confirmar {} {} porque {} {} o {}.'.format(
+            'No se {} confirmar {} {} porque {} {}, {} o no tiene permisos \
+            sobre su sede'.format(
                 "pudieron" if len(_error) > 1 else "pudo",
                 len(_error),
                 "clases" if len(_error) > 1 else "clase",
@@ -1070,44 +1156,58 @@ def confirmar_clases(request, _ids=None, context=None):
         "classes_success": _success,
         "classes_error": _error,
     }
-    return render(request, "apps/scg_app/clases_confirm.html", context)
+    return render(request, template, context)
 
 @login_required
 def gestion_ausencia(request, ids_clases=None, context=None):
     """
         Permite asignar un motivo, adjunto y un comentario para una clase.
-        Si éste recibe un adjunto, crea un Certificado con el archivo y motivo 
+        Si éste recibe un adjunto, crea un Certificado con el archivo y motivo \
         seleccionado.
     """
 
     template = "apps/scg_app/gestion_ausencia.html"
 
-    #in errors only
+    #with errors only
     if not ids_clases:
         return render(request, template, context)
 
+    #form context
     if request.method == 'POST':
         form = MotivoAusenciaForm(request.POST, request.FILES)
     else:
         form = MotivoAusenciaForm()
-    
+
     context = context or {'form': form}
+
+    #check absence manage permission
+    if not request.user.has_perm('scg_app.absence_management'):
+        context["locked"] = True
+        messages.error(request, "No tiene permiso para gestionar ausencias")
+        return render(request, template, context)
 
     clases_to_edit = Clase.objects.filter(pk__in=ids_clases.split('-'))
 
-    #lockeds ignore
-    lockeds = clases_to_edit.filter(locked=True).count()
+    #lockeds an unavailable sedes ignore
+    lockeds = clases_to_edit.filter(
+        Q(locked=True) | ~Q(sede__in=request.user.sedes_available())).count()
+
     if lockeds:
         messages.warning(
             request, 
-            "{0} clase{1} esta{2} bloqueada{1} y fue{3} ignorada{1}.".format(
+            "No tiene permiso para la sede de {} {} o {} {} y {} {}.".format(
                 lockeds,
-                "s" if lockeds > 1 else "",
-                "n" if lockeds > 1 else "",
-                "ron" if lockeds > 1 else "",
+                "clases" if lockeds > 1 else "clase",
+                "estan" if lockeds > 1 else "esta",
+                "bloqueadas" if lockeds > 1 else "bloqueada",
+                "fueron" if lockeds > 1 else "fue",
+                "ignoradas" if lockeds > 1 else "ignorada",
             )
         )
-        clases_to_edit = clases_to_edit.exclude(locked=True)
+
+        #exclude lockeds and unavailable sedes
+        clases_to_edit = clases_to_edit.exclude(
+            Q(locked=True) | ~Q(sede__in=request.user.sedes_available()))
 
     #if not exists classes to apply
     if not clases_to_edit:
@@ -1153,6 +1253,18 @@ def asignar_reemplazo(request, id_clase=None, context=None):
 
     clase_to_edit = get_object_or_404(Clase, pk=id_clase)
     context["clase_to_edit"] = clase_to_edit
+
+    #check absence manage permission
+    if not request.user.has_perm('scg_app.asign_replacement'):
+        context["locked"] = True
+        messages.error(request, "No tiene permiso para gestionar reemplazos")
+        return render(request, template, context)
+
+    #check sede permission
+    if not request.user.has_sede_permission(clase_to_edit.sede):
+        context["locked"] = True
+        messages.error(request, "No tiene permiso sobre esta sede")
+        return render(request, template, context)
 
     if clase_to_edit.locked:
         messages.error(
@@ -1209,11 +1321,9 @@ def asignar_reemplazo(request, id_clase=None, context=None):
 
 @login_required
 def gestion_marcajes(request, id_empleado=None, fecha=None, context=None):
-    """  
-        It shows the classes of the day of an employee and allows adding and 
-        removing markings. 
-        It is also possible to recalculate the managed day.
-    """
+    """ It shows the classes of the day of an employee and allows adding and \ 
+        removing markings.
+        It is also possible to recalculate the managed day. """
 
     template = "apps/scg_app/gestion_marcajes.html"
 
@@ -1252,6 +1362,13 @@ def gestion_marcajes(request, id_empleado=None, fecha=None, context=None):
     if request.method == 'POST':
 
         if 'recalcular' in request.POST:
+
+            #check recalculate_blocks permission
+            if not request.user.has_perm('scg_app.recalculate_blocks'):
+                messages.error(
+                    request, "No tiene permisos para recalcular el día")
+                return render(request, template, context)
+
             # recalculate blocks
             if not BloqueDePresencia.recalcular_bloques(empleado, fecha):
                 messages.error(request, "Hubo un error recalculando el día.")
@@ -1266,6 +1383,11 @@ def gestion_marcajes(request, id_empleado=None, fecha=None, context=None):
             context["day_blocks"] = day_blocks
             messages.success(
                 request, "Se recalcularon las clases y bloques del día.")
+            return render(request, template, context)
+
+        #check add clocking permission
+        if not request.user.has_perm('scg_app.add_marcaje'):
+            messages.error(request, "No tiene permiso para agregar marcajes.")
             return render(request, template, context)
 
         #check valid form
@@ -1286,7 +1408,7 @@ def gestion_marcajes(request, id_empleado=None, fecha=None, context=None):
             messages.error(request, "Ya existe un marcaje en este horario.")
             return render(request, template, context)
 
-        
+            
         try:    #trying save cloocking
             nuevo_marcaje = Marcaje()
             nuevo_marcaje.empleado = empleado

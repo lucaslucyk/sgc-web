@@ -3,7 +3,7 @@
 ### built-in ###
 import os
 import datetime
-from collections import defaultdict
+#from collections import defaultdict
 
 ### third ###
 from multiselectfield import MultiSelectField
@@ -16,10 +16,10 @@ from django.utils import timezone
 from django.core.validators import MinValueValidator    #, MaxValueValidator
 from django.shortcuts import reverse
 from django.db.models import Q
+from django.conf import settings
 
 ### own ###
 from scg_app import utils
-from django.conf import settings
 
 class Periodo(models.Model):
     """ To manage available and blocked periods """
@@ -667,6 +667,12 @@ class Clase(models.Model):
         get_latest_by = "id"
         ordering = ["-fecha"]
 
+        permissions = [
+            ("confirm_classes", "Can confirm classes"),
+            ("absence_management", "Can manage absence"),
+            ("asign_replacement", "Can assign replacements"),
+        ]
+
     # class ReportBuilder:
     #     # Lists or tuple of excluded fields
     #     #exclude = ()
@@ -876,11 +882,11 @@ class BloqueDePresencia(models.Model):
             return True
 
         if len(_day_clockings) != 1:
-            for e, s in utils.grouped(_day_clockings, 2):
+            for entrada, salida in utils.grouped(_day_clockings, 2):
                 bloque = cls()
-                bloque.empleado = empleado 
-                bloque.inicio = e
-                bloque.fin = s
+                bloque.empleado = empleado
+                bloque.inicio = entrada
+                bloque.fin = salida
                 bloque.fecha = fecha
                 bloque.save()
 
@@ -972,3 +978,5 @@ class Certificado(models.Model):
 
 ### user extend ###
 User.add_to_class('sedes', models.ManyToManyField(Sede))
+User.has_sede_permission = utils.has_sede_permission
+User.sedes_available = utils.sedes_available

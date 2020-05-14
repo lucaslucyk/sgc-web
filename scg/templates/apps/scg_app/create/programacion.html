@@ -18,6 +18,7 @@
 				</div><!-- /.card-header -->
 
 				<div class="card-body">
+					{% if locked %}<fieldset disabled>{% endif %}
 					<div class="form-row">
 						<div class="form-group col-4">
 					        <div class="input-group mb-3">
@@ -148,19 +149,18 @@
 					<div class="form-row text-center pt-2 mb-0">
 						<div class="form-group col-md-12 col-lg-12 mb-0">	
 							<!--<label for="">Día de la semana: &nbsp;&nbsp;</label>-->
-
 							{% for dia in form.weekdays %}
 								<div class="form-check form-check-inline" required>
 									{{ dia }}
 								</div>
 							{% endfor %}
-							
 						</div>
-
 					</div>
+					{% if locked %}</fieldset>{% endif %}
 				</div><!-- /.card-body -->
 				<div class="card-footer text-center">
-          <input class="btn btn-info" type="submit" value="Generar programación">
+          <button type="submit" class="btn btn-info" {% if locked %}disabled{% endif %}>Generar programaci&oacute;n</button>
+					<a class="btn btn-secondary" href="javascript: window.history.back();" role="button">Atras</a>
         </div>
         <!-- /.card-footer -->
     	</div><!-- /.card -->
