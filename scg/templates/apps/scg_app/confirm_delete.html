@@ -41,7 +41,7 @@
                   <div class="form-row">
 
                     <div class="form-group-inline col-md-12 col-lg-12 text-center">
-                      <button class="btn btn-danger" type="submit" {% if object.locked or object.bloqueado %}disabled{% endif %}>Eliminar</button>
+                      <button class="btn btn-danger" type="submit" {% if locked %}disabled{% endif %}>Eliminar</button>
                       <a class="btn btn-secondary" href="javascript: window.history.back();" role="button">Cancelar</a>
                     </div>
 

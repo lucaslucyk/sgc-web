@@ -1,6 +1,12 @@
+
 .nav-sidebar > .nav-item > .nav-link.active {
   background-color: #17a2b8 !important;
   color: #fff;
+}
+
+.no-decore{
+  color: #007bff !important;
+  text-decoration: none !important;
 }
 
 footer{

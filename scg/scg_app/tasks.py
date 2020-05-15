@@ -26,7 +26,7 @@ __TASKS_CONFIGS = {
     'sgc_nettime_sync': {
         'command_file': DEFAULT_ROUTE + '\\scripts\\ntsync_command.cmd',
         'command': 'python "{0}" pull_nettime >> "{1}" \nexit'.format(
-            DEFAULT_ROUTE + '\\manage.py', 
+            DEFAULT_ROUTE + '\\manage.py',
             DEFAULT_ROUTE + '\\scripts\\ntsync_history.log',
         )
     }
@@ -106,15 +106,15 @@ def task_create(task_name):
     except:
         return False
 
-    OPTIONS = {
+    options = {
         'schtasks': '/create',  # create command
         '/tn': task_name,       # taskname
     }
-    OPTIONS.update(__ALLOWED_TASKS.get(task_name))
+    options.update(__ALLOWED_TASKS.get(task_name))
 
     ### create task ###
     to_list = list()
-    [to_list.extend([k, v]) for k, v in OPTIONS.items()]
+    [to_list.extend([k, v]) for k, v in options.items()]
     command = r' '.join(to_list)
 
     #command execute

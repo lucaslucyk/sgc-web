@@ -72,15 +72,18 @@ def clase_edit(request, pk, context=None):
     #check edit permission
     if clase.locked or not request.user.has_perm('scg_app.change_clase'):
         context["locked"] = True
+
         messages.error(
             request,
-            "El periodo esta bloqueado o no tiene permiso para editar esta \
-                clase.")
+            'El <a href="{}" class="no-decore">periodo</a> esta bloqueado o no \
+            tiene permiso para editar clases.'.format(
+                Periodo.get_url_date_period(clase.fecha)
+            ))
         return render(request, template, context)
 
     #check sede permission
     if not request.user.has_sede_permission(clase.sede):
-        messages.error(request, "No tiene permisos para esta sede.")
+        messages.error(request, "No tiene permisos para la sede de esta clase.")
         context["locked"] = True
         return render(request, template, context)
 
@@ -314,8 +317,15 @@ def confirm_delete(request, model, pk, context=None):
             r'([A-Z])', 
             r' \1', obj.__class__.__name__
             ).replace(' ', '', 1).capitalize(),
-        "object": obj
+        "object": obj,
+        "locked": False
     }
+
+    #check delete permission
+    if not request.user.has_perm(f'scg_app.delete_{model.lower()}'):
+        context["locked"] = True
+        messages.error(request, 'No tiene permisos para eliminar este objeto.')
+        return render(request, "apps/scg_app/confirm_delete.html", context)
 
     #check locked property
     try:
@@ -330,6 +340,7 @@ def confirm_delete(request, model, pk, context=None):
         bloqueado = False
 
     if locked or bloqueado:
+        context["locked"] = True
         messages.error(
             request,
             '{0} {1} pertenece a un periodo bloqueado.'.format(
@@ -1269,7 +1280,11 @@ def asignar_reemplazo(request, id_clase=None, context=None):
     if clase_to_edit.locked:
         messages.error(
             request,
-            "El periodo esta bloqueado y la clase no puede ser editada.")
+            'El <a href="{}" class="no-decore">periodo</a> esta bloqueado y la \
+            clase no puede ser editada.'.format(
+                Periodo.get_url_date_period(clase_to_edit.fecha)
+            ))
+
         return render(request, template, context)
 
     if request.method == 'POST':
@@ -1354,21 +1369,39 @@ def gestion_marcajes(request, id_empleado=None, fecha=None, context=None):
     context["day_blocks"] = day_blocks
     #context["day_clockings"] = day_clockings
 
-    if Periodo.blocked_day(fecha):
-        messages.error(request, "El día esta bloqueado y no puede ser editado.")
+    if Periodo.blocked_day(fecha):        
         context["day_locked"] = True
+        messages.error(
+            request,
+            'El <a href="{}" class="no-decore">periodo</a> esta bloqueado y el \
+            día no puede ser modificado.'.format(
+                Periodo.get_url_date_period(fecha)
+            ))
+
         return render(request, template, context)
+    
+    #check delete clockings permissions
+    if not request.user.has_perm('scg_app.delete_marcaje'):
+        context["lock_delete"] = True
+
+    #check recalculate permission
+    if not request.user.has_perm('scg_app.recalculate_blocks'):
+        context["lock_recalculate"] = True
+        context["lock_add"] = True
+
+    #check add clocking permission
+    if not request.user.has_perm('scg_app.add_marcaje'):
+        context["lock_add"] = True
 
     if request.method == 'POST':
 
+        #check recalculate_blocks permission
+        if not request.user.has_perm('scg_app.recalculate_blocks'):
+            messages.error(
+                request, "No tiene permisos para recalcular el día")
+            return render(request, template, context)
+
         if 'recalcular' in request.POST:
-
-            #check recalculate_blocks permission
-            if not request.user.has_perm('scg_app.recalculate_blocks'):
-                messages.error(
-                    request, "No tiene permisos para recalcular el día")
-                return render(request, template, context)
-
             # recalculate blocks
             if not BloqueDePresencia.recalcular_bloques(empleado, fecha):
                 messages.error(request, "Hubo un error recalculando el día.")

@@ -97,6 +97,20 @@ class Periodo(models.Model):
 
         return clases.count()
 
+    @classmethod
+    def get_date_period(cls, _date):
+        """ return period from a specific date, None if no exists """
+
+        period = cls.objects.filter(desde__lte=_date, hasta__gte=_date)
+        return period.first() if period else period
+
+    @classmethod
+    def get_url_date_period(cls, _date):
+        """ return period edit url from a specific date, '#' if no exists """
+        
+        period = cls.get_date_period(_date)
+        return period.get_edit_url() if period else '#'
+
     def get_edit_url(self):
         """ construct edit url from current object """
         return reverse('periodo_update', kwargs={"pk": self.id})
@@ -424,7 +438,7 @@ class Saldo(models.Model):
     hasta = models.DateField(default=timezone.now)
     saldo_asignado = models.PositiveIntegerField(
         default=0,
-        validators=[MinValueValidator(1)], 
+        validators=[MinValueValidator(1)],
         help_text="Cantidad de clases que desea disponibilizar")
 
     #history = HistoricalRecords()
@@ -872,7 +886,8 @@ class BloqueDePresencia(models.Model):
 
     @classmethod
     def recalcular_bloques(cls, empleado, fecha):
-        #cls.objects.filter(empleado=empleado, inicio__fecha=fecha).delete()
+        """ Recalculates an employee's presence blocks on a specific day """
+
         cls.objects.filter(empleado=empleado, fecha=fecha).delete()
 
         #grouped
