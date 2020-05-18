@@ -54,11 +54,11 @@ class SaldoForm(forms.Form):
 
     saldo_asignado = forms.IntegerField(required=True)
     saldo_asignado.widget.attrs.update({
-       'class':'form-control', 
-       'placeholder': '0',
-       'min': '1',
-       'max': '9999',
-    })  
+        'class':'form-control',
+        'placeholder': '0',
+        'min': '1',
+        'max': '9999',
+    })
 
 class SaldoUpdForm(SaldoForm, forms.ModelForm):
 
@@ -98,7 +98,7 @@ class RecurrenciaForm(forms.Form):
     fecha_desde = forms.CharField(max_length=10, help_text="", required=True, widget=widget_date)
     fecha_hasta = forms.CharField(max_length=10, help_text="", required=True, widget=widget_date)
 
-    horario_desde = forms.TimeField(widget=forms.TimeInput(format="%H:%M"), 
+    horario_desde = forms.TimeField(widget=forms.TimeInput(format="%H:%M"),
         help_text="Horario de inicio de clase", required=True)#, initial="00:00")
     horario_desde.widget.attrs.update({'class': 'form-control hour-input', 'placeholder':'00:00'})
 
@@ -151,6 +151,12 @@ class FiltroForm(forms.Form):
         'type': 'time',
         'class': 'form-control',
     })
+    tri_state_check = {
+        'min': '-1',
+        'max': '1',
+        'tri-state-check': '',
+        'type': 'checkbox',
+    } 
 
     empleado = forms.CharField(max_length=50, help_text="", required=False, widget=widget_search)
     empleado.widget.attrs.update({'placeholder': "Algún dato del empleado asignado...",})
@@ -193,15 +199,18 @@ class FiltroForm(forms.Form):
         required=False, label="Sede", 
         empty_label="Todas"
     )
+    
+    solo_ausencia = forms.IntegerField(required=False)
+    solo_ausencia.widget.attrs.update(tri_state_check)
 
-    solo_ausencia = forms.BooleanField(required=False, label="Solo ausencias", initial=False)
-    solo_ausencia.widget.attrs.update({'class': 'form-check-input'})
+    solo_reemplazos = forms.IntegerField(required=False)
+    solo_reemplazos.widget.attrs.update(tri_state_check)
 
-    solo_reemplazos = forms.BooleanField(required=False, label="Solo reemplazos", initial=False)
-    solo_reemplazos.widget.attrs.update({'class': 'form-check-input'})
+    solo_confirmadas = forms.IntegerField(required=False)
+    solo_confirmadas.widget.attrs.update(tri_state_check)
 
-    solo_confirmadas = forms.BooleanField(required=False, label="Solo confirmadas", initial=False)
-    solo_confirmadas.widget.attrs.update({'class': 'form-check-input'})
+    solo_bloqueadas = forms.IntegerField(required=False)
+    solo_bloqueadas.widget.attrs.update(tri_state_check)
 
 class MarcajeForm(forms.Form):
     hora_marcaje = forms.TimeField(widget=forms.TimeInput(format="%H:%M"), required=False, help_text="")

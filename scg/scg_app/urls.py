@@ -82,6 +82,9 @@ urlpatterns = [
     #delete view
     path('delete/<str:model>/<int:pk>',
         views.confirm_delete, name="confirm_delete"),
+
+    ### messages
+    path('message/<str:_type>/', views.show_message, name='show_message'),
 ]
 
 if settings.DEBUG:

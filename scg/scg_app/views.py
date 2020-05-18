@@ -131,7 +131,8 @@ def clase_edit(request, pk, context=None):
 def index(request):
     return render(request, "index.html", {})
 
-def about(request): return render(request, "scg_app/about.html", {})
+def about(request):
+    return render(request, "scg_app/about.html", {})
 
 @login_required
 def wiki(request): 
@@ -773,9 +774,8 @@ def programacion_update(request, pk, context=None):
             
             for clase in clases_to_edit:
                 if not clase.empleado.is_busy(
-                    clase.fecha, clase.horario_desde, 
-                    clase.horario_hasta, rec_ignore=rec
-                ):
+                        clase.fecha, clase.horario_desde,
+                        clase.horario_hasta, rec_ignore=rec):
                     clase.horario_desde = fields.get("horario_desde")
                     clase.horario_hasta = fields.get("horario_hasta")
                     clase.save()
@@ -785,7 +785,7 @@ def programacion_update(request, pk, context=None):
         #if employee is busy in specific days or times
         if exis_overlaps_classes:
             messages.warning(
-                request, 
+                request,
                 "No se pudo editar una o más clases por falta de disponibilidad"
             )
 
@@ -801,9 +801,8 @@ def programacion_update(request, pk, context=None):
 
         #checks saldos
         if not Saldo.check_saldos(
-            fields["sede"], fields["actividad"], 
-            fields["fecha_desde"], fields["fecha_hasta"]
-        ):
+                fields["sede"], fields["actividad"],
+                fields["fecha_desde"], fields["fecha_hasta"]):
             messages.warning(
                 request, 'Ya no dispone de saldo en periodos puntuales.')
 
@@ -904,9 +903,15 @@ class ClasesView(LoginRequiredMixin, ListView):
         hora_inicio = form.cleaned_data.get('hora_inicio')
         hora_fin = form.cleaned_data.get('hora_fin')
 
-        ### checks ###
-        solo_ausencia = form.cleaned_data.get('solo_ausencia')
-        solo_reemplazos = form.cleaned_data.get('solo_reemplazos')
+        ### tri-state checks ###
+        f_ausencia = form.cleaned_data.get('solo_ausencia')
+        f_ausencia = bool(f_ausencia > 0) if f_ausencia else f_ausencia
+        f_reemplazos = form.cleaned_data.get('solo_reemplazos')
+        f_reemplazos = bool(f_reemplazos > 0) if f_reemplazos else f_reemplazos
+        f_confirm = form.cleaned_data.get('solo_confirmadas')
+        f_confirm = bool(f_confirm > 0) if f_confirm else f_confirm
+        f_bloqueadas = form.cleaned_data.get('solo_bloqueadas')
+        f_bloqueadas = bool(f_bloqueadas > 0) if f_bloqueadas else f_bloqueadas
         
         #for don't create specific keys
         querys = defaultdict(Q)
@@ -958,10 +963,15 @@ class ClasesView(LoginRequiredMixin, ListView):
             querys["hora_fin"] = Q(horario_desde__lt=hora_fin)
 
         ### checks ###
-        if solo_ausencia:
-            querys["solo_ausencia"] = Q(ausencia__isnull=not solo_ausencia)
-        if solo_reemplazos:
-            querys["solo_reemplazos"] = Q(reemplazo__isnull=not solo_reemplazos)
+        if f_ausencia is not None:
+            querys["f_ausencia"] = Q(ausencia__isnull=not f_ausencia)
+        if f_reemplazos is not None:
+            querys["f_reemplazos"] = Q(reemplazo__isnull=not f_reemplazos)
+        if f_confirm is not None:
+            querys["f_confirm"] = Q(confirmada=f_confirm)
+        if f_bloqueadas is not None:
+            querys["f_bloqueadas"] = Q(locked=f_bloqueadas)
+
 
         #get ordering data
         order_by = request.POST.get('order_by', None)
@@ -973,7 +983,14 @@ class ClasesView(LoginRequiredMixin, ListView):
         #add all the filters with and critery
         query = Q()
         [query.add(v, Q.AND) for k, v in querys.items()]
-        qs = Clase.objects.filter(query).order_by(*order_by)
+        
+        #filter user sede permission
+        sf = Sede.objects.all()
+        if not request.user.is_superuser:
+            sf = request.user.sedes.all()
+
+        #filtering with sede permission
+        qs = Clase.objects.filter(sede__in=sf).filter(query).order_by(*order_by)
 
         total_regs = qs.count()
 
@@ -1017,7 +1034,6 @@ class ClasesView(LoginRequiredMixin, ListView):
             "page": page
         })
 
-
     def get_queryset(self):
         qs = Clase.objects.filter(
             fecha__gte=datetime.date.today()).order_by('fecha')
@@ -1031,7 +1047,7 @@ class ClasesView(LoginRequiredMixin, ListView):
 
 @login_required
 def action_process(request, context=None):
-    """ processes the action that was selected 
+    """ processes the action that was selected
         to redirect to the corresponding section """
 
     def get_ids(_keys):
@@ -1047,21 +1063,21 @@ def action_process(request, context=None):
             messages.error(
                 request,
                 "Seleccione uno o más registros para ejecutar una acción.")
-            return redirect('clases_view')
+            return redirect('show_message', _type='error')
 
         ### actions ###
         if _accion == 'ver_certificados':
             if len(ids) != 1: 
                 messages.error(
                     request, "Debe seleccionar solo un registro para editarlo.")
-                return redirect('clases_view')
+                return redirect('show_message', _type='error')
             return redirect('certificados_list', id_clase=ids[0])
 
         if _accion == 'editar_clases':
             if len(ids) != 1: 
                 messages.error(
                     request, "Debe seleccionar solo un registro para editarlo.")
-                return redirect('clases_view')
+                return redirect('show_message', _type='error')
             return redirect('clase_update', pk=ids[0])
 
         if _accion == 'gestion_ausencia':
@@ -1072,7 +1088,7 @@ def action_process(request, context=None):
                 messages.error(
                     request,
                     "Seleccione solo un registro para asignar un reemplazo.")
-                return redirect('clases_view')
+                return redirect('show_message', _type='error')
             return redirect('asignar_reemplazo', id_clase=ids[0])
 
         if _accion == 'confirmar_clases':
@@ -1083,7 +1099,7 @@ def action_process(request, context=None):
                 messages.error(
                     request,
                     "Seleccione solo una clase para gestionar su programación.")
-                return redirect('clases_view')
+                return redirect('show_message', _type='error')
 
             # get the class if all verifications were correct
             clase = get_object_or_404(Clase, pk=ids[0])
@@ -1095,7 +1111,7 @@ def action_process(request, context=None):
                 messages.error(
                     request,
                     "Seleccione solo una clase para ver los marcajes del día.")
-                return redirect('clases_view')
+                return redirect('show_message', _type='error')
 
             # get the class if all verifications were correct
             clase = get_object_or_404(Clase, pk=ids[0])
@@ -1107,7 +1123,17 @@ def action_process(request, context=None):
 
     # if accessed by url or method is not POST
     messages.error(request, "Acción o método no soportado.")
-    return redirect('clases_view')
+    return redirect('show_message', _type='error')
+
+@login_required
+def show_message(request, _type="error", context=None):
+    """ show message with a specific template for don't lost page content """
+
+    templates = {
+        "error": 'messages/error.html',
+    }
+
+    return render(request, templates.get(_type), context)
 
 @login_required
 def confirmar_clases(request, _ids=None, context=None):

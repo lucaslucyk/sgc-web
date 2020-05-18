@@ -1,5 +1,10 @@
 {% extends "base_template.html" %}
 
+{% block extra_css %}
+  {% load static %}
+  <link href="{% static 'plugins/candlestick/css/candlestick.min.css' %}" rel="stylesheet">
+{% endblock extra_css %}
+
 {% block namepage %}Monitor de clases{% endblock %}
 {% block active_monitor %}active{% endblock %}
 
@@ -127,25 +132,25 @@
           </div>
           <div class="form-row">
             <div class="form-group col-md-12 col-lg-12 text-center">
-            <div class="form-group">
+
+            <div class="form-group mt-3">
               <div class="form-check-inline">
-                {{ form.solo_ausencia }}
-                <label class="form-check-label" for="solo_ausencia">
-                  {{ form.solo_ausencia.label }}
-                </label>
+                <input type="checkbox" name="solo_ausencias" value="" id="solo_ausencias" tri-state-check>
+                <label class="form-check-label ml-1" for="solo_ausencias">Ausencias</label>
               </div>
               <div class="form-check-inline">
-                {{ form.solo_reemplazos }}
-                <label class="form-check-label" for="solo_reemplazos">
-                  {{ form.solo_reemplazos.label }}
-                </label>
+                <input type="checkbox" name="solo_reemplazos" value="" id="solo_reemplazos" tri-state-check>
+                <label class="form-check-label ml-1" for="solo_reemplazos">Reemplazos</label>
               </div>
               <div class="form-check-inline">
-                {{ form.solo_confirmadas }}
-                <label class="form-check-label" for="solo_confirmadas">
-                  {{ form.solo_confirmadas.label }}
-                </label>
+                <input type="checkbox" name="solo_confirmadas" value="" id="solo_confirmadas" tri-state-check>
+                <label class="form-check-label ml-1" for="solo_confirmadas">Confirmadas</label>
               </div>
+              <div class="form-check-inline">
+                <input type="checkbox" name="solo_bloqueadas" value="" id="solo_bloqueadas" tri-state-check>
+                <label class="form-check-label ml-1" for="solo_bloqueadas">Bloqueadas</label>
+              </div>
+
             </div>
           </div>
         </div>
@@ -373,5 +378,14 @@
   <!-- dateformat -->
   <script src="{%  static 'js/jquery-dateformat.min.js' %}"></script>
   <script src="{%  static 'js/monitor.js' %}"></script>
+
+  <script src="{%  static 'plugins/candlestick/js/candlestick.min.js' %}"></script>
+
+  <script src="{%  static 'plugins/hammer/js/hammer.min.js' %}"></script>
+  <script src="{%  static 'plugins/hammer/js/jquery.hammer.js' %}"></script>
+
+  <script type="text/javascript">
+    $("input[tri-state-check]").candlestick({'off': '-1'});
+  </script>
 
 {% endblock %}
