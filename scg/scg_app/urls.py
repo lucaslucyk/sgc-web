@@ -19,7 +19,7 @@ clases_urls = [
     path('monitor/', views.ClasesView.as_view(), name='clases_view'),
     path('<int:pk>/edit/', views.clase_edit, name='clase_update'),
     path('action_process/', views.action_process, name='action_process'),
-    path('gestion_ausencia/<str:ids_clases>',
+    path('gestion_ausencia/',
         views.gestion_ausencia, name="gestion_ausencia"),
     path('asignar_reemplazo/<str:id_clase>',
         views.asignar_reemplazo, name="asignar_reemplazo"),

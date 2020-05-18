@@ -23,6 +23,7 @@ from django.http import JsonResponse, Http404
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib import messages
 from django.apps import apps
+from django.http import HttpResponseRedirect
 
 ### own ###
 from django.conf import settings
@@ -39,12 +40,22 @@ def certificados_list(request, id_clase: int, context=None):
         attached with their corresponding reasons.
     """
 
+    template = "apps/scg_app/certificados.html"
     clase = get_object_or_404(Clase, pk=id_clase)
+
+    #check sede permission
+    if not request.user.has_sede_permission(clase.sede):
+        messages.error(
+            request, "No tiene permisos para la sede de esta clase.")
+        return render(request, template, context)
+
+    #after permission checks
     certificados = Certificado.objects.filter(clases__in=[clase])
 
     _ids = set()
     for certificado in certificados:
-        [_ids.add(clase.id) for clase in certificado.clases.all()]
+        for clase in certificado.clases.all():
+            _ids.add(clase.id)
 
     clases_impacto = Clase.objects.filter(id__in=_ids)
 
@@ -54,12 +65,11 @@ def certificados_list(request, id_clase: int, context=None):
         "clases_impacto": clases_impacto,
     }
 
-    return render(request, "apps/scg_app/certificados.html", context)
+    return render(request, template, context)
 
-#@permission_required('scg_app.change_clase', raise_exception=True)
 @login_required
 def clase_edit(request, pk, context=None):
-    """ It lists all the justifications for which files were attached with
+    """ It lists all the justifications for which files were attached with \
         their corresponding reasons.
         Does not allow overlap with a different class.
     """
@@ -1074,17 +1084,18 @@ def action_process(request, context=None):
             return redirect('certificados_list', id_clase=ids[0])
 
         if _accion == 'editar_clases':
-            if len(ids) != 1: 
+            if len(ids) != 1:
                 messages.error(
                     request, "Debe seleccionar solo un registro para editarlo.")
                 return redirect('show_message', _type='error')
             return redirect('clase_update', pk=ids[0])
 
         if _accion == 'gestion_ausencia':
-            return redirect('gestion_ausencia', ids_clases='-'.join(ids))
+            request.session['ids_clases'] = ids
+            return redirect('gestion_ausencia')#, ids_clases='-'.join(ids))
 
         if _accion == 'asignar_reemplazo':
-            if len(ids) != 1: 
+            if len(ids) != 1:
                 messages.error(
                     request,
                     "Seleccione solo un registro para asignar un reemplazo.")
@@ -1196,7 +1207,7 @@ def confirmar_clases(request, _ids=None, context=None):
     return render(request, template, context)
 
 @login_required
-def gestion_ausencia(request, ids_clases=None, context=None):
+def gestion_ausencia(request, context=None):
     """
         Permite asignar un motivo, adjunto y un comentario para una clase.
         Si éste recibe un adjunto, crea un Certificado con el archivo y motivo \
@@ -1205,9 +1216,15 @@ def gestion_ausencia(request, ids_clases=None, context=None):
 
     template = "apps/scg_app/gestion_ausencia.html"
 
+    ids_clases = request.session.get('ids_clases')
+    deleted = request.session.pop('ids_clases', None)
+
     #with errors only
     if not ids_clases:
+        messages.error(request, "No se ha seleccionado ninguna clase.")
         return render(request, template, context)
+
+    #print(ids)
 
     #form context
     if request.method == 'POST':
@@ -1223,24 +1240,27 @@ def gestion_ausencia(request, ids_clases=None, context=None):
         messages.error(request, "No tiene permiso para gestionar ausencias")
         return render(request, template, context)
 
-    clases_to_edit = Clase.objects.filter(pk__in=ids_clases.split('-'))
+    clases_to_edit = Clase.objects.filter(pk__in=ids_clases)
 
     #lockeds an unavailable sedes ignore
     lockeds = clases_to_edit.filter(
-        Q(locked=True) | ~Q(sede__in=request.user.sedes_available())).count()
+        Q(locked=True) | ~Q(sede__in=request.user.sedes_available()))
+    lockeds_count = lockeds.count() if lockeds else 0
 
     if lockeds:
         messages.warning(
-            request, 
+            request,
             "No tiene permiso para la sede de {} {} o {} {} y {} {}.".format(
-                lockeds,
-                "clases" if lockeds > 1 else "clase",
-                "estan" if lockeds > 1 else "esta",
-                "bloqueadas" if lockeds > 1 else "bloqueada",
-                "fueron" if lockeds > 1 else "fue",
-                "ignoradas" if lockeds > 1 else "ignorada",
+                lockeds_count,
+                "clases" if lockeds_count > 1 else "clase",
+                "estan" if lockeds_count > 1 else "esta",
+                "bloqueadas" if lockeds_count > 1 else "bloqueada",
+                "fueron" if lockeds_count > 1 else "fue",
+                "ignoradas" if lockeds_count > 1 else "ignorada",
             )
         )
+        #put ignore in context
+        context["clases_ignoradas"] = lockeds
 
         #exclude lockeds and unavailable sedes
         clases_to_edit = clases_to_edit.exclude(
@@ -1254,6 +1274,9 @@ def gestion_ausencia(request, ids_clases=None, context=None):
     context["clases_to_edit"] = clases_to_edit
 
     if request.method == 'POST':
+        request.session['ids_clases'] = ids_clases
+        
+        #check valid form
         if not form.is_valid():
             messages.error(request, "Error de formulario.")
             return render(request, template, context)
@@ -1274,7 +1297,7 @@ def gestion_ausencia(request, ids_clases=None, context=None):
             clase.update_status()
 
         messages.success(request, "Acción finalizada.")
-
+        
     return render(request, template, context)
 
 @login_required

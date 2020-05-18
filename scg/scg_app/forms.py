@@ -155,7 +155,6 @@ class FiltroForm(forms.Form):
         'min': '-1',
         'max': '1',
         'tri-state-check': '',
-        'type': 'checkbox',
     } 
 
     empleado = forms.CharField(max_length=50, help_text="", required=False, widget=widget_search)
