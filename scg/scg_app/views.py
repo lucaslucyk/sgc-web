@@ -1103,7 +1103,8 @@ def action_process(request, context=None):
             return redirect('asignar_reemplazo', id_clase=ids[0])
 
         if _accion == 'confirmar_clases':
-            return confirmar_clases(request, ids)
+            request.session['ids_clases'] = ids
+            return redirect('confirmar_clases')
 
         if _accion == 'gestion_recurrencia':
             if len(ids) != 1:
@@ -1147,15 +1148,19 @@ def show_message(request, _type="error", context=None):
     return render(request, templates.get(_type), context)
 
 @login_required
-def confirmar_clases(request, _ids=None, context=None):
+def confirmar_clases(request, context=None):
     """ confirm all classes from the ids list """
 
     template = "apps/scg_app/clases_confirm.html"
 
-    if not _ids:
+    ids_clases = request.session.get('ids_clases')
+    deleted = request.session.pop('ids_clases', None)
+
+    if not ids_clases:
+        messages.error(request, "No se ha seleccionado ninguna clase.")
         return render(request, template, context)
 
-    clases = Clase.objects.filter(pk__in=_ids)
+    clases = Clase.objects.filter(pk__in=ids_clases)
     
     #check confirm permission
     if not request.user.has_perm('scg_app.confirm_classes'):
@@ -1366,10 +1371,10 @@ def asignar_reemplazo(request, id_clase=None, context=None):
                 request, "El reemplazante no puede ser el empleado asignado.")
             return render(request, template, context)
 
-        if reemplazante.is_busy(fecha=clase_to_edit.fecha, 
-                                inicio=clase_to_edit.horario_desde, 
-                                fin=clase_to_edit.horario_hasta
-        ):
+        if reemplazante.is_busy(
+                fecha=clase_to_edit.fecha,
+                inicio=clase_to_edit.horario_desde,
+                fin=clase_to_edit.horario_hasta):
             messages.error(
                 request,
                 "El reemplazante no está disponible en este rango horario")

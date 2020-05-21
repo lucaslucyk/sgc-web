@@ -17,14 +17,16 @@ list_urls = [
 clases_urls = [
     ### clases ###
     path('monitor/', views.ClasesView.as_view(), name='clases_view'),
-    path('<int:pk>/edit/', views.clase_edit, name='clase_update'),
     path('action_process/', views.action_process, name='action_process'),
+
+    path('<int:pk>/edit/', views.clase_edit, name='clase_update'),
     path('gestion_ausencia/',
         views.gestion_ausencia, name="gestion_ausencia"),
     path('asignar_reemplazo/<str:id_clase>',
         views.asignar_reemplazo, name="asignar_reemplazo"),
     path('gestion_marcajes/<str:id_empleado>/<str:fecha>',
         views.gestion_marcajes, name="gestion_marcajes"),
+    path('confirmar/', views.confirmar_clases, name="confirmar_clases"),
 
     ### certificados ###
     path('certificados/<int:id_clase>',

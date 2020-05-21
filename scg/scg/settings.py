@@ -42,12 +42,15 @@ INSTALLED_APPS = [
     #third
     'multiselectfield',
     'report_builder',
+    'ckeditor',
+    'ckeditor_uploader',
     #'simple_history',
     #'django_crontab',
 
     #own
     'scg_app',
     'api',
+    'help',
 ]
 
 MIDDLEWARE = [
@@ -139,6 +142,7 @@ STATIC_ROOT = os.path.join(os.path.dirname(BASE_DIR),'statics_pub')
 #media files
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(os.path.dirname(BASE_DIR), 'media_uploads')
+CKEDITOR_UPLOAD_PATH = "help/"
 
 ### reporting ###
 #REPORT_BUILDER_ASYNC_REPORT = True
@@ -197,3 +201,61 @@ PRESENCIA_CHOICES = (
     ("Realizada", "Realizada"),  # keep last
 )
 
+CKEDITOR_CONFIGS = {
+    "default": {
+        'skin': 'n1theme',
+        "removePlugins": "flash",
+        'toolbar_Basic': [ ['Source', '-', 'Bold', 'Italic'] ],
+        'toolbar_YourCustomToolbarConfig': [
+            {
+                'name': 'styles',
+                'items': [
+                    'Styles', 'Format', 'Font', 'FontSize'
+                ]
+            },
+            {'name': 'colors', 'items': ['TextColor', 'BGColor']},
+            {'name': 'tools', 'items': ['Maximize', 'ShowBlocks', 'Preview']},
+            '/',
+            {'name': 'document', 'items': ['Source', '-']},
+            {
+                'name': 'clipboard',
+                'items': ['Paste', 'PasteText', '-', 'Undo', 'Redo']
+            },
+            {'name': 'editing', 'items': ['Find', '-', 'SelectAll']},
+            {
+                'name': 'forms',
+                'items': [
+                    'Form', 'Checkbox', 'Radio', 'TextField', 'Textarea',
+                    'Select', 'Button', 'ImageButton', 'HiddenField'
+                ]
+            },
+            '/',
+            {
+                'name': 'basicstyles',
+                'items': [
+                    'Bold', 'Italic', 'Underline', 'Strike', 'Subscript',
+                    'Superscript', '-', 'RemoveFormat'
+                ]
+            },
+            {
+                'name': 'paragraph',
+                'items': [
+                    'NumberedList', 'BulletedList', '-', 'Outdent', 'Indent',
+                    '-', 'Blockquote', '-', 'JustifyLeft', 'JustifyCenter',
+                    'JustifyRight', 'JustifyBlock', '-'
+                ]
+            },
+            {'name': 'links', 'items': ['Link', 'Unlink', 'Anchor']},
+            {
+                'name': 'insert',
+                'items': [
+                    'Image', 'Flash', 'Table', 'HorizontalRule', 'Smiley',
+                    'SpecialChar', 'PageBreak', 'Iframe', 'Youtube'
+                ]
+            },
+        ],
+        'toolbar': 'YourCustomToolbarConfig', # put selected toolbar config here
+        'extraPlugins': 'youtube',
+
+    }
+}
