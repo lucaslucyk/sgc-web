@@ -24,26 +24,15 @@
           <div class="col-12">
             
             <div class="callout callout-info">
-              <h5><i class="fas fa-info"></i> Nota:</h5>
-              Esta página ha sido mejorada para impresi&oacute;n. 
-              Haga click en el botón de impresión de la parte inferior para imprimir.
+              <h5><i class="fas fa-info"></i> {{ help_detail.title|capfirst }}</h5>
+              {{ help_detail.short_description|capfirst }}
             </div>
 
 
             <!-- Main content -->
-            <div class="invoice p-3 mb-3">
-              <!-- title row -->
-              <div class="row">
-                <div class="col-12">
-                  <h4>
-                    <i class="fas fa-question-circle"></i> {{ help_detail.title|capfirst }}
-                    <small class="float-right text-md">{{ help_detail.tags }}</small>
-                  </h4>
-                </div>
-                <!-- /.col -->
-              </div>
+            <div class="invoice p-3">
               <!-- info row -->
-              <div class="row invoice-info mt-3">
+              <div class="row invoice-info">
                 <div class="col-12">
                   {{ help_detail.content|safe }}
                 </div>
@@ -54,7 +43,8 @@
               <!-- this row will not appear when printing -->
               <div class="row no-print">
                 <div class="col-12">
-                  <a href="invoice-print.html" target="_blank" class="btn btn-default"><i class="fas fa-print"></i> Imprimir</a>
+                  <a href="{{ help_detail.get_print_url }} " target="_blank" class="btn btn-outline-dark">
+                    <i class="fas fa-print"></i> Imprimir</a>
 
                   <a href="{{ help_detail.get_edit_url }}" class="btn btn-info float-right">
                     <i class="fas fa-pencil-alt"></i> Editar ayuda</a>

@@ -14,6 +14,8 @@ class Help(models.Model):
 
     title = models.TextField(unique=True, max_length=200, blank=True, null=True)
     tags = models.TextField(max_length=200, blank=True, null=True)
+    short_description = models.TextField(max_length=200, blank=True, null=True)
+
     content = RichTextUploadingField(
         # extra_plugins=['uploadwidget', 'autoembed', 'youtube'],
         # external_plugin_resources=[(
@@ -38,6 +40,10 @@ class Help(models.Model):
     def get_edit_url(self):
         """ construct edit url from current object """
         return reverse('help_update', kwargs={"pk": self.id})
+    
+    def get_print_url(self):
+        """ construct print url from current object """
+        return reverse('help_print', kwargs={"pk": self.id})
 
     def get_delete_url(self):
         """ construct delete url from current object """

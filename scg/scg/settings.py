@@ -205,7 +205,7 @@ CKEDITOR_CONFIGS = {
     "default": {
         'skin': 'n1theme',
         "removePlugins": "flash",
-        'toolbar_Basic': [ ['Source', '-', 'Bold', 'Italic'] ],
+        'toolbar_Basic': [['Source', '-', 'Bold', 'Italic']],
         'toolbar_YourCustomToolbarConfig': [
             {
                 'name': 'styles',

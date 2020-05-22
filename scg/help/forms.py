@@ -12,10 +12,12 @@ class HelpForm(forms.ModelForm):
 
     title = forms.CharField()
     tags = forms.CharField()
+    short_description = forms.CharField()
     content = forms.CharField(widget=CKEditorUploadingWidget())
 
     title.widget.attrs.update(attrs)
     tags.widget.attrs.update(attrs)
+    short_description.widget.attrs.update(attrs)
     content.widget.attrs.update(attrs)
 
     class Meta:

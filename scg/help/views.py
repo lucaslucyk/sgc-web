@@ -69,3 +69,17 @@ def help_detail(request, pk, context=None):
     }
 
     return render(request, template, context)
+
+
+@login_required
+def help_print(request, pk, context=None):
+    """ Allows print detail of a specific Help. """
+
+    template = 'apps/help/print.html'
+    _help = get_object_or_404(Help, pk=pk)
+
+    context = {
+        "help_detail": _help,
+    }
+
+    return render(request, template, context)

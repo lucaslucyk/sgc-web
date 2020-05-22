@@ -1,10 +1,13 @@
+.table-middle>tbody>tr>td, .table-middle>thead>tr>th{
+  vertical-align: middle;
+}
+
 .django-ckeditor-widget{
   display: block !important;
 }
 .cke_chrome{
   width: 100% !important;
 }
-
 .nav-sidebar > .nav-item > .nav-link.active {
   background-color: #17a2b8 !important;
   color: #fff;
