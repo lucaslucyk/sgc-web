@@ -4,3 +4,6 @@ django-multiselectfield
 django-report-builder
 pywin32
 django-ckeditor
+djangorestframework
+markdown
+django-filter

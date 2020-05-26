@@ -1,7 +1,13 @@
 {% extends "base_template.html" %}
 
-{% block namepage %}Detalle{% endblock %}
+{% block namepage %}Ayuda{% endblock %}
 {% block active_help %}active{% endblock %}
+
+{% block route %}
+  <li class="breadcrumb-item"><a href="{% url 'index' %}">Inicio</a></li>
+  <li class="breadcrumb-item"><a href="{% url 'help_list' %}">Ayuda</a></li>
+  <li class="breadcrumb-item active">{{ help_detail.id }}</li>
+{% endblock route %}
 
 {% block content %}
  <div class="row">
@@ -43,6 +49,7 @@
               <!-- this row will not appear when printing -->
               <div class="row no-print">
                 <div class="col-12">
+                  <a class="btn btn-secondary" href="javascript: window.history.back();" role="button">Volver</a>
                   <a href="{{ help_detail.get_print_url }} " target="_blank" class="btn btn-outline-dark">
                     <i class="fas fa-print"></i> Imprimir</a>
 

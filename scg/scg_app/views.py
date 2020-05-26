@@ -106,14 +106,14 @@ def clase_edit(request, pk, context=None):
 
         clase = form.save(commit=False)
 
-        if clase.parent_recurrencia:
-            if (clase.horario_desde != clase.parent_recurrencia.horario_desde or
-                clase.horario_hasta != clase.parent_recurrencia.horario_hasta):
+        if clase.recurrencia:
+            if (clase.horario_desde != clase.recurrencia.horario_desde or
+                clase.horario_hasta != clase.recurrencia.horario_hasta):
 
                 if Empleado.is_busy(
                         clase.empleado, clase.fecha, 
                         clase.horario_desde, clase.horario_hasta,
-                        rec_ignore=clase.parent_recurrencia):
+                        rec_ignore=clase.recurrencia):
 
                     messages.error(
                         request, "La edición se superpone con otra clase.")
@@ -338,17 +338,9 @@ def confirm_delete(request, model, pk, context=None):
         messages.error(request, 'No tiene permisos para eliminar este objeto.')
         return render(request, "apps/scg_app/confirm_delete.html", context)
 
-    #check locked property
-    try:
-        locked = obj.locked
-    except:
-        locked = False
-
-    #check bloqueado property
-    try:
-        bloqueado = obj.bloqueado
-    except:
-        bloqueado = False
+    #check locked and bloqueado properties
+    locked = getattr(obj, 'locked', False)
+    bloqueado = getattr(obj, 'bloqueado', False)
 
     if locked or bloqueado:
         context["locked"] = True
@@ -737,7 +729,7 @@ def programacion_update(request, pk, context=None):
         ### dates actions ###
         if fields.get("fecha_hasta") < old_rec.fecha_hasta: #delete end differences
             classes_to_delete = Clase.objects.filter(
-                parent_recurrencia=old_rec, 
+                recurrencia=old_rec, 
                 fecha__gt=fields.get("fecha_hasta"))
 
             #prevent blocked delete
@@ -751,7 +743,7 @@ def programacion_update(request, pk, context=None):
 
         if fields.get("fecha_desde") > old_rec.fecha_desde: #delete coming differences
             classes_to_delete = Clase.objects.filter(
-                parent_recurrencia=old_rec,
+                recurrencia=old_rec,
                 fecha__lt=fields.get("fecha_desde"))
             
             #prevent blocked delete
@@ -767,7 +759,7 @@ def programacion_update(request, pk, context=None):
         if fields.get("weekdays") != old_rec.weekdays:
             to_delete = set(old_rec.weekdays) - set(fields.get("weekdays"))
             Clase.objects.filter(
-                parent_recurrencia=old_rec, dia_semana__in=list(to_delete)
+                recurrencia=old_rec, dia_semana__in=list(to_delete)
             ).delete()
 
         ### time actions ###
@@ -775,7 +767,7 @@ def programacion_update(request, pk, context=None):
         if (fields.get("horario_desde") != old_rec.horario_desde or
                 fields.get("horario_hasta") != old_rec.horario_hasta):
 
-            clases_to_edit = Clase.objects.filter(parent_recurrencia=old_rec)
+            clases_to_edit = Clase.objects.filter(recurrencia=old_rec)
 
             if clases_to_edit.filter(locked=True):
                 messages.error(
@@ -856,7 +848,7 @@ def generar_clases(_fields, _dia, _recurrencia, editing=None):
                         ):
 
                     Clase.objects.create(
-                        parent_recurrencia = _recurrencia,
+                        recurrencia = _recurrencia,
                         dia_semana = _dia,
                         fecha = dia_actual,
                         horario_desde = _fields["horario_desde"],
@@ -1116,7 +1108,7 @@ def action_process(request, context=None):
             # get the class if all verifications were correct
             clase = get_object_or_404(Clase, pk=ids[0])
 
-            return redirect('programacion_update', pk=clase.parent_recurrencia.id)
+            return redirect('programacion_update', pk=clase.recurrencia.id)
 
         if _accion == 'gestion_marcajes':
             if len(ids) != 1:
@@ -1222,7 +1214,6 @@ def gestion_ausencia(request, context=None):
     template = "apps/scg_app/gestion_ausencia.html"
 
     ids_clases = request.session.get('ids_clases')
-    deleted = request.session.pop('ids_clases', None)
 
     #with errors only
     if not ids_clases:
@@ -1302,7 +1293,10 @@ def gestion_ausencia(request, context=None):
             clase.update_status()
 
         messages.success(request, "Acción finalizada.")
-        
+        return render(request, template, context)
+
+    #clean session data
+    #deleted = request.session.pop('ids_clases', None)
     return render(request, template, context)
 
 @login_required

@@ -68,7 +68,7 @@ class RecurrenciaAdmin(admin.ModelAdmin):
 @admin.register(Clase)
 class ClaseAdmin(admin.ModelAdmin):
     fields = (
-        'parent_recurrencia', ('dia_semana', 'fecha'),
+        'recurrencia', ('dia_semana', 'fecha'),
         ('horario_desde', 'horario_hasta'), 'actividad', 'sede', 'empleado',
         'modificada', 'estado', 'presencia', 'ausencia', 'reemplazo',
         'confirmada', 'locked',)
@@ -79,7 +79,7 @@ class ClaseAdmin(admin.ModelAdmin):
         'modificada', 'ausencia', 'confirmada', 'locked',)
 
     readonly_fields = (
-        'parent_recurrencia', 'creacion', 'dia_semana', 'fecha',
+        'recurrencia', 'creacion', 'dia_semana', 'fecha',
         'horario_desde', 'horario_hasta', 'actividad', 'sede', 'empleado',
         'modificada', 'presencia', 'ausencia', 'reemplazo', 'estado')
 

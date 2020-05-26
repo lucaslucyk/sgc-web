@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, \
     permission_required, user_passes_test
 from django.contrib import messages
+from django.db.models import Q
 
 from .models import Help
 from .forms import HelpForm
@@ -64,12 +65,8 @@ def help_detail(request, pk, context=None):
     template = 'apps/help/detail.html'
     _help = get_object_or_404(Help, pk=pk)
 
-    context = {
-        "help_detail": _help,
-    }
-
+    context = {"help_detail": _help,}
     return render(request, template, context)
-
 
 @login_required
 def help_print(request, pk, context=None):
@@ -78,8 +75,23 @@ def help_print(request, pk, context=None):
     template = 'apps/help/print.html'
     _help = get_object_or_404(Help, pk=pk)
 
-    context = {
-        "help_detail": _help,
-    }
+    context = {"help_detail": _help,}
+    return render(request, template, context)
 
+
+@login_required
+def help_list(request, context=None):
+    """ Allows list detail of a specific Help. """
+
+    template = 'apps/help/list.html'
+    
+    qs = Q()
+    if 'q' in request.GET:
+        qs.add(Q(title__icontains=request.GET.get('q')), Q.OR)
+        qs.add(Q(tags__icontains=request.GET.get('q')), Q.OR)
+        qs.add(Q(short_description__icontains=request.GET.get('q')), Q.OR)
+
+    _helps = Help.objects.filter(qs)
+
+    context = {"help_list": _helps,}
     return render(request, template, context)

@@ -37,6 +37,10 @@ class Help(models.Model):
     def __str__(self):
         return self.title
 
+    def get_detail_url(self):
+        """ construct edit url from current object """
+        return reverse('help_detail', kwargs={"pk": self.id})
+
     def get_edit_url(self):
         """ construct edit url from current object """
         return reverse('help_update', kwargs={"pk": self.id})

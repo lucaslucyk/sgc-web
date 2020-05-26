@@ -85,7 +85,7 @@ class Periodo(models.Model):
         ).update(locked=self.bloqueado)
 
         ### recurrencias ###
-        r_ids = set(clases.values_list('parent_recurrencia__id', flat=True))
+        r_ids = set(clases.values_list('recurrencia__id', flat=True))
         Recurrencia.objects.filter(pk__in=r_ids).update(locked=self.bloqueado)
 
         ### marcajes ###
@@ -325,7 +325,7 @@ class Empleado(models.Model):
             Q(horario_hasta__lte=inicio) | Q(estado='5')
         )
         if rec_ignore:
-            clases.exclude(parent_recurrencia=rec_ignore)
+            clases.exclude(recurrencia=rec_ignore)
 
         return clases.exists()
 
@@ -641,9 +641,10 @@ class Recurrencia(models.Model):
         )
 
 class Clase(models.Model):
-    parent_recurrencia = models.ForeignKey(
+    recurrencia = models.ForeignKey(
         'Recurrencia', on_delete=models.CASCADE, null=True)
     creacion = models.DateTimeField(default=timezone.now)
+
     dia_semana = models.CharField(
         max_length=9, choices=settings.DIA_SEMANA_CHOICES, blank=True)
     fecha = models.DateField(blank=True, default=timezone.now)

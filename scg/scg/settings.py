@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'report_builder',
     'ckeditor',
     'ckeditor_uploader',
+    'rest_framework',
     #'simple_history',
     #'django_crontab',
 
@@ -158,6 +159,17 @@ REPORT_BUILDER_INCLUDE = [
 
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/accounts/logout/?next=/'
+
+#DRF
+REST_FRAMEWORK = {
+    # Use Django's standard `django.contrib.auth` permissions,
+    # or allow read-only access for unauthenticated users.
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 10
+}
 
 #para testeo de recuperacion de passwords, borrar despues!
 #EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'

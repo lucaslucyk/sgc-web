@@ -6,6 +6,132 @@ from scg_app.models import *
 import datetime
 from collections import defaultdict
 
+from django.contrib.auth.models import User, Group
+from rest_framework import viewsets
+from rest_framework import permissions
+from api import serializers
+
+### v2.0 ###
+
+class BaseViewSet:
+    permission_classes = [permissions.IsAuthenticated]
+    http_method_names = ['get', 'head', 'options']
+
+class UserViewSet(BaseViewSet, viewsets.ModelViewSet):
+    """ API endpoint that allows users to be viewed or edited."""
+
+    queryset = User.objects.all().order_by('-date_joined')
+    serializer_class = serializers.UserSerializer
+
+class GroupViewSet(BaseViewSet, viewsets.ModelViewSet):
+    """ API endpoint that allows groups to be viewed or edited."""
+
+    queryset = Group.objects.all()
+    serializer_class = serializers.GroupSerializer
+
+class ClaseViewSet(BaseViewSet, viewsets.ModelViewSet):
+    """ Clase endpoint """
+
+    queryset = Clase.objects.all()
+    serializer_class = serializers.ClaseSerializer
+
+
+class EmpleadoViewSet(BaseViewSet, viewsets.ModelViewSet):
+    """ Empleado endpoint """
+
+    queryset = Empleado.objects.all()
+    serializer_class = serializers.EmpleadoSerializer
+
+class EscalaViewSet(BaseViewSet, viewsets.ModelViewSet):
+    """ Escala endpoint """
+
+    queryset = Escala.objects.all()
+    serializer_class = serializers.EscalaSerializer
+
+
+class GrupoViewSet(BaseViewSet, viewsets.ModelViewSet):
+    """ Grupo endpoint """
+
+    queryset = GrupoActividad.objects.all()
+    serializer_class = serializers.GrupoSerializer
+    
+class TipoLiquidacionViewSet(BaseViewSet, viewsets.ModelViewSet):
+    """ TipoLiquidacion endpoint """
+
+    queryset = TipoLiquidacion.objects.all()
+    serializer_class = serializers.TipoLiquidacionSerializer
+
+class TipoContratoViewSet(BaseViewSet, viewsets.ModelViewSet):
+    """ TipoContrato endpoint """
+
+    queryset = TipoContrato.objects.all()
+    serializer_class = serializers.TipoLiquidacionSerializer
+
+
+class ActividadViewSet(BaseViewSet, viewsets.ModelViewSet):
+    """ Actividad endpoint """
+
+    queryset = Actividad.objects.all()
+    serializer_class = serializers.ActividadSerializer
+
+
+class MotivoAusenciaViewSet(BaseViewSet, viewsets.ModelViewSet):
+    """ MotivoAusencia endpoint """
+
+    queryset = MotivoAusencia.objects.all()
+    serializer_class = serializers.MotivoAusenciaSerializer
+
+
+class SedeViewSet(BaseViewSet, viewsets.ModelViewSet):
+    """ Sede endpoint """
+
+    queryset = Sede.objects.all()
+    serializer_class = serializers.SedeSerializer
+
+
+class RecurrenciaViewSet(BaseViewSet, viewsets.ModelViewSet):
+    """ Programación endpoint """
+
+    queryset = Recurrencia.objects.all()
+    serializer_class = serializers.RecurrenciaSerializer
+
+
+class SaldoViewSet(BaseViewSet, viewsets.ModelViewSet):
+    """ Saldo endpoint """
+
+    queryset = Saldo.objects.all()
+    serializer_class = serializers.SaldoSerializer
+
+
+class MarcajeViewSet(BaseViewSet, viewsets.ModelViewSet):
+    """ Marcaje endpoint """
+
+    queryset = Marcaje.objects.all()
+    serializer_class = serializers.MarcajeSerializer
+
+
+class BloqueDePresenciaViewSet(BaseViewSet, viewsets.ModelViewSet):
+    """ Bloque de presencia endpoint """
+
+    queryset = BloqueDePresencia.objects.all()
+    serializer_class = serializers.BloqueDePresenciaSerializer
+
+
+class CertificadoViewSet(BaseViewSet, viewsets.ModelViewSet):
+    """ Certificado endpoint """
+
+    queryset = Certificado.objects.all()
+    serializer_class = serializers.CertificadoSerializer
+
+
+class PeriodoViewSet(BaseViewSet, viewsets.ModelViewSet):
+    """ Periodo endpoint """
+
+    queryset = Periodo.objects.all()
+    serializer_class = serializers.PeriodoSerializer
+
+
+### v1.0 ###
 
 # class EmployeeAutocomplete(autocomplete.Select2QuerySetView):
 #     def get_queryset(self):
