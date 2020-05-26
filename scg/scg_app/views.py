@@ -129,7 +129,7 @@ def clase_edit(request, pk, context=None):
 
         clase.save()
 
-        context = context or {'form': form}
+        context = {'form': form}
         return render(request, template, context)
 
     form = ClaseUpdForm(instance=clase)
@@ -339,10 +339,7 @@ def confirm_delete(request, model, pk, context=None):
         return render(request, "apps/scg_app/confirm_delete.html", context)
 
     #check locked and bloqueado properties
-    locked = getattr(obj, 'locked', False)
-    bloqueado = getattr(obj, 'bloqueado', False)
-
-    if locked or bloqueado:
+    if getattr(obj, 'locked', False) or getattr(obj, 'bloqueado', False):
         context["locked"] = True
         messages.error(
             request,

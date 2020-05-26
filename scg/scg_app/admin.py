@@ -70,18 +70,18 @@ class ClaseAdmin(admin.ModelAdmin):
     fields = (
         'recurrencia', ('dia_semana', 'fecha'),
         ('horario_desde', 'horario_hasta'), 'actividad', 'sede', 'empleado',
-        'modificada', 'estado', 'presencia', 'ausencia', 'reemplazo',
-        'confirmada', 'locked',)
+        'modificada', 'estado', 'presencia', 'ausencia', 'reemplazo', 'horas',
+        'confirmada', 'locked', )
 
     list_display = (
         'estado', 'presencia', 'empleado', 'reemplazo', 'sede',
         'actividad', 'dia_semana', 'fecha', 'horario_desde', 'horario_hasta',
-        'modificada', 'ausencia', 'confirmada', 'locked',)
+        'modificada', 'ausencia', 'confirmada', 'locked', 'horas')
 
     readonly_fields = (
         'recurrencia', 'creacion', 'dia_semana', 'fecha',
         'horario_desde', 'horario_hasta', 'actividad', 'sede', 'empleado',
-        'modificada', 'presencia', 'ausencia', 'reemplazo', 'estado')
+        'modificada', 'presencia', 'ausencia', 'reemplazo', 'estado', 'horas')
 
     search_fields = [
         'empleado__nombre','empleado__apellido', 'empleado__dni',
@@ -89,7 +89,7 @@ class ClaseAdmin(admin.ModelAdmin):
         'reemplazo__nombre', 'reemplazo__apellido', 'reemplazo__dni',
         'reemplazo__legajo', 'reemplazo__empresa',
         'sede__nombre', 'ausencia__nombre', 'ausencia__grupo',
-        'fecha', 'hora'
+        'fecha', 'horas'
     ]
 
     def has_delete_permission(self, request, obj=None):

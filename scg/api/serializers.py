@@ -78,9 +78,10 @@ class ClaseSerializer(serializers.HyperlinkedModelSerializer):
         model = models.Clase
         fields = [
             'get_dia_semana_display', 'fecha', 'horario_desde', 'horario_hasta',
-            'empleado', 'reemplazo', 'actividad', 'confirmada', 'modificada',
+            'empleado', 'reemplazo', 'sede', 'actividad', 'horas', 'monto',
             'get_estado_display', 'get_presencia_display', 'comentario',
-            'ausencia', 'recurrencia', 'certificado_set', 'locked',
+            'ausencia', 'recurrencia', 'confirmada', 'modificada',
+            'certificado_set', 'locked',
         ]
 
 

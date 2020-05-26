@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from django.http import JsonResponse
-from django.contrib.auth.decorators import login_required, permission_required, user_passes_test
+from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from scg_app.models import *
 import datetime
@@ -15,7 +15,7 @@ from api import serializers
 
 class BaseViewSet:
     permission_classes = [permissions.IsAuthenticated]
-    http_method_names = ['get', 'head', 'options']
+    http_method_names = ['get', 'head', 'options', 'post']
 
 class UserViewSet(BaseViewSet, viewsets.ModelViewSet):
     """ API endpoint that allows users to be viewed or edited."""
@@ -178,7 +178,7 @@ def get_day_classes(request, context=None):
 
 
 #@login_required
-def get_model_data(_model, _filter, _fields='__all__', _order='id'):#, context=None):
+def get_model_data(_model, _filter, _fields='__all__', _order='id'):
     """ return qs of an specific model from database """
 
     query = Q()
@@ -219,7 +219,9 @@ def get_empleados(request, _filter, context=None):
 def get_actividades(request, _filter, context=None):
     """ return activitys what match with filter in JSON format """
 
-    actividades = get_model_data(Actividad, _filter, _fields=('nombre', 'grupo__nombre'), _order='nombre')
+    actividades = get_model_data(
+        Actividad, _filter,
+        _fields=('nombre', 'grupo__nombre'), _order='nombre')
 
     results = [{
         "id": actividad.id,

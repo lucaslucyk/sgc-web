@@ -140,7 +140,7 @@ class Escala(models.Model):
     nombre = models.CharField(max_length=30)
     grupo = models.ForeignKey(
         'GrupoActividad', on_delete=models.SET_NULL, null=True, blank=True)
-    monto_hora = models.CharField(max_length=10)
+    monto_hora = models.FloatField(null=True, blank=True)
 
     class Meta:
         verbose_name = "Escala"
@@ -306,6 +306,9 @@ class Empleado(models.Model):
         verbose_name = "Empleado"
         verbose_name_plural = "Empleados"
         get_latest_by = "id"
+    
+    class ReportBuilder:
+        extra = ['legajo_apellido_nombre', ]
 
     def is_busy(self, fecha, inicio, fin, rec_ignore=None):
         """ informs if a person is busy at a certain time range 
@@ -323,9 +326,10 @@ class Empleado(models.Model):
             #excludes classes that end before the start time -including it-
             #or canceled
             Q(horario_hasta__lte=inicio) | Q(estado='5')
+        ).exclude(
+            #ignore if is editing self object
+            recurrencia=rec_ignore
         )
-        if rec_ignore:
-            clases.exclude(recurrencia=rec_ignore)
 
         return clases.exists()
 
@@ -367,10 +371,14 @@ class Empleado(models.Model):
 
         except Exception as error:
             raise error
-
+    
     @property
     def pronombre(self):
         return "el"
+
+    @property
+    def legajo_apellido_nombre(self):
+        return f'{self.legajo} - {self.apellido} {self.nombre}'
 
     @property
     def get_str(self):
@@ -650,6 +658,8 @@ class Clase(models.Model):
     fecha = models.DateField(blank=True, default=timezone.now)
     horario_desde = models.TimeField(blank=True, default=timezone.now)
     horario_hasta = models.TimeField(blank=True, default=timezone.now)
+    horas = models.FloatField(blank=True, null=True)
+    #monto = models.FloatField(blank=True, null=True)
     actividad = models.ForeignKey('Actividad', on_delete=models.SET(''))
     sede = models.ForeignKey('Sede', on_delete=models.SET(''))
 
@@ -688,18 +698,41 @@ class Clase(models.Model):
             ("asign_replacement", "Can assign replacements"),
         ]
 
-    # class ReportBuilder:
-    #     # Lists or tuple of excluded fields
-    #     #exclude = ()
-    #     # Explicitly allowed fields
-    #     fields = ('get_dia_semana_display',)
-    #     # List extra fields (useful for methods)
-    #     #extra = ('get_dia_semana_display',)
+    def save(self, *args, **kwargs):
+        #set hours of class in float(hs)
+        hf = datetime.datetime.combine(self.fecha, self.horario_hasta) 
+        hi = datetime.datetime.combine(self.fecha, self.horario_desde)
+        self.horas = round((hf - hi).total_seconds() / 3600, 2)
+
+        super().save(*args, **kwargs)
+
+    class ReportBuilder:
+        # Lists or tuple of excluded fields
+        #exclude = ('dia_semana',)
+        # Explicitly allowed fields
+        #fields = ('get_dia_semana_display',)
+        # List extra fields (useful for methods)
+        extra = ('monto', 'url_certificados', 'dia_semana_display')
+    
+    @property
+    def dia_semana_display(self):
+        return self.get_dia_semana_display()
 
     @property
-    def certificados(self):
-        cert = Certificado.objects.filter(clases__in=[self])
-        return cert    
+    def url_certificados(self):
+        urls = self.certificado_set.all().values_list('file_url', flat=True)
+        return '\n'.join(urls)    
+
+    @property
+    def monto(self):
+        #set mount of class
+        ejecutor = self.reemplazo if self.reemplazo else self.empleado
+        escala = ejecutor.escala.filter(grupo=self.actividad.grupo)
+        
+        if not escala or not self.horas:
+            return 0.0
+        
+        return escala.first().monto_hora * self.horas
 
     @property
     def is_cancelled(self):
