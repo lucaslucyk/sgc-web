@@ -1,6 +1,9 @@
 # SGC-WEB (Class Management System)
 
 ![python3.8](https://img.shields.io/badge/python-v3.8-blue)
+![django2.2](https://img.shields.io/badge/django-v2.2-blue)
+![winx86/64](https://img.shields.io/badge/OS-win%20x86%2Fx64-lightgrey)
+![winx86/64](https://img.shields.io/badge/license-GPL%20v3-brightgreen)
 
 ## Project install
 
