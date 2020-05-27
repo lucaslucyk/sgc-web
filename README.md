@@ -10,36 +10,36 @@
 
 - Clone this repository:
 ```bash
-git clone https://github.com/lucaslucyk/sgc-web.git
-cd scg-web
-cd scg
+> git clone https://github.com/lucaslucyk/sgc-web.git
+> cd scg-web
+> cd scg
 ```
 
 - Install dependencies:
 ```bash
-python -m pip install requirements.txt -r
+> python -m pip install requirements.txt -r
 ```
 
 - Generate and run migrations:
 ```bash
-python manage.py makemigrations
-python manage.py migrate
+> python manage.py makemigrations
+> python manage.py migrate
 ```
 
 - (ERROR ONLY) Repare conection between poroject and database:
 ```bash
-python manage.py migrate --run-syncdb
+> python manage.py migrate --run-syncdb
 ```
 
 - Create superuser completing specific data:
 ```bash
-python manage.py createsuperuser
+> python manage.py createsuperuser
 ...
 ```
 
 - Run server:
 ```bash
-python manage.py runserver
+> python manage.py runserver
 ```
 
 - For stop server, use CTRL+C.
