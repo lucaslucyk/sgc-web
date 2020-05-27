@@ -5,6 +5,9 @@ __pycache__/
 *$py.class
 migrations
 
+#IDE
+.vscode/
+
 #db backup
 *.7z
 
