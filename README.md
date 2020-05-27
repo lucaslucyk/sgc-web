@@ -1,8 +1,6 @@
-# sgc-web
-## Megatlon web app
+# SGC-WEB (Class Management System)
 
-
-### Installation of project
+## Project install
 
 - Install python v>=3.8 x64 adding to PATH
 
@@ -46,6 +44,6 @@
 
 *To use a third party database or web-server, use the corresponding settings* 
 
-### Application Guide
+## Application Guide
 ...
 
