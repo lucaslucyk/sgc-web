@@ -1,5 +1,7 @@
 # SGC-WEB (Class Management System)
 
+https://img.shields.io/badge/python-v3.8-blue
+
 ## Project install
 
 - Install python 3.8 (or high) x64 adding to PATH
