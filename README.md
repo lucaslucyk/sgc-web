@@ -42,8 +42,9 @@
 
 - For stop server, use CTRL+C.
 
-*\*To use a third party database or web-server, use the corresponding settings* 
-**Scheduled tasks don't work on UNIX OS's**
+*\* To use a third party database or web-server, use the corresponding settings* 
+
+**\* Scheduled tasks don't work on UNIX OS's**
 
 ## Application Guide
 ...
