@@ -2,7 +2,7 @@
 
 ## Project install
 
-- Install python v>=3.8 x64 adding to PATH
+- Install python 3.8 (or high) x64 adding to PATH
 
 - Install git (if don't have it)
 
@@ -42,7 +42,8 @@
 
 - For stop server, use CTRL+C.
 
-*To use a third party database or web-server, use the corresponding settings* 
+*\*To use a third party database or web-server, use the corresponding settings* 
+**Scheduled tasks don't work on UNIX OS's**
 
 ## Application Guide
 ...
