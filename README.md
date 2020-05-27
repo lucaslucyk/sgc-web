@@ -1,6 +1,6 @@
 # SGC-WEB (Class Management System)
 
-https://img.shields.io/badge/python-v3.8-blue
+![python3.8](https://img.shields.io/badge/python-v3.8-blue)
 
 ## Project install
 
