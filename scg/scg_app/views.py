@@ -581,8 +581,8 @@ def programar(request, context=None):
 
         ### check if period is locked
         period_locked = Periodo.check_overlap(
-            desde=fields.get("fecha_desde"),
-            hasta=fields.get("fecha_hasta"),
+            _desde=fields.get("fecha_desde"),
+            _hasta=fields.get("fecha_hasta"),
             locked_only=True
         )
         if period_locked:
@@ -1274,18 +1274,20 @@ def gestion_ausencia(request, context=None):
             messages.error(request, "Error de formulario.")
             return render(request, template, context)
 
-        motivo_ausencia = form.cleaned_data["motivo"]
+        ausencia = form.cleaned_data["motivo"]
         adjunto = form.cleaned_data["adjunto"]
 
         #if a file was added
         if adjunto:
-            certif = Certificado.objects.create(
-                file=adjunto, motivo=motivo_ausencia)
+            certif = Certificado.objects.create(file=adjunto, motivo=ausencia)
             certif.clases.set(clases_to_edit)
+        elif ausencia.requiere_certificado:
+            messages.error(request, "La ausencia requiere un certificado.")
+            return render(request, template, context)
 
         #assign absence for each class
         for clase in clases_to_edit:
-            clase.ausencia = motivo_ausencia
+            clase.ausencia = ausencia
             clase.save()
             clase.update_status()
 

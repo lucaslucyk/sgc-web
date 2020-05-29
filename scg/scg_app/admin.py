@@ -31,9 +31,9 @@ class EmpleadoAdmin(admin.ModelAdmin):
 
 @admin.register(Sede)
 class SedeAdmin(admin.ModelAdmin):
-    list_display = ('nombre', 'tipo', 'id', )
-    readonly_fields = ('nombre', 'tipo', 'id', )
-    search_fields = ['nombre']
+    list_display = ('nombre', 'tipo', 'codigo' )
+    readonly_fields = ('nombre', 'tipo', 'id' )
+    search_fields = ['nombre', 'codigo']
     # def has_delete_permission(self, request, obj=None):
     #     return False
 
@@ -46,7 +46,7 @@ class ActividadAdmin(admin.ModelAdmin):
 
 @admin.register(MotivoAusencia)
 class MotivoAusenciaAdmin(admin.ModelAdmin):
-    list_display = ('nombre', 'genera_pago' )
+    list_display = ('nombre', 'genera_pago', 'requiere_certificado')
 
 @admin.register(Saldo)
 class SaldoAdmin(admin.ModelAdmin):
@@ -108,7 +108,7 @@ class EscalaAdmin(admin.ModelAdmin):
 
 @admin.register(GrupoActividad)
 class GrupoActividadAdmin(admin.ModelAdmin):
-    list_display = ('nombre', )
+    list_display = ('nombre', 'codigo', 'tipo' )
 
 @admin.register(Certificado)
 class CertificadoAdmin(admin.ModelAdmin):

@@ -111,6 +111,14 @@ class Periodo(models.Model):
         period = cls.get_date_period(_date)
         return period.get_edit_url() if period else '#'
 
+    def get_liquid_mono_url(self):
+        """ construct liquid mono url from current object """
+        return reverse('liquida_mono', kwargs={"pk": self.id})
+    
+    def get_liquid_rd_url(self):
+        """ construct liquid rd url from current object """
+        return reverse('liquida_rd', kwargs={"pk": self.id})
+
     def get_edit_url(self):
         """ construct edit url from current object """
         return reverse('periodo_update', kwargs={"pk": self.id})
@@ -160,6 +168,8 @@ class Escala(models.Model):
 
 class GrupoActividad(models.Model):
     nombre = models.CharField(max_length=100)
+    codigo = models.CharField(max_length=50, blank=True, null=True, unique=True)
+    tipo = models.CharField(max_length=50, blank=True, null=True)
 
     class Meta:
         verbose_name = "Grupo de Actividad"
@@ -180,7 +190,7 @@ class GrupoActividad(models.Model):
 class Actividad(models.Model):
     nombre = models.CharField(max_length=100)
     grupo = models.ForeignKey(
-        'GrupoActividad', on_delete=models.SET(''), null=True, blank=True)
+        'GrupoActividad', on_delete=models.SET_NULL, null=True, blank=True)
 
     class Meta:
         verbose_name = "Actividad"
@@ -207,6 +217,7 @@ class MotivoAusencia(models.Model):
     nombre = models.CharField(
         max_length=50, unique=True, blank=False, null=False)
     genera_pago = models.BooleanField(blank=True, default=False)
+    requiere_certificado = models.BooleanField(blank=True, default=True)
 
     class Meta:
         verbose_name = 'Motivo de Ausencia'
@@ -334,6 +345,14 @@ class Empleado(models.Model):
         return clases.exists()
 
     @classmethod
+    def serializable_fields(cls):
+        return [field.name for field in cls._meta.fields
+            if field.name not in ('id', 'id_netTime') and
+                not isinstance(field, models.ForeignKey) and
+                not isinstance(field, models.ManyToManyField)
+        ]
+
+    @classmethod
     def update_from_nettime(cls):
         """ use pull_netTime() for get all employees from netTime webservice """
 
@@ -396,7 +415,9 @@ class Sede(models.Model):
         validators=[MinValueValidator(1)],
         unique=True,
         help_text="Para matchear marcajes e importaciones")
-    nombre = models.CharField(max_length=40)
+    nombre = models.CharField(max_length=100)
+
+    codigo = models.CharField(max_length=50, blank=True, null=True, unique=True)
     tipo = models.CharField(max_length=30, default="Física", blank=True)
 
     class Meta:
@@ -548,10 +569,10 @@ class Recurrencia(models.Model):
     horario_desde = models.TimeField(default=timezone.now)
     horario_hasta = models.TimeField(blank=True)
     empleado = models.ForeignKey(
-        'Empleado', on_delete=models.SET(''), null=True)
+        'Empleado', on_delete=models.SET_NULL, null=True)
     actividad = models.ForeignKey(
-        'Actividad', on_delete=models.SET(''), null=True)
-    sede = models.ForeignKey('Sede', on_delete=models.SET(''), null=True)
+        'Actividad', on_delete=models.SET_NULL, null=True)
+    sede = models.ForeignKey('Sede', on_delete=models.SET_NULL, null=True)
     weekdays = MultiSelectField(
         'Días de la semana', choices=settings.DIA_SEMANA_CHOICES,
         null=True, blank=True)
@@ -658,19 +679,22 @@ class Clase(models.Model):
     fecha = models.DateField(blank=True, default=timezone.now)
     horario_desde = models.TimeField(blank=True, default=timezone.now)
     horario_hasta = models.TimeField(blank=True, default=timezone.now)
-    horas = models.FloatField(blank=True, null=True)
+    horas = models.FloatField(default=0.0)
     #monto = models.FloatField(blank=True, null=True)
-    actividad = models.ForeignKey('Actividad', on_delete=models.SET(''))
-    sede = models.ForeignKey('Sede', on_delete=models.SET(''))
+    actividad = models.ForeignKey(
+        Actividad, blank=True, null=True, on_delete=models.SET_NULL)
+    sede = models.ForeignKey(
+        Sede, blank=True, null=True, on_delete=models.SET_NULL)
 
     empleado = models.ForeignKey(
-        'Empleado', on_delete=models.SET(''), related_name='empleado')
+        Empleado, blank=True, null=True, on_delete=models.SET_NULL,
+        related_name='empleado')
     reemplazo = models.ForeignKey(
-        'Empleado', blank=True, null=True,
-        on_delete=models.SET(''),
+        Empleado, blank=True, null=True,
+        on_delete=models.SET_NULL,
         related_name='reemplazo')
     ausencia = models.ForeignKey(
-        'MotivoAusencia', blank=True, null=True, on_delete=models.SET(''),
+        MotivoAusencia, blank=True, null=True, on_delete=models.SET_NULL,
         related_name='ausencia')
     confirmada = models.BooleanField(blank=True, default=False)
 
@@ -732,7 +756,7 @@ class Clase(models.Model):
         if not escala or not self.horas:
             return 0.0
         
-        return escala.first().monto_hora * self.horas
+        return round(escala.first().monto_hora * self.horas, 2)
 
     @property
     def is_cancelled(self):
@@ -809,8 +833,19 @@ class Clase(models.Model):
             self.empleado
         )
 
+# class ClaseReemplazo(models.Model):
+#     clase = models.ForeignKey(Clase, on_delete=models.CASCADE)
+#     empleado = models.ForeignKey(
+#         Empleado, blank=True, null=True, on_delete=models.SET_NULL)
+    
+#     class Meta:
+#         verbose_name = "Reemplazo de Clase"
+#         verbose_name_plural = "Reemplazos de Clases"
+#         get_latest_by = "id"
+
 class Marcaje(models.Model):
-    empleado = models.ForeignKey('Empleado', on_delete=models.SET(''))
+    empleado = models.ForeignKey(
+        'Empleado', blank=True, null=True, on_delete=models.SET_NULL)
     fecha = models.DateField(blank=True, default=timezone.now)
     hora = models.TimeField(null=True, blank=True)
     locked = models.BooleanField(blank=True, default=False)
@@ -903,10 +938,10 @@ class BloqueDePresencia(models.Model):
     fecha = models.DateField(blank=True, default=timezone.now)
 
     inicio = models.ForeignKey(
-        'Marcaje', blank=True, null=True, on_delete=models.SET(''),
+        'Marcaje', blank=True, null=True, on_delete=models.SET_NULL,
         related_name='inicio')
     fin = models.ForeignKey(
-        'Marcaje', blank=True, null=True, on_delete=models.SET(''),
+        'Marcaje', blank=True, null=True, on_delete=models.SET_NULL,
         related_name='fin')
 
     class Meta:

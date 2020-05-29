@@ -1,7 +1,7 @@
 from django.urls import path, include
 from django.conf.urls.static import static
 from django.conf import settings
-from scg_app import views
+from scg_app import views, reports
 
 list_urls = [
     ### lists ###
@@ -58,6 +58,11 @@ nettime_urls = [
         views.get_nt_incidencias, name='get_nt_incidencias'),
 ]
 
+reports_urls = [
+    path('liquida-mono/<int:pk>', reports.liquida_mono, name='liquida_mono'),
+    path('liquida-rd/<int:pk>', reports.liquida_rd, name='liquida_rd'),
+]
+
 urlpatterns = [
     path('', views.index, name='index'),
 
@@ -81,19 +86,20 @@ urlpatterns = [
     path('about/', views.about, name='about'),
     path('tasks/', views.tasks_management, name='tasks_management'),
 
-    #delete view
+    #delete view ###
     path('delete/<str:model>/<int:pk>',
         views.confirm_delete, name="confirm_delete"),
 
-    ### messages
+    ### messages ###
     path('message/<str:_type>/', views.show_message, name='show_message'),
+
+    ### custom-report ###
+    path('custom-reports/', include(reports_urls)),
 ]
 
 if settings.DEBUG:
     urlpatterns += static(
-        settings.STATIC_URL,
-        document_root=settings.STATIC_URL)
+        settings.STATIC_URL, document_root=settings.STATIC_URL)
     urlpatterns += static(
-        settings.MEDIA_URL,
-        document_root=settings.MEDIA_ROOT)
+        settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 

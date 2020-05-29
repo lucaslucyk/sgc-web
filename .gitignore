@@ -5,7 +5,29 @@ __pycache__/
 *$py.class
 migrations
 
-#IDE
+# migrations
+# !scg/scg_app/migrations/
+# !scg/api/migrations/
+# !scg/help/migrations/
+# scg/scg_app/migrations/*
+# scg/api/migrations/*
+# scg/help/migrations/*
+# !scg/scg_app/migrations/__init__.py
+# !scg/api/migrations/__init__.py
+# !scg/help/migrations/__init__.py
+
+# Django stuff:
+statics_pub/
+*.log
+local_settings.py
+#db.sqlite3
+#db.sqlite3-journal
+db.sqlite3.old
+
+# MEDIA
+# media_uploads/certificados/
+
+# IDE
 .vscode/
 
 #db backup
@@ -62,14 +84,6 @@ coverage.xml
 # Translations
 *.mo
 *.pot
-
-# Django stuff:
-statics_pub/
-*.log
-local_settings.py
-#db.sqlite3
-#db.sqlite3-journal
-db.sqlite3.old
 
 # Flask stuff:
 instance/

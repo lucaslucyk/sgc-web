@@ -27,8 +27,7 @@ urlpatterns = [
 
     #for custom api functions
     path('api/', include('api.urls')),
-    path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
-
+    path('api-auth/',include('rest_framework.urls',namespace='rest_framework')),
 
     path('help/', include('help.urls')),
     

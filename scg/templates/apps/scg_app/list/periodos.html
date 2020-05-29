@@ -38,9 +38,16 @@
 
       <td class="py-0 align-middle">
         <div class="btn-group btn-group-sm">
+        
           <a href="{{ periodo.get_edit_url|safe }}" class="btn btn-info"><i class="fas fa-pencil-alt"></i></a>
 
           {% if periodo.bloqueado %}
+            <a href="{{ periodo.get_liquid_mono_url|safe }}" class="btn btn-outline-dark">
+              <i class="far fa-file-alt"></i> MT</a>
+            
+            <a href="{{ periodo.get_liquid_rd_url|safe }}" class="btn btn-outline-dark">
+              <i class="far fa-file-alt"></i> RD</a>
+            
             <a href="#" class="btn btn-danger disabled" role="button" aria-disabled="true">
               <i class="fas fa-trash"></i>
             </a>
