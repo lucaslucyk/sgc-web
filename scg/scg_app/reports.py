@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """ views for custom reports """
+
 ### built-in ###
 from collections import defaultdict
 import json
@@ -56,7 +57,11 @@ def liquida_mono(request, pk, format='excel', context=None):
         estado=settings.ESTADOS_CHOICES[-1][0]
     ).order_by('sede', 'empleado')
 
-    # process in soc for get structure like:
+    if not clases:
+        messages.error(request, "No hay clases para liquidar en este periodo.")
+        return redirect('periodos_view')
+
+    # process in soc (structure of classes) for get structure like:
     # { sede: { empleado: {actividad.grupo: [clases, ]} }
     soc = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
 
@@ -87,7 +92,6 @@ def liquida_mono(request, pk, format='excel', context=None):
 
     # generate and return excel
     return generate_excel(data_list, sheet_name='Presentismo', header=headers)
-
 
     # employee_fields = models.Empleado.serializable_fields()
     # structure = list()
@@ -134,6 +138,10 @@ def liquida_rd(request, pk, format='excel', context=None):
         #cancelled
         estado=settings.ESTADOS_CHOICES[-1][0]
     ).order_by('empleado', 'fecha', 'horario_desde', 'horario_hasta')
+
+    if not clases:
+        messages.error(request, "No hay clases para liquidar en este periodo.")
+        return redirect('periodos_view')
 
     # base prepare
     data_list = []

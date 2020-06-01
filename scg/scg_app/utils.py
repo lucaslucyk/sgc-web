@@ -3,6 +3,11 @@ import datetime
 from zeep import Client
 from django.conf import settings
 from scg_app import models
+from string import digits as str_digits, ascii_lowercase as str_letters
+from random import choice as r_choice
+
+from django.utils.text import slugify
+from typing import Any
 
 def grouped(iterable, n=2):
     """ Agrupa los elementos de un iterable para obtener conjuntos
@@ -93,6 +98,36 @@ def has_sede_permission(user, *sedes, operator: str = "AND"):
         return any(sede in user.sedes.all() for sede in sedes)
 
     return False
+
+
+def random_str(size=10, chars=str_digits + str_letters):
+    """ Return a str of 'size' len with numbers and ascii lower letters. """
+
+    return ''.join(r_choice(chars) for _ in range(size))
+
+def unique_slug_generator(instance: Any, to_slug: str, field: str='slug', \
+        append_random: bool=False):
+    """ Return a slug text checking what the property exists and duplicate \
+        does not exits. """
+    
+    if getattr(instance, field, '__ne__') == '__ne__':
+        raise AttributeError('La clase {} no posee el atributo {}'.format(
+            instance.__class__.__name__, field))
+
+    if getattr(instance, field):
+        return getattr(instance, field)
+
+    if not append_random:
+        slug = slugify(to_slug)
+    else:
+        slug = f'{slugify(to_slug)}-{random_str()}'
+
+    if instance.__class__.objects.filter(**{field: slug}).exists():
+        #recursion activate
+        slug = unique_slug_generator(instance, to_slug, append_random=True)
+
+    return slug
+        
 
 # def handle_uploaded_file(f):
 #     with open('some/file/name.txt', 'wb+') as destination:

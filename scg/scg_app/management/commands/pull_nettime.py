@@ -1,6 +1,16 @@
-from django.core.management.base import BaseCommand, CommandError
-from scg_app.models import Empleado, Sede, MotivoAusencia, Marcaje
+# -*- coding: utf-8 -*-
+
+### built-in ###
 from datetime import datetime
+
+### third ###
+#...
+
+### django ###
+from django.core.management.base import BaseCommand, CommandError
+
+### own ###
+from scg_app.models import Empleado, Sede, MotivoAusencia, Marcaje
 
 class Command(BaseCommand):
     help = 'Import data from netTime'

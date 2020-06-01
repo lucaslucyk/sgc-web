@@ -20,7 +20,10 @@ class EmpleadoAdmin(admin.ModelAdmin):
         'id_netTime', 'apellido', 'nombre', 'dni', 'legajo', 'empresa',
         'escala', 'tipo', 'liquidacion')
     list_display = (
-        'id_netTime', 'apellido', 'nombre', 'dni', 'legajo', 'empresa')
+        'dni', 'apellido', 'nombre', 'legajo', 'empresa', 'id_netTime', 'tipo',
+        'liquidacion',
+    )
+    autocomplete_fields = ('escala', )
     ordering = ('apellido', )
     
     #readonly_fields = ('apellido', 'nombre', 'dni', 'legajo', 'empresa', )
@@ -105,6 +108,8 @@ class MarcajeAdmin(admin.ModelAdmin):
 @admin.register(Escala)
 class EscalaAdmin(admin.ModelAdmin):
     list_display = ('nombre', 'monto_hora', )
+    search_fields = ['nombre', 'grupo__nombre']
+    ordering = ('nombre', )
 
 @admin.register(GrupoActividad)
 class GrupoActividadAdmin(admin.ModelAdmin):

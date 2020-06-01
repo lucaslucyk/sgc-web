@@ -1,12 +1,22 @@
+# -*- coding: utf-8 -*-
+
+### built-in ###
+#...
+
+### third ###
+#...
+
+### django ###
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, \
     permission_required, user_passes_test
 from django.contrib import messages
 from django.db.models import Q
 
+### own ###
+from scg_app.utils import unique_slug_generator
 from .models import Help
 from .forms import HelpForm
-
 
 # Create your views here.
 @login_required
@@ -20,24 +30,25 @@ def help_create(request, context=None):
 
     if request.method == 'POST':
         if not form.is_valid():
-            messages.error(request, "Error en datos del formulario.")
+            #error is rendered in template
             return render(request, template, context)
 
         _help = form.save(commit=False)
+        _help.slug = unique_slug_generator(_help, _help.title)
         _help.save()
 
         messages.success(request, "Se ha generado el punto de ayuda.")
-        #return redirect('saldo_update', pk=new_saldo.id)
+        return redirect('help_detail', slug_text=_help.slug)
 
     return render(request, template, context)
 
 
 @login_required
-def help_update(request, pk, context=None):
+def help_update(request, slug_text, context=None):
     """ Allows updating the data of a Help. """
 
     template = 'apps/help/create.html'
-    _help = get_object_or_404(Help, pk=pk)
+    _help = get_object_or_404(Help, slug=slug_text)
 
     if request.method == 'POST':
         form = HelpForm(request.POST, instance=_help)
@@ -51,7 +62,7 @@ def help_update(request, pk, context=None):
         _help.save()
 
         messages.success(request, "Se actualizó el punto de ayuda.")
-        return redirect('help_update', pk=_help.id)
+        return redirect('help_detail', slug_text=_help.slug)
 
     form = HelpForm(instance=_help)
     context = {'form': form}
@@ -59,23 +70,23 @@ def help_update(request, pk, context=None):
     return render(request, template, context)
 
 @login_required
-def help_detail(request, pk, context=None):
+def help_detail(request, slug_text, context=None):
     """ Allows view detail of a specific Help. """
 
     template = 'apps/help/detail.html'
-    _help = get_object_or_404(Help, pk=pk)
+    _help = get_object_or_404(Help, slug=slug_text)
 
-    context = {"help_detail": _help,}
+    context = {"help_detail": _help}
     return render(request, template, context)
 
 @login_required
-def help_print(request, pk, context=None):
+def help_print(request, slug_text, context=None):
     """ Allows print detail of a specific Help. """
 
     template = 'apps/help/print.html'
-    _help = get_object_or_404(Help, pk=pk)
+    _help = get_object_or_404(Help, slug=slug_text)
 
-    context = {"help_detail": _help,}
+    context = {"help_detail": _help}
     return render(request, template, context)
 
 

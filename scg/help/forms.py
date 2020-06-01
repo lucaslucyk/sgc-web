@@ -11,6 +11,7 @@ class HelpForm(forms.ModelForm):
     }
 
     title = forms.CharField()
+    slug = forms.SlugField(max_length=250, required=False)
     tags = forms.CharField()
     short_description = forms.CharField()
     content = forms.CharField(widget=CKEditorUploadingWidget())

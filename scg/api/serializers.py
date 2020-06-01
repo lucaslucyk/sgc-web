@@ -1,6 +1,15 @@
-from django.contrib.auth.models import User, Group
+# -*- coding: utf-8 -*-
+
+### built-in ###
+#...
+
+### third ###
 from rest_framework import serializers
 
+### django ###
+from django.contrib.auth.models import User, Group
+
+### own ###
 from scg_app import models
 
 ### example ###

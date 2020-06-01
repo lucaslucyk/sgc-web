@@ -254,8 +254,11 @@ def periodo_create(request, context=None):
         affecteds = new_period.update_related()
 
         messages.success(
-            request, "Periodo creado. Afecta a {0} clases".format(affecteds))
-        return redirect('periodo_update', pk=new_period.id)
+            request,
+            '<a href="{}" class="no-recore">Periodo</a> creado.'.format(
+                new_period.get_edit_url()))
+        return redirect('periodos_view')
+
 
     return render(request, "apps/scg_app/create/periodo.html", context)
 
@@ -302,8 +305,9 @@ def periodo_update(request, pk, context=None):
 
         messages.success(
             request,
-            "Periodo actualizado. Afecta a {0} clases.".format(affecteds)
-        )
+            '<a href="{}" class="no-decore">Periodo</a> actualizado.'.format(
+                periodo.get_edit_url()))
+        return redirect('periodos_view')
 
     form = PeriodoUpdForm(instance=periodo)
     context = {'form': form}
@@ -316,9 +320,11 @@ def confirm_delete(request, model, pk, context=None):
 
     try:
         _model = apps.get_model('scg_app', model)
+    except LookupError:
+        _model = apps.get_model('help', model)
     except:
         raise Http404(f'No existe el modelo {model}')
-
+    
     obj = get_object_or_404(_model, pk=pk)
 
     context = {
@@ -326,7 +332,7 @@ def confirm_delete(request, model, pk, context=None):
         #convert "ModelName" to "Model name"
         "model": re.sub(
             r'([A-Z])', 
-            r' \1', obj.__class__.__name__
+            r' \1', obj.__class__._meta.verbose_name
             ).replace(' ', '', 1).capitalize(),
         "object": obj,
         "locked": False
@@ -410,7 +416,12 @@ def saldo_update(request, pk, context=None):
 
         #after of all checks
         saldo.save()
-        messages.success(request, "Se actualizó el saldo correctamente.")
+
+        messages.success(
+            request,
+            '<a href="{}" class="no-decore">Saldo</a> actualizado.'.format(
+                saldo.get_edit_url()))
+        return redirect('saldos_view')
 
     form = SaldoUpdForm(instance=saldo)
     context = {'form': form}
@@ -461,9 +472,12 @@ def generar_saldo(request, context=None):
             hasta = form.cleaned_data.get("hasta"), 
             saldo_asignado = form.cleaned_data.get("saldo_asignado"), 
         )
-        messages.success(request, 
-            "Se ha generado el saldo para la sede y actividad seleccionada.")
-        return redirect('saldo_update', pk=new_saldo.id)
+
+        messages.success(
+            request,
+            '<a href="{}" class="no-decore">Saldo</a> generado.'.format(
+                new_saldo.get_edit_url()))
+        return redirect('saldos_view')
 
     return render(request, template, context)
 
@@ -630,7 +644,12 @@ def programar(request, context=None):
                 disponible ciertos días y horarios.'.replace('\t', '')
             )
 
-        messages.success(request, "Programación generada!")
+        #generated
+        messages.success(
+            request,
+            '<a href="{}" class="no-decore">Programación</a> generada.'.format(
+                rec.get_edit_url()))
+        return redirect('programaciones_view')
 
     return render(request, template, context)
 
@@ -815,8 +834,11 @@ def programacion_update(request, pk, context=None):
         rec.save()
 
         #after of all checks
-        #saldo.save()
-        messages.success(request, "Programación actualizada.")
+        messages.success(
+            request,
+            '<a href="{}" class="{}">Programación</a> actualizada.'.format(
+                rec.get_edit_url(), "no-decore"))
+        return redirect('programaciones_view')
 
     return render(request, template, context)
 

@@ -13,6 +13,7 @@
   <tr>
     <th>Nombre</th>
     <th>Genera pago</th>
+    <th>Requiere certificado</th>
   </tr>
 {% endblock %}
 
@@ -27,6 +28,13 @@
           <i class="fas fa-times-circle" style="color: red !important;"></i>
         {% endif %}
       </td>
+      <td class="align-middle">
+        {% if motivo.requiere_certificado %}
+          <i class="fas fa-check-circle" style="color: green !important;"></i>
+        {% else %}
+          <i class="fas fa-times-circle" style="color: red !important;"></i>
+        {% endif %}
+      </td>
     </tr>
   {% endfor %}
 {% endblock %}
@@ -35,5 +43,6 @@
   <tr>
     <th>Nombre</th>
     <th>Genera pago</th>
+    <th>Requiere certificado</th>
   </tr>
 {% endblock %}

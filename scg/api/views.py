@@ -1,14 +1,22 @@
+# -*- coding: utf-8 -*-
+
+### built-in ###
+import datetime
+from collections import defaultdict
+
+### third ###
+from rest_framework import viewsets
+from rest_framework import permissions
+
+### django ###
 from django.shortcuts import render
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
-from scg_app.models import *
-import datetime
-from collections import defaultdict
-
 from django.contrib.auth.models import User, Group
-from rest_framework import viewsets
-from rest_framework import permissions
+
+### own ###
+from scg_app.models import *
 from api import serializers
 
 ### v2.0 ###

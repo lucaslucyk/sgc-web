@@ -1,13 +1,21 @@
+# -*- coding: utf-8 -*-
+
+### built-in ###
 import datetime as dt
+
+### third ###
+#from django_select2.forms import Select2MultipleWidget
+#from dal import autocomplete
+
+### django ###
 from django import forms
 from django.conf import settings
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from django.utils import timezone as tz
-from scg_app.models import *
 
-#from django_select2.forms import Select2MultipleWidget
-#from dal import autocomplete
+### own ###
+from scg_app.models import *
 
 class PeriodoForm(forms.Form):
     widget_date = forms.TextInput(attrs={
