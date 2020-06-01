@@ -168,7 +168,7 @@ def liquida_rd(request, pk, format='excel', context=None):
             clase.horas,
             clase.ausencia.nombre if clase.ausencia else '',
             clase.url_certificados,
-            clase.comentario
+            clase.comentario,
         ])
         if clase.reemplazo:
             data_list.append([
@@ -187,7 +187,7 @@ def liquida_rd(request, pk, format='excel', context=None):
                 clase.horas,
                 '', #ausencia
                 clase.url_certificados,
-                clase.comentario
+                clase.comentario,
             ])
 
     # generate and return excel

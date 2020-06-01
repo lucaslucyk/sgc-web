@@ -117,9 +117,7 @@ class GrupoActividadAdmin(admin.ModelAdmin):
 
 @admin.register(Certificado)
 class CertificadoAdmin(admin.ModelAdmin):
-    exclude = ('file_url',)
     autocomplete_fields = ('clases',)
-
 
 @admin.register(Periodo)
 class PeriodoAdmin(admin.ModelAdmin):

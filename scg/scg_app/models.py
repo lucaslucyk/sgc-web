@@ -744,8 +744,8 @@ class Clase(models.Model):
 
     @property
     def url_certificados(self):
-        urls = self.certificado_set.all().values_list('file_url', flat=True)
-        return '\n'.join(urls)    
+        urls = [cert.complete_file_url for cert in self.certificado_set.all()]
+        return '\n'.join(urls)
 
     @property
     def monto(self):
@@ -1014,21 +1014,21 @@ class Certificado(models.Model):
 
     locked = models.BooleanField(null=True, blank=True, default=False)
 
-    #seted in save method and for use in out system (excel, csv, etc)
-    file_url = models.URLField(max_length=200, blank=True, null=True)
-
     class Meta:
         verbose_name = "Certificado"
         verbose_name_plural = "Certificados"
         ordering = ["motivo"]
+    
+    class ReportBuilder:
+        extra = ('complete_file_url',)
 
-    def save(self, *args, **kwargs):
-        self.file_url = '{}://{}{}'.format(
+    @property
+    def complete_file_url(self):
+        return '{}://{}{}'.format(
             settings.PROTOCOL,
             settings.BASE_URL,
             self.file.url
         )
-        super().save(*args, **kwargs)
 
     @property
     def filename(self):
