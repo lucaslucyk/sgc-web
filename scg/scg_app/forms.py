@@ -251,3 +251,11 @@ class MotivoAusenciaForm(forms.Form):
     class Meta:
         model = MotivoAusencia
         fields = ("id", "nombre")
+
+class ComentarioForm(forms.Form):
+    comentario = forms.CharField(widget=forms.Textarea, required=False)
+    comentario.widget.attrs.update({
+        'class': 'form-control',
+        'rows': '2',
+        'placeholder': 'Ingrese un comentario...',
+    })

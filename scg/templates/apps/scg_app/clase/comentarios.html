@@ -1,0 +1,151 @@
+{% extends "base_template.html" %}
+
+{% block namepage %}Comentarios{% endblock %}
+
+{% block route %}
+  <li class="breadcrumb-item"><a href="{% url 'index' %}">Inicio</a></li>
+  <li class="breadcrumb-item"><a href="{% url 'clases_view' %}">Monitor</a></li>
+  <li class="breadcrumb-item active">Comentarios</li>
+{% endblock route %}
+
+{% block content %}
+  
+  {% if messages or not comentarios %}
+    <div class="row">
+      <div class="col-md-12">
+        {% for message in messages %}
+          <div class="alert alert-{% if message.tags %}{{ message.tags }}{% endif %} alert-dismissible" >
+            <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+              {{ message }}
+          </div>
+        {% endfor %}
+        {% if not comentarios %}
+          <div class="alert alert-warning alert-dismissible" >
+            <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+              No hay comentarios para la clase seleccionada.
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  {% endif %}
+  
+
+  <div class="row"> 
+    
+    {% if clase %}
+      <div class="col-md-8">
+        <div class="card card-info">
+          <div class="card-header">
+            <h3 class="card-title">Clase seleccionada</h3>
+            <div class="card-tools">
+              <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                <i class="fas fa-minus"></i>
+              </button>
+            </div>
+          </div>
+          <div class="card-body">
+            
+            <table class="table table-sm">
+              <thead>
+                <tr>
+                  <th>Actividad</th>
+                  <th>D&iacute;a</th>
+                  <th>Fecha</th>
+                  <th>Inicio</th>
+                  <th>Fin</th>
+                  <th>Empleado</th>
+                  <th>Ausencia</th>
+                </tr>
+              </thead>
+              <tbody>
+                  <tr>
+                    <td>{{ clase.actividad.nombre }}</td>
+                    <td>{{ clase.get_dia_semana_display }}</td>
+                    <td>{{ clase.fecha }}</td>
+                    <td>{{ clase.horario_desde }}</td>
+                    <td>{{ clase.horario_hasta }}</td>
+                    <td>{{ clase.empleado }}</td>
+                    <td>{{ clase.ausencia.nombre }}</td>
+                  </tr>
+              </tbody>
+            </table>
+
+          </div><!-- /.card-body -->
+        </div><!-- /.card -->
+
+      </div><!-- /.col-->
+      <div class="col-md-4">
+        <div class="card card-info collapsing-card">
+          <div class="card-header">
+            <h3 class="card-title">Nuevo comentario</h3>
+            <div class="card-tools">
+              <button type="button" class="btn btn-tool" data-card-widget="collapse"><i class="fas fa-minus"></i>
+              </button>
+            </div>
+          </div>
+          <!-- /.card-header -->
+          <div class="card-body">
+            <form role="form" method="POST">{% csrf_token %}
+              <!-- textarea -->
+              <div class="input-group input-group-sm">
+                {{ form.comentario }}
+                <span class="input-group-append">
+                  <button type="submit" class="btn btn-info btn-flat">Enviar</button>
+                </span>
+              </div>
+              <!-- /input-group -->
+            </form>
+          </div>
+          <!-- /.card-body -->
+        </div>
+        <!-- /.card -->
+      </div><!-- /.col-->
+    {% endif %}
+
+    <div class="col-md-12 mt-3">
+      {% if comentarios %}
+        <div class="timeline">
+          {% comment %} <div class="time-label">
+            <span class="bg-secondary">Historial de comentarios</span>
+          </div> {% endcomment %}
+
+          {% for comentario in comentarios %}
+            <!-- timeline item -->
+              <div>
+                <i class="fas fa-comments bg-secondary"></i>
+                <div class="timeline-item">
+                  <span class="time"><i class="fas fa-clock"></i> {{ comentario.hora }}</span>
+                  <span class="time"><i class="far fa-calendar-alt"></i> {{ comentario.fecha }}</span>
+                  <h3 class="timeline-header">
+                    <a class="text-info">{{ comentario.usuario.first_name }} {{ comentario.usuario.last_name }}</a> {{ comentario.get_accion_display }}</h3>
+                  <div class="timeline-body">
+                    {{ comentario.contenido|linebreaksbr }}
+                  </div>
+                </div>
+              </div>
+              <!-- END timeline item -->
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      </div><!-- /.col-->
+    <div class="col-md-12">
+      <p><a href="javascript: window.history.back();"><i class="fas fa-chevron-circle-left"></i> Volver atras</a></p>
+    </div> <!-- principal col -->
+  </div> <!-- principal row -->
+
+{% endblock %}
+
+{% block extra_js %}
+<!-- for dont charge home js -->
+<script type="text/javascript">
+  $(function () {
+    $('.timeline-body').html(function(i, text) {
+      return text.replace(
+        /\bhttp[s]?:\/\/([\w\.-]+\.)+[a-z]{2,}([\/\w\.\-\_\?\=\!\#,\&amp;]+)/gi,
+        '<a target="_blank" href="$&">$&</a>'
+      );
+    });
+  });
+</script>
+{% endblock %}

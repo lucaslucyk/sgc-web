@@ -22,15 +22,19 @@ clases_urls = [
     path('<int:pk>/edit/', views.clase_edit, name='clase_update'),
     path('gestion_ausencia/',
         views.gestion_ausencia, name="gestion_ausencia"),
-    path('asignar_reemplazo/<str:id_clase>',
+    path('<str:id_clase>/asignar_reemplazo/',
         views.asignar_reemplazo, name="asignar_reemplazo"),
     path('gestion_marcajes/<str:id_empleado>/<str:fecha>',
         views.gestion_marcajes, name="gestion_marcajes"),
     path('confirmar/', views.confirmar_clases, name="confirmar_clases"),
 
     ### certificados ###
-    path('certificados/<int:id_clase>',
+    path('<int:id_clase>/certificados/',
         views.certificados_list, name="certificados_list"),
+
+    ### comentarios ###
+    path('<int:id_clase>/comentarios/',
+         views.comments_of_class, name="comments_of_class"),
 ]
 
 create_urls = [

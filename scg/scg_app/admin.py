@@ -4,6 +4,7 @@ from scg_app.models import *
 ### django
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
+from dynamic_raw_id.admin import DynamicRawIDMixin
 
 ### user extend ###
 UserAdmin.fieldsets += (
@@ -68,13 +69,24 @@ class RecurrenciaAdmin(admin.ModelAdmin):
         'actividad', 'get_dias_str', 'locked')
     list_filter = ['empleado', 'sede', 'actividad', 'locked']
 
+
+# class ComentariosInLine(admin.InlineModelAdmin):
+#     model = GrupoComentario
+#     ct_fk_field = "object_id"
+#     ct_field = "content_object"
+#     extra = 1
+#     ordering = ("-fecha",)
+#     #raw_id_fields = ("producto",)
+#     #autocomplete_fields = ["comentario"]
+
 @admin.register(Clase)
 class ClaseAdmin(admin.ModelAdmin):
+    #inlines = [ComentariosInLine]
     fields = (
         'recurrencia', ('dia_semana', 'fecha'),
         ('horario_desde', 'horario_hasta'), 'actividad', 'sede', 'empleado',
         'modificada', 'estado', 'presencia', 'ausencia', 'reemplazo', 'horas',
-        'confirmada', 'locked', )
+        'confirmada', 'locked', 'comentarios')
 
     list_display = (
         'estado', 'presencia', 'empleado', 'reemplazo', 'sede',
@@ -140,6 +152,16 @@ class BloqueDePresenciaAdmin(admin.ModelAdmin):
         return False
     def has_change_permission(self, request, obj=None):
         return False
+
+@admin.register(Comentario)
+class ComentarioAdmin(admin.ModelAdmin):
+    list_display = ('fecha', 'usuario', 'accion', '__str__', 'locked')
+
+
+@admin.register(GrupoComentario)
+class GrupoComentarioAdmin(admin.ModelAdmin):
+    list_display = (
+        'fecha', 'hora', 'content_type', 'content_object', 'comentario')
 
 #admin.site.register(BloqueDePresencia)
 admin.site.register(TipoLiquidacion)

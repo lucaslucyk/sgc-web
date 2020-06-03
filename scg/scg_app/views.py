@@ -35,6 +35,50 @@ def check_admin(user):
     return user.is_superuser
 
 @login_required
+def comments_of_class(request, id_clase: int, context=None):
+    """ Lists all comments of a specific class. """
+
+    template = "apps/scg_app/clase/comentarios.html"
+    clase = get_object_or_404(Clase, pk=id_clase)
+
+    #check sede permission
+    if not request.user.has_sede_permission(clase.sede):
+        messages.error(
+            request, "No tiene permisos para la sede de esta clase.")
+        return render(request, template, context)
+
+    if request.method == "POST":
+        form = ComentarioForm(request.POST)
+
+        if not form.is_valid():
+            messages.error(request, 'Error de formulario.')
+            return render(request, template, context)
+
+        #create comment
+        new_comment = Comentario.objects.create(
+            usuario=request.user,
+            accion=settings.ACCIONES_CHOICES[-1][0],
+            contenido=form.cleaned_data["comentario"])
+
+        #assign comment to
+        clase.comentarios.create(comentario=new_comment)
+        clase.save()
+
+    #reset form
+    form = ComentarioForm()
+
+    #after permissions checks
+    comments = [comment.comentario for comment in clase.comentarios.all()]
+
+    context = {
+        "clase": clase,
+        "comentarios": comments,
+        "form": form,
+    }
+
+    return render(request, template, context)
+
+@login_required
 def certificados_list(request, id_clase: int, context=None):
     """ Lists all the justifications for which files were
         attached with their corresponding reasons.
@@ -77,7 +121,8 @@ def clase_edit(request, pk, context=None):
     template = 'apps/scg_app/clase_edit.html'
     clase = get_object_or_404(Clase, pk=pk)
     form = ClaseUpdForm(instance=clase)
-    context = context or {'form': form}
+    
+    context = context or {'form': form, 'comment_form': ComentarioForm()}
 
     #check edit permission
     if clase.locked or not request.user.has_perm('scg_app.change_clase'):
@@ -99,8 +144,10 @@ def clase_edit(request, pk, context=None):
 
     if request.method == 'POST':
         form = ClaseUpdForm(request.POST, instance=clase)
-        if not form.is_valid():
-            messages.error(request, f'Error de formulario.')
+        comment_form = ComentarioForm(request.POST)
+
+        if not form.is_valid() or not comment_form.is_valid():
+            messages.error(request, 'Error de formulario.')
             context = context or {'form': ClaseUpdForm(instance=clase)}
             return render(request, template, context)
 
@@ -127,9 +174,19 @@ def clase_edit(request, pk, context=None):
                 clase.modificada = False
                 messages.success(request, f'La clase ha sido modificada.')
 
+        #create comment
+        if comment_form.cleaned_data["comentario"]:
+            new_comment = Comentario.objects.create(
+                usuario=request.user,
+                accion='edicion',
+                contenido=comment_form.cleaned_data["comentario"])
+
+            #assign comment to
+            clase.comentarios.create(comentario=new_comment)
+
         clase.save()
 
-        context = {'form': form}
+        context['form'] = form
         return render(request, template, context)
 
     form = ClaseUpdForm(instance=clase)
@@ -1032,27 +1089,15 @@ class ClasesView(LoginRequiredMixin, ListView):
         qs = qs[reg_ini:reg_end]
 
         #list of dict for JsonResponse
-        results = [{
-            'id': clase.id,
-            'estado': clase.get_estado_display(),
-            'was_made': clase.was_made,
-            'empleado': clase.empleado.__str__(),
-            'reemplazo': clase.reemplazo.__str__() if clase.reemplazo else "",
-            'sede': clase.sede.nombre,
-            'actividad': clase.actividad.nombre,
-            'dia_semana': clase.get_dia_semana_display(),
-            'fecha': clase.fecha,
-            'horario_desde': clase.horario_desde.strftime("%H:%M"),
-            'horario_hasta': clase.horario_hasta.strftime("%H:%M"),
-            'modificada': clase.modificada,
-            'ausencia': clase.ausencia.__str__() if clase.ausencia else "",
-            'confirmada': clase.confirmada,
-        } for clase in qs]
+        #results = [clase.to_dict() for clase in qs]
+        num_pages = math.ceil(total_regs/self.results_pp)
 
         return JsonResponse({
-            "results": results,
-            "pages": math.ceil(total_regs/self.results_pp),
-            "page": page
+            "results": [clase.to_monitor() for clase in qs],
+            "pages": num_pages,
+            "page": page,
+            "next": page + 1 if page < num_pages else None,
+            "prev": page - 1 if page > 1 and num_pages > 1 else None,
         })
 
     def get_queryset(self):
@@ -1307,9 +1352,20 @@ def gestion_ausencia(request, context=None):
             messages.error(request, "La ausencia requiere un certificado.")
             return render(request, template, context)
 
+        #create comment
+        new_comment = None
+        if form.cleaned_data["comentario"]:
+            new_comment = Comentario.objects.create(
+                usuario=request.user,
+                accion="gestion_ausencia",
+                contenido=form.cleaned_data["comentario"])
+
         #assign absence for each class
         for clase in clases_to_edit:
             clase.ausencia = ausencia
+            #only if was added comment
+            if new_comment:
+                clase.comentarios.create(comentario=new_comment)
             clase.save()
             clase.update_status()
 
@@ -1329,10 +1385,15 @@ def asignar_reemplazo(request, id_clase=None, context=None):
     if not id_clase:
         return render(request, template, context)
 
-    context = context or {'search_data': {}}
-
     clase_to_edit = get_object_or_404(Clase, pk=id_clase)
-    context["clase_to_edit"] = clase_to_edit
+
+    context = context or {
+        'search_data': {},
+        'clase_to_edit': clase_to_edit,
+        'form': ComentarioForm(),
+    }
+
+    #context["clase_to_edit"] = clase_to_edit
 
     #check absence manage permission
     if not request.user.has_perm('scg_app.asign_replacement'):
@@ -1353,7 +1414,6 @@ def asignar_reemplazo(request, id_clase=None, context=None):
             clase no puede ser editada.'.format(
                 Periodo.get_url_date_period(clase_to_edit.fecha)
             ))
-
         return render(request, template, context)
 
     if request.method == 'POST':
@@ -1373,6 +1433,12 @@ def asignar_reemplazo(request, id_clase=None, context=None):
                 return render(request, template, context)
         else:
             reemplazante = None
+
+        #check comment form
+        form = ComentarioForm(request.POST)
+        if not form.is_valid():
+            messages.error(request, "Error en el comentario.")
+            return render(request, template, context)
 
         if not reemplazante:
             clase_to_edit.reemplazo = None
@@ -1394,7 +1460,20 @@ def asignar_reemplazo(request, id_clase=None, context=None):
                 request,
                 "El reemplazante no está disponible en este rango horario")
             return render(request, template, context)
+        
+        #create comment
+        new_comment = None
+        if form.cleaned_data["comentario"]:
+            new_comment = Comentario.objects.create(
+                usuario=request.user,
+                accion='gestion_reemplazo',
+                contenido=form.cleaned_data["comentario"])
 
+        #assign comment to class
+        if new_comment:
+            clase_to_edit.comentarios.create(comentario=new_comment)
+
+        #replace assign
         clase_to_edit.reemplazo = reemplazante
         clase_to_edit.save()
         clase_to_edit.update_status()

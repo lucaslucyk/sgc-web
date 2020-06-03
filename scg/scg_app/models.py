@@ -17,9 +17,54 @@ from django.core.validators import MinValueValidator    #, MaxValueValidator
 from django.shortcuts import reverse
 from django.db.models import Q
 from django.conf import settings
+from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.models import ContentType
+from django.contrib.contenttypes.fields import GenericRelation
 
 ### own ###
 from scg_app import utils
+
+### models ###
+class Comentario(models.Model):
+    usuario = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
+    contenido = models.TextField(blank=True)
+    fecha = models.DateField(auto_now_add=True, null=True)
+    hora = models.TimeField(auto_now_add=True)
+    locked = models.BooleanField(null=True, blank=True, default=False)
+
+    accion = models.CharField(
+        max_length=50, choices=settings.ACCIONES_CHOICES, blank=True, null=True)
+
+    class Meta:
+        verbose_name = "Comentario"
+        verbose_name_plural = "Comentarios"
+        ordering = ["-fecha", "-hora"]
+        get_latest_by = '-fecha'
+
+    def __str__(self):
+        return '{}{}'.format(
+            self.contenido[:min(30, len(self.contenido))],
+            '...' if len(self.contenido) > 30 else ''
+        )
+
+class GrupoComentario(models.Model):
+    fecha = models.DateField(auto_now_add=True, null=True)
+    hora = models.TimeField(auto_now_add=True)
+
+    comentario = models.ForeignKey(
+        Comentario, null=True, on_delete=models.CASCADE)
+
+    content_type = models.ForeignKey(
+        ContentType, null=True, on_delete=models.CASCADE)
+
+    object_id = models.PositiveIntegerField()
+    content_object = GenericForeignKey()
+
+    class Meta:
+        verbose_name = "Grupo de comentarios"
+        verbose_name_plural = "Grupos de comentarios"
+        ordering = ["-fecha", "-hora"]
+        get_latest_by = '-fecha'
 
 class Periodo(models.Model):
     """ To manage available and blocked periods """
@@ -32,6 +77,7 @@ class Periodo(models.Model):
         verbose_name = "Periodo"
         verbose_name_plural = "Periodos"
         ordering = ["-desde"]
+        get_latest_by = "-desde"
 
     @classmethod
     def check_overlap(cls, _desde, _hasta, id_exclude=None, locked_only=False):
@@ -153,7 +199,8 @@ class Escala(models.Model):
     class Meta:
         verbose_name = "Escala"
         verbose_name_plural = "Escalas"
-        get_latest_by = "id"
+        ordering = ["nombre",]
+        get_latest_by = "nombre"
 
     @property
     def pronombre(self):
@@ -174,7 +221,8 @@ class GrupoActividad(models.Model):
     class Meta:
         verbose_name = "Grupo de Actividad"
         verbose_name_plural = "Grupos de Actividad"
-        get_latest_by = "id"
+        ordering = ["nombre", ]
+        get_latest_by = "nombre"
 
     @property
     def pronombre(self):
@@ -195,7 +243,8 @@ class Actividad(models.Model):
     class Meta:
         verbose_name = "Actividad"
         verbose_name_plural = "Actividades"
-        get_latest_by = "id"
+        ordering = ["nombre", ]
+        get_latest_by = "nombre"
 
     @property
     def pronombre(self):
@@ -222,6 +271,7 @@ class MotivoAusencia(models.Model):
     class Meta:
         verbose_name = 'Motivo de Ausencia'
         verbose_name_plural = 'Motivos de Ausencia'
+        ordering = ["nombre", ]
         get_latest_by = 'nombre'
 
     @classmethod
@@ -269,7 +319,8 @@ class TipoLiquidacion(models.Model):
     class Meta:
         verbose_name = "Tipo de liquidación"
         verbose_name_plural = "Tipos de liquidación"
-        get_latest_by = "id_netTime"
+        ordering = ["nombre", ]
+        get_latest_by = "nombre"
 
     def __str__(self):
         return f'{self.nombre}'
@@ -316,7 +367,8 @@ class Empleado(models.Model):
     class Meta:
         verbose_name = "Empleado"
         verbose_name_plural = "Empleados"
-        get_latest_by = "id"
+        get_latest_by = "dni"
+        ordering = ["dni", "apellido", "nombre"]
     
     class ReportBuilder:
         extra = ['legajo_apellido_nombre', ]
@@ -423,7 +475,8 @@ class Sede(models.Model):
     class Meta:
         verbose_name = "Sede"
         verbose_name_plural = "Sedes"
-        get_latest_by = "id"
+        get_latest_by = "nombre"
+        ordering = ["nombre", ]
 
     @classmethod
     def update_from_nettime(cls):
@@ -475,7 +528,8 @@ class Saldo(models.Model):
     class Meta:
         verbose_name = "Saldo"
         verbose_name_plural = "Saldos"
-        get_latest_by = "id"
+        get_latest_by = "-desde"
+        ordering = ["-desde", "-hasta"]
 
     def get_edit_url(self):
         """ construct edit url from current object """
@@ -581,7 +635,8 @@ class Recurrencia(models.Model):
     class Meta:
         verbose_name = "Recurrencia"
         verbose_name_plural = "Recurrencias"
-        get_latest_by = "id"
+        get_latest_by = "-fecha_desde"
+        ordering = ["-fecha_desde", "-fecha_hasta"]
 
     def get_dias_str(self):
         return ', '.join(utils.get_dia_display(*self.weekdays))
@@ -705,15 +760,16 @@ class Clase(models.Model):
     presencia = models.CharField(
         max_length=12, choices=settings.PRESENCIA_CHOICES, null=True,
         blank=True, default=settings.PRESENCIA_CHOICES[0][0])
-    comentario = models.CharField(
-        max_length=1000, blank=True, help_text="Aclaraciones varias")
+
+    #related comments
+    comentarios = GenericRelation('GrupoComentario')
 
     locked = models.BooleanField(blank=True, default=False)
 
     class Meta:
         verbose_name = "Clase"
         verbose_name_plural = "Clases"
-        get_latest_by = "id"
+        get_latest_by = "-fecha"
         ordering = ["-fecha"]
 
         permissions = [
@@ -721,6 +777,17 @@ class Clase(models.Model):
             ("absence_management", "Can manage absence"),
             ("asign_replacement", "Can assign replacements"),
         ]
+
+    class ReportBuilder:
+        # Lists or tuple of excluded fields
+        exclude = ('comentarios',)
+        # Explicitly allowed fields
+        #fields = ('get_dia_semana_display',)
+        # List extra fields (useful for methods)
+        extra = (
+            'monto', 'url_certificados', 'dia_semana_display',
+            'format_user_comments',
+        )
 
     def save(self, *args, **kwargs):
         #set hours of class in float(hs)
@@ -730,13 +797,18 @@ class Clase(models.Model):
 
         super().save(*args, **kwargs)
 
-    class ReportBuilder:
-        # Lists or tuple of excluded fields
-        #exclude = ('dia_semana',)
-        # Explicitly allowed fields
-        #fields = ('get_dia_semana_display',)
-        # List extra fields (useful for methods)
-        extra = ('monto', 'url_certificados', 'dia_semana_display')
+    @property
+    def user_comments(self):
+        return ['[{}, {} ({})]: {}'.format(
+            comment.comentario.usuario.last_name,
+            comment.comentario.usuario.first_name,
+            comment.fecha.strftime("%d/%m/%Y"),
+            comment.comentario.contenido,
+        ) for comment in self.comentarios.all()]
+
+    @property
+    def format_user_comments(self):
+        return '.\r\n'.join(self.user_comments)
     
     @property
     def dia_semana_display(self):
@@ -781,6 +853,26 @@ class Clase(models.Model):
         )
         #
         return bool(blocks)
+
+    def to_monitor(self):
+        """ convert a instance to dict for class monitor """
+
+        return {
+            'id': self.id,
+            'estado': self.get_estado_display(),
+            'was_made': self.was_made,
+            'empleado': self.empleado.__str__(),
+            'reemplazo': self.reemplazo.__str__() if self.reemplazo else "",
+            'sede': self.sede.nombre,
+            'actividad': self.actividad.nombre,
+            'dia_semana': self.get_dia_semana_display(),
+            'fecha': self.fecha,
+            'horario_desde': self.horario_desde.strftime("%H:%M"),
+            'horario_hasta': self.horario_hasta.strftime("%H:%M"),
+            'modificada': self.modificada,
+            'ausencia': self.ausencia.__str__() if self.ausencia else "",
+            'confirmada': self.confirmada,
+        }
 
     def update_status(self):
         """ update the class status according to all its variables  """
@@ -853,7 +945,8 @@ class Marcaje(models.Model):
     class Meta:
         verbose_name = "Marcaje"
         verbose_name_plural = "Marcajes"
-        get_latest_by = "hora"
+        get_latest_by = "-fecha"
+        ordering = ["-fecha", "hora"]
 
     @classmethod
     def update_from_nettime(cls):
@@ -947,7 +1040,8 @@ class BloqueDePresencia(models.Model):
     class Meta:
         verbose_name = "Bloque de presencia"
         verbose_name_plural = "Bloques de presencia"
-        ordering = ["-inicio"]
+        get_latest_by = "-fecha"
+        ordering = ["-fecha", "-inicio"]
 
         permissions = [
             ("recalculate_blocks", "Can recalculate blocks of a specific day"),
@@ -1017,7 +1111,8 @@ class Certificado(models.Model):
     class Meta:
         verbose_name = "Certificado"
         verbose_name_plural = "Certificados"
-        ordering = ["motivo"]
+        get_latest_by = "locked"
+        ordering = ["locked", ]
     
     class ReportBuilder:
         extra = ('complete_file_url',)

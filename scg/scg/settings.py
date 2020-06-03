@@ -214,6 +214,17 @@ PRESENCIA_CHOICES = (
     ("Realizada", "Realizada"),  # keep last
 )
 
+ACCIONES_CHOICES = (
+    ("gestion_ausencia", "Gestión de Ausencia"),
+    ("gestion_reemplazo", "Gestión de Reemplazo"),
+    ("confirmacion", "Confirmación"),
+    ("edicion", "Edición de Clase"),
+    ("cancelacion", "Cancelación"),
+
+    ("comentario", "Comentario"),   #keep last
+)
+
+#help editor
 CKEDITOR_CONFIGS = {
     "default": {
         'skin': 'n1theme',
