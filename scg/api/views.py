@@ -7,6 +7,8 @@ from collections import defaultdict
 ### third ###
 from rest_framework import viewsets
 from rest_framework import permissions
+from rest_framework import generics
+from rest_framework.response import Response
 
 ### django ###
 from django.shortcuts import render
@@ -23,7 +25,7 @@ from api import serializers
 
 class BaseViewSet:
     permission_classes = [permissions.IsAuthenticated]
-    http_method_names = ['get', 'head', 'options', 'post']
+    http_method_names = ['get', 'head', 'options', 'post', 'put']
 
 class UserViewSet(BaseViewSet, viewsets.ModelViewSet):
     """ API endpoint that allows users to be viewed or edited."""
@@ -139,6 +141,26 @@ class PeriodoViewSet(BaseViewSet, viewsets.ModelViewSet):
     serializer_class = serializers.PeriodoSerializer
 
 
+class ComentarioViewSet(BaseViewSet, viewsets.ModelViewSet):
+    """ Comentario endpoint """
+
+    queryset = Comentario.objects.all()
+    serializer_class = serializers.ComentarioSerializer
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        if request.user == instance.usuario:
+            instance.contenido = request.data.get("contenido")
+            instance.save()
+            
+            serializer = self.get_serializer(instance, data=request.data)
+            serializer.is_valid(raise_exception=True)
+            self.perform_update(serializer)
+
+            return Response(serializer.data)
+        
+        return Response(self.get_serializer(instance).data)
+
 ### v1.0 ###
 
 # class EmployeeAutocomplete(autocomplete.Select2QuerySetView):
@@ -250,3 +272,14 @@ def get_sedes(request, _filter, context=None):
     } for sede in sedes]
     
     return JsonResponse({"results":results})
+
+@login_required
+def get_comment_data(request, comment, context=None):
+    if not comment:
+        return JsonResponse({"results": []})
+
+    try:
+        comment = Comentario.objects.get(pk=comment)
+        return JsonResponse({"results": [{"contenido": comment.contenido}]})
+    except:
+        return JsonResponse({"results": []})

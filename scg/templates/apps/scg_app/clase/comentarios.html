@@ -85,12 +85,13 @@
           </div>
           <!-- /.card-header -->
           <div class="card-body">
-            <form role="form" method="POST">{% csrf_token %}
+            <form role="form" method="POST">
+              {% csrf_token %}
               <!-- textarea -->
               <div class="input-group input-group-sm">
                 {{ form.comentario }}
                 <span class="input-group-append">
-                  <button type="submit" class="btn btn-info btn-flat">Enviar</button>
+                  <button name="add_comment" type="submit" class="btn btn-info btn-flat">Enviar</button>
                 </span>
               </div>
               <!-- /input-group -->
@@ -113,15 +114,36 @@
             <!-- timeline item -->
               <div>
                 <i class="fas fa-comments bg-secondary"></i>
+
                 <div class="timeline-item">
+
+                  {% if user == comentario.usuario or user.is_superuser %}
+                    <span class="time pt-1"> <!-- actions -->
+                      <div class="btn-group btn-group-sm">
+                        <a href="#" class="btn btn-info" role="button" aria-disabled="true" btn_action="comment_update" edit_id="{{ comentario.pk }}">
+                          <i class="fas fa-pencil-alt"></i>
+                        </a>
+                        <a href="{{ comentario.get_delete_url }}" class="btn btn-danger">
+                          <i class="fas fa-trash"></i>
+                        </a>
+                      </div>
+                    </span>
+                  {% endif %}
+
                   <span class="time"><i class="fas fa-clock"></i> {{ comentario.hora }}</span>
                   <span class="time"><i class="far fa-calendar-alt"></i> {{ comentario.fecha }}</span>
                   <h3 class="timeline-header">
                     <a class="text-info">{{ comentario.usuario.first_name }} {{ comentario.usuario.last_name }}</a> {{ comentario.get_accion_display }}</h3>
                   <div class="timeline-body">
-                    {{ comentario.contenido|linebreaksbr }}
+                    <form role="form" method="POST">{% csrf_token %}
+                      <input type="hidden" name="comment_id" value="{{ comentario.pk }}">
+                      <div class="input-group input-group-sm" form_group_id="{{ comentario.pk }}" searh_urls="true">
+                        {{ comentario.contenido|linebreaksbr }}
+                      </div>
+                    </form>
                   </div>
                 </div>
+
               </div>
               <!-- END timeline item -->
           {% endfor %}
@@ -137,15 +159,8 @@
 {% endblock %}
 
 {% block extra_js %}
-<!-- for dont charge home js -->
-<script type="text/javascript">
-  $(function () {
-    $('.timeline-body').html(function(i, text) {
-      return text.replace(
-        /\bhttp[s]?:\/\/([\w\.-]+\.)+[a-z]{2,}([\/\w\.\-\_\?\=\!\#,\&amp;]+)/gi,
-        '<a target="_blank" href="$&">$&</a>'
-      );
-    });
-  });
-</script>
+
+  {% load static %}
+  <script src="{%  static 'js/comentarios.js' %}"></script>
+
 {% endblock %}

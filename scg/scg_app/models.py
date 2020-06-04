@@ -47,9 +47,23 @@ class Comentario(models.Model):
             '...' if len(self.contenido) > 30 else ''
         )
 
+    def get_delete_url(self):
+        """ construct delete url from current object """
+        return reverse(
+            'confirm_delete',
+            kwargs={"model": self.__class__.__name__, "pk": self.id})
+
+    def pos_delete_url(self):
+        """ construct pos delete url from current object """
+        return reverse('clases_view')
+    
+    @property
+    def pronombre(self):
+        return "el"
+
 class GrupoComentario(models.Model):
-    fecha = models.DateField(auto_now_add=True, null=True)
-    hora = models.TimeField(auto_now_add=True)
+    #fecha = models.DateField(auto_now_add=True, null=True)
+    #hora = models.TimeField(auto_now_add=True)
 
     comentario = models.ForeignKey(
         Comentario, null=True, on_delete=models.CASCADE)
@@ -63,8 +77,8 @@ class GrupoComentario(models.Model):
     class Meta:
         verbose_name = "Grupo de comentarios"
         verbose_name_plural = "Grupos de comentarios"
-        ordering = ["-fecha", "-hora"]
-        get_latest_by = '-fecha'
+        ordering = ["-comentario__fecha", "-comentario__hora"]
+        get_latest_by = '-comentario__fecha'
 
 class Periodo(models.Model):
     """ To manage available and blocked periods """

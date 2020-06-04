@@ -48,21 +48,42 @@ def comments_of_class(request, id_clase: int, context=None):
         return render(request, template, context)
 
     if request.method == "POST":
-        form = ComentarioForm(request.POST)
+        
+        if 'add_comment' in request.POST:
+            form = ComentarioForm(request.POST)
 
-        if not form.is_valid():
-            messages.error(request, 'Error de formulario.')
-            return render(request, template, context)
+            if not form.is_valid():
+                messages.error(request, 'Error de formulario.')
+                return render(request, template, context)
 
-        #create comment
-        new_comment = Comentario.objects.create(
-            usuario=request.user,
-            accion=settings.ACCIONES_CHOICES[-1][0],
-            contenido=form.cleaned_data["comentario"])
+            #create comment
+            new_comment = Comentario.objects.create(
+                usuario=request.user,
+                accion=settings.ACCIONES_CHOICES[-1][0],
+                contenido=form.cleaned_data["comentario"])
 
-        #assign comment to
-        clase.comentarios.create(comentario=new_comment)
-        clase.save()
+            #assign comment to
+            clase.comentarios.create(comentario=new_comment)
+            clase.save()
+        
+        if 'update_comment' in request.POST:
+            upd_comm = get_object_or_404(
+                Comentario, pk=request.POST.get('comment_id'))
+
+            if request.user == upd_comm.usuario or request.user.is_superuser:
+                form_update = ComentarioForm(request.POST)
+
+                if not form_update.is_valid():
+                    messages.error(request, 'Error de formulario.')
+                    return render(request, template, context)
+                
+                #update comment
+                upd_comm.contenido = form_update.cleaned_data["comentario"]
+                upd_comm.fecha = datetime.date.today()
+                upd_comm.hora = datetime.datetime.now().time()
+                upd_comm.save()
+            else:
+                messages.error(request, "No puede editar este comentario")
 
     #reset form
     form = ComentarioForm()

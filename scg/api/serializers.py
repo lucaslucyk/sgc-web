@@ -126,6 +126,13 @@ class PeriodoSerializer(serializers.HyperlinkedModelSerializer):
         model = models.Periodo
         fields = ['desde', 'hasta', 'bloqueado']
 
+
+class ComentarioSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = models.Comentario
+        fields = ['fecha', 'hora', 'get_accion_display', 'contenido', 'locked']
+
+
 # class EmpleadooSerializer(serializers.Serializer):
 #     id_netTime = serializers.IntegerField()
 #     apellido = serializers.CharField()

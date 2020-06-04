@@ -155,13 +155,13 @@ class BloqueDePresenciaAdmin(admin.ModelAdmin):
 
 @admin.register(Comentario)
 class ComentarioAdmin(admin.ModelAdmin):
-    list_display = ('fecha', 'usuario', 'accion', '__str__', 'locked')
+    list_display = ('fecha', 'hora', 'usuario', 'accion', '__str__', 'locked')
 
 
 @admin.register(GrupoComentario)
 class GrupoComentarioAdmin(admin.ModelAdmin):
     list_display = (
-        'fecha', 'hora', 'content_type', 'content_object', 'comentario')
+        'content_type', 'content_object', 'comentario')
 
 #admin.site.register(BloqueDePresencia)
 admin.site.register(TipoLiquidacion)

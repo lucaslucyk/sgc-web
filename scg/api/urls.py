@@ -23,6 +23,7 @@ router.register(r'marcajes', views.MarcajeViewSet)
 router.register(r'bloques-de-presencia', views.BloqueDePresenciaViewSet)
 router.register(r'certificados', views.CertificadoViewSet)
 router.register(r'periodos', views.PeriodoViewSet)
+router.register(r'comentarios', views.ComentarioViewSet)
 
 get_urls = [ 
 	path('empleados/<str:_filter>/', views.get_empleados, name='get_empleados'),
@@ -34,6 +35,7 @@ get_urls = [
 	path(
 		'clases_from_certificado/<int:certificado_id>/',
 		views.get_clases_from_certificado, name='clases_from_certificado'),
+	path('comment/<int:comment>',views.get_comment_data, name='get_comment'),
 ]
 
 urlpatterns = [
