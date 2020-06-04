@@ -117,10 +117,8 @@ async function get_classes(_page, _order){
 
 async function update_paginator(_pages, _page){
   /* remove actual and create new paginator with current _page and number of _pages */
-  //console.log(_page + " of " + _pages);
 
   $('#paginatorNav ul li').remove();
-
 
   $('#paginatorNav ul').append('\
     <li class="page-item '+ (_page <= 1 ? 'disabled' : '') +'">\
@@ -134,17 +132,20 @@ async function update_paginator(_pages, _page){
     </li>\
   ');
 
-  for (var i=1; i<=_pages; i++) {
+  $.each(getPageList(_pages, _page, 7), function (i, item) {
     $('#paginatorNav ul').append('\
-      <li class="page-item '+ (i == _page? 'active' : '') +'"><a class="page-link" href="#">'+ i +'</a></li>\
+      <li class="page-item '+ (item == _page ? 'active' : '') + (item == 0 ? 'disabled' : '') + '">\
+        <a class="page-link" href="#">' + (item > 0 ? item : '...') + '</a>\
+      </li>\
     ');
-  }
+  });
 
   $('#paginatorNav ul').append('\
     <li class="page-item '+ (_page == _pages || _pages == 0 ? 'disabled' : '') +'">\
       <a class="page-link" href="#" tabindex="1">Siguiente</a>\
     </li>\
   ');
+  
   $('#paginatorNav ul').append('\
     <li class="page-item '+ (_page == _pages || _pages == 0 ? 'disabled' : '') +'">\
       <a class="page-link" href="#" tabindex="'+ (parseInt(_pages) - parseInt(_page)) +'"><i class="fas fa-step-forward"></i></a>\
@@ -182,6 +183,42 @@ async function update_table(dataList){
       <td class="align-middle"><i class="fas fa-'+ (item.confirmada ? 'check': 'times') +'-circle"></i></td>\
     ');
   });
+}
+
+function getPageList(totalPages, page, maxLength) {
+  // Returns an array of maxLength (or less) page numbers
+  // where a 0 in the returned array denotes a gap in the series.
+  // Parameters:
+  //   totalPages:     total number of pages
+  //   page:           current page
+  //   maxLength:      maximum size of returned array
+  if (maxLength < 5) throw "maxLength must be at least 5";
+
+  function range(start, end) {
+    return Array.from(Array(end - start + 1), (_, i) => i + start);
+  }
+
+  var sideWidth = maxLength < 9 ? 1 : 2;
+  var leftWidth = (maxLength - sideWidth * 2 - 3) >> 1;
+  var rightWidth = (maxLength - sideWidth * 2 - 2) >> 1;
+  if (totalPages <= maxLength) {
+    // no breaks in list
+    return range(1, totalPages);
+  }
+  if (page <= maxLength - sideWidth - 1 - rightWidth) {
+    // no break on left of page
+    return range(1, maxLength - sideWidth - 1)
+      .concat(0, range(totalPages - sideWidth + 1, totalPages));
+  }
+  if (page >= totalPages - sideWidth - 1 - rightWidth) {
+    // no break on right of page
+    return range(1, sideWidth)
+      .concat(0, range(totalPages - sideWidth - 1 - rightWidth - leftWidth, totalPages));
+  }
+  // Breaks on both sides
+  return range(1, sideWidth)
+    .concat(0, range(page - leftWidth, page + rightWidth),
+      0, range(totalPages - sideWidth + 1, totalPages));
 }
 
 function clean_localStorage(){
