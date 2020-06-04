@@ -886,6 +886,7 @@ class Clase(models.Model):
             'modificada': self.modificada,
             'ausencia': self.ausencia.__str__() if self.ausencia else "",
             'confirmada': self.confirmada,
+            'comentarios': self.comentarios.all().count() if self.comentarios else 0,
         }
 
     def update_status(self):

@@ -99,7 +99,7 @@ async function get_classes(_page, _order){
   var form = $('#formFiltros').serializeArray();
   form.push({name: 'order_by', value: _order});
   form.push({name: 'page', value: _page});
-  form.push({ name: 'rpp', value: _rpp});
+  form.push({name: 'rpp', value: _rpp});
 
   var currentUrl = window.location.href;
 
@@ -122,7 +122,9 @@ async function update_paginator(_pages, _page){
 
   $('#paginatorNav ul').append('\
     <li class="page-item '+ (_page <= 1 ? 'disabled' : '') +'">\
-      <a class="page-link" href="#" tabindex="'+ (parseInt(_page) * (-1) + 1 ) +'"><i class="fas fa-step-backward"></i></a>\
+      <a class="page-link" href="#" tabindex="'+ (parseInt(_page) * (-1) + 1 ) +'">\
+        <i class="fas fa-step-backward"></i>\
+      </a>\
     </li>\
   ');
 
@@ -145,10 +147,12 @@ async function update_paginator(_pages, _page){
       <a class="page-link" href="#" tabindex="1">Siguiente</a>\
     </li>\
   ');
-  
+
   $('#paginatorNav ul').append('\
     <li class="page-item '+ (_page == _pages || _pages == 0 ? 'disabled' : '') +'">\
-      <a class="page-link" href="#" tabindex="'+ (parseInt(_pages) - parseInt(_page)) +'"><i class="fas fa-step-forward"></i></a>\
+      <a class="page-link" href="#" tabindex="'+ (parseInt(_pages) - parseInt(_page)) +'">\
+        <i class="fas fa-step-forward"></i>\
+      </a>\
     </li>\
   ');
 }
@@ -178,9 +182,9 @@ async function update_table(dataList){
       <td class="align-middle">'+ $.format.date(new Date(item.fecha.split("-")), "d MMMM yyyy") +'</td>\
       <td class="align-middle">'+ item.horario_desde +'</td>\
       <td class="align-middle">'+ item.horario_hasta +'</td>\
-      <td class="align-middle">'+ (item.modificada ? '<i class="fas fa-exclamation-circle"></i>': '&nbsp;') +'</td>\
       <td class="align-middle">'+ item.ausencia +'</td>\
       <td class="align-middle"><i class="fas fa-'+ (item.confirmada ? 'check': 'times') +'-circle"></i></td>\
+      <td class="align-middle">'+ (item.comentarios ? '<i class="far fa-comments">&nbsp;<sup><span class="badge bg-info">' + item.comentarios +'</span></sup></i>': '&nbsp;') +'</td>\
     ');
   });
 }

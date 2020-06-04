@@ -1209,6 +1209,14 @@ def action_process(request, context=None):
                 id_empleado=clase.empleado.id,
                 fecha=clase.fecha
             )
+        
+        if _accion == 'ver_comentarios':
+            if len(ids) != 1:
+                messages.error(
+                    request,
+                    "Seleccione solo un registro para ver los comentarios.")
+                return redirect('show_message', _type='error')
+            return redirect('comments_of_class', id_clase=ids[0])
 
     # if accessed by url or method is not POST
     messages.error(request, "Acción o método no soportado.")
