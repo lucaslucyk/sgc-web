@@ -93,6 +93,9 @@ async function get_classes(_page, _order){
     after update paginator with function "update_paginator" and obtained json data 
   */
 
+  //put overlay to inform user
+  $('.overlay').show("fast");
+
   //get results per page config
   var _rpp = rpp.children("option:selected").val();
 
@@ -113,6 +116,7 @@ async function get_classes(_page, _order){
       const paginator = update_paginator(response.pages, response.page);
    }
   });
+
 }
 
 async function update_paginator(_pages, _page){
@@ -155,6 +159,9 @@ async function update_paginator(_pages, _page){
       </a>\
     </li>\
   ');
+
+  //disable overlay after of update
+  $('.overlay').hide("fast");
 }
 
 async function update_table(dataList){
@@ -173,7 +180,7 @@ async function update_table(dataList){
         </div>\
       </td>\
       <td class="align-middle">'+ item.estado +'</td>\
-      <td class="align-middle"><i class="fas fa-'+ (item.was_made ? 'check': 'times') +'-circle"></i></td>\
+      <td class="align-middle text-center"><i class="fas fa-'+ (item.was_made ? 'check': 'times') +'-circle"></i></td>\
       <td class="align-middle">'+ item.empleado +'</td>\
       <td class="align-middle">'+ (item.reemplazo ? '<strong>'+item.reemplazo+'</strong>': item.empleado) +'</td>\
       <td class="align-middle">'+ item.sede +'</td>\
@@ -183,7 +190,7 @@ async function update_table(dataList){
       <td class="align-middle">'+ item.horario_desde +'</td>\
       <td class="align-middle">'+ item.horario_hasta +'</td>\
       <td class="align-middle">'+ item.ausencia +'</td>\
-      <td class="align-middle"><i class="fas fa-'+ (item.confirmada ? 'check': 'times') +'-circle"></i></td>\
+      <td class="align-middle text-center"><i class="fas fa-'+ (item.confirmada ? 'check': 'times') +'-circle"></i></td>\
       <td class="align-middle">'+ (item.comentarios ? '<i class="far fa-comments">&nbsp;<sup><span class="badge bg-info">' + item.comentarios +'</span></sup></i>': '&nbsp;') +'</td>\
     ');
   });

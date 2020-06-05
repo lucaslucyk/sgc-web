@@ -16,10 +16,11 @@
   color: #007bff !important;
   text-decoration: none !important;
 }
-
+sup{
+  font-family: 'Roboto';
+}
 footer{
   font-size: .9rem;
-  
 }
 
 table td {

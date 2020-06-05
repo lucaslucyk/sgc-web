@@ -155,6 +155,13 @@ class Periodo(models.Model):
             locked=not self.bloqueado
         ).update(locked=self.bloqueado)
 
+        ### comentarios ###
+        Comentario.objects.filter(
+            fecha__gte=self.desde,
+            fecha__lte=self.hasta,
+            locked=not self.bloqueado
+        ).update(locked=self.bloqueado)
+
         return clases.count()
 
     @classmethod
@@ -816,7 +823,7 @@ class Clase(models.Model):
         return ['[{}, {} ({})]: {}'.format(
             comment.comentario.usuario.last_name,
             comment.comentario.usuario.first_name,
-            comment.fecha.strftime("%d/%m/%Y"),
+            comment.comentario.fecha.strftime("%d/%m/%Y"),
             comment.comentario.contenido,
         ) for comment in self.comentarios.all()]
 

@@ -86,6 +86,7 @@
           <!-- /.card-header -->
           <div class="card-body">
             <form role="form" method="POST">
+              {% if clase.locked %}<fieldset disabled>{% endif %}
               {% csrf_token %}
               <!-- textarea -->
               <div class="input-group input-group-sm">
@@ -95,6 +96,7 @@
                 </span>
               </div>
               <!-- /input-group -->
+              {% if clase.locked %}</fieldset>{% endif %}
             </form>
           </div>
           <!-- /.card-body -->
@@ -105,7 +107,7 @@
 
     <div class="col-md-12 mt-3">
       {% if comentarios %}
-        <div class="timeline">
+        <div class="timeline mb-3">
           {% comment %} <div class="time-label">
             <span class="bg-secondary">Historial de comentarios</span>
           </div> {% endcomment %}
@@ -120,10 +122,10 @@
                   {% if user == comentario.usuario or user.is_superuser %}
                     <span class="time pt-1"> <!-- actions -->
                       <div class="btn-group btn-group-sm">
-                        <a href="#" class="btn btn-info" role="button" aria-disabled="true" btn_action="comment_update" edit_id="{{ comentario.pk }}">
+                        <a href="#" class="btn btn-info {% if clase.locked %}disabled{% endif %}" role="button" aria-disabled="true" btn_action="comment_update" edit_id="{{ comentario.pk }}">
                           <i class="fas fa-pencil-alt"></i>
                         </a>
-                        <a href="{{ comentario.get_delete_url }}" class="btn btn-danger">
+                        <a href="{{ comentario.get_delete_url }}" class="btn btn-danger {% if clase.locked %}disabled{% endif %}" role="button" aria-disabled="true">
                           <i class="fas fa-trash"></i>
                         </a>
                       </div>
@@ -135,11 +137,14 @@
                   <h3 class="timeline-header">
                     <a class="text-info">{{ comentario.usuario.first_name }} {{ comentario.usuario.last_name }}</a> {{ comentario.get_accion_display }}</h3>
                   <div class="timeline-body">
-                    <form role="form" method="POST">{% csrf_token %}
+                    <form role="form" method="POST">
+                      {% if clase.locked %}<fieldset disabled>{% endif %}
+                      {% csrf_token %}
                       <input type="hidden" name="comment_id" value="{{ comentario.pk }}">
                       <div class="input-group input-group-sm" form_group_id="{{ comentario.pk }}" searh_urls="true">
                         {{ comentario.contenido|linebreaksbr }}
                       </div>
+                      {% if clase.locked %}</fieldset>{% endif %}
                     </form>
                   </div>
                 </div>
@@ -151,8 +156,11 @@
       {% endif %}
 
       </div><!-- /.col-->
-    <div class="col-md-12">
-      <p><a href="javascript: window.history.back();"><i class="fas fa-chevron-circle-left"></i> Volver atras</a></p>
+    <!-- back button -->
+    <div class="col-md-12 mt-3">
+      <p><a href="javascript: window.history.back();" class="btn btn-outline-dark" role="button">
+        <i class="fas fa-chevron-circle-left"></i> Volver atr&aacute;s
+      </a></p>
     </div> <!-- principal col -->
   </div> <!-- principal row -->
 

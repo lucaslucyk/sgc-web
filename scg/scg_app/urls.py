@@ -6,6 +6,9 @@ from scg_app import views, reports
 list_urls = [
     ### lists ###
     path('empleados/', views.EmpleadosList.as_view(), name='empleados_view'),
+    # path('empleados/<int:empleado>/certificados',
+    #     views.EmpleadosList.as_view(), name='empleados_view'),
+
     path('saldos/', views.SaldosList.as_view(), name='saldos_view'),
     path('programaciones/', views.RecurrenciasList.as_view(),
         name='programaciones_view'),

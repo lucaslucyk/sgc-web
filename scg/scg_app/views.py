@@ -47,8 +47,9 @@ def comments_of_class(request, id_clase: int, context=None):
             request, "No tiene permisos para la sede de esta clase.")
         return render(request, template, context)
 
-    if request.method == "POST":
-        
+    #if clase is locked, doesn't support actions
+    if request.method == "POST" and not clase.locked:
+
         if 'add_comment' in request.POST:
             form = ComentarioForm(request.POST)
 
