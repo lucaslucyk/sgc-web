@@ -85,12 +85,17 @@ urlpatterns = [
     ### update ###
     path('update/', include(update_urls)),
 
-    #nettime operations
+    ### nettime operations ###
     path('netTime/', include(nettime_urls)),
 
+    ### calendar of sede ###
+    path('calendario-sede/', views.sede_calendar, name='sede_calendar'),
+
     ### others ###
-    path('wiki/', views.wiki, name='wiki'),
-    path('about/', views.about, name='about'),
+    # path('wiki/', views.wiki, name='wiki'),
+    #path('about/', views.about, name='about'),
+
+    ### schedule tasks ###
     path('tasks/', views.tasks_management, name='tasks_management'),
 
     #delete view ###

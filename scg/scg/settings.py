@@ -12,6 +12,10 @@ https://docs.djangoproject.com/en/3.0/ref/settings/
 
 import os
 from django.contrib.messages import constants as message_constants
+try:
+    from . import credentials
+except:
+    pass
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -172,16 +176,17 @@ REST_FRAMEWORK = {
     'PAGE_SIZE': 10
 }
 
-#para testeo de recuperacion de passwords, borrar despues!
-#EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-
 ### password recovery ###
-EMAIL_USE_TLS = True
-EMAIL_HOST = ''
-EMAIL_PORT = 25
-EMAIL_HOST_USER = ''
-EMAIL_HOST_PASSWORD = ''
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+if 'credentials' in dir():
+    EMAIL_USE_TLS = credentials.EMAIL_USE_TLS
+    EMAIL_HOST = credentials.EMAIL_HOST
+    EMAIL_PORT = credentials.EMAIL_PORT
+    EMAIL_HOST_USER = credentials.EMAIL_HOST_USER
+    EMAIL_HOST_PASSWORD = credentials.EMAIL_HOST_PASSWORD
+    DEFAULT_FROM_EMAIL = credentials.DEFAULT_FROM_EMAIL
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+else:
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 ### SCG_APP specifics ###
 SERVER_URL = "http://192.168.1.104:8091/webservice?"

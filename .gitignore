@@ -19,7 +19,8 @@ migrations
 # Django stuff:
 statics_pub/
 *.log
-local_settings.py
+#migrate to os.path
+credentials.py
 #db.sqlite3
 #db.sqlite3-journal
 db.sqlite3.old

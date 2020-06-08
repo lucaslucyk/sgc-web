@@ -38,3 +38,7 @@ urlpatterns = [
     
     path('accounts/', include('django.contrib.auth.urls'))
 ]
+
+
+handler404 = 'scg_app.views.handler404'
+handler500 = 'scg_app.views.handler500'

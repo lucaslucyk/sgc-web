@@ -13,7 +13,8 @@ import math
 from django.contrib.auth import login, authenticate
 from django.contrib.auth.decorators import login_required, \
     permission_required, user_passes_test
-from django.shortcuts import render, redirect, get_object_or_404
+from django.shortcuts import render, redirect, get_object_or_404,\
+    render_to_response
 from requests.exceptions import ConnectionError, HTTPError
 from django.core.paginator import EmptyPage, Paginator
 from django.views.generic.list import ListView
@@ -106,7 +107,7 @@ def certificados_list(request, id_clase: int, context=None):
         attached with their corresponding reasons.
     """
 
-    template = "apps/scg_app/certificados.html"
+    template = "apps/scg_app/clase/certificados.html"
     clase = get_object_or_404(Clase, pk=id_clase)
 
     #check sede permission
@@ -140,7 +141,7 @@ def clase_edit(request, pk, context=None):
         Does not allow overlap with a different class.
     """
 
-    template = 'apps/scg_app/clase_edit.html'
+    template = 'apps/scg_app/clase/edit.html'
     clase = get_object_or_404(Clase, pk=pk)
     form = ClaseUpdForm(instance=clase)
     
@@ -220,12 +221,9 @@ def clase_edit(request, pk, context=None):
 def index(request):
     return render(request, "index.html", {})
 
-def about(request):
-    return render(request, "scg_app/about.html", {})
-
-@login_required
-def wiki(request): 
-    return render(request, "apps/scg_app/wiki.html", {})
+# @login_required
+# def wiki(request): 
+#     return render(request, "apps/scg_app/wiki.html", {})
 
 class SafePaginator(Paginator):
     def validate_number(self, number):
@@ -966,7 +964,7 @@ def generar_clases(_fields, _dia, _recurrencia, editing=None):
 
 class ClasesView(LoginRequiredMixin, ListView):
     model = Clase
-    template_name = 'apps/scg_app/monitor_clases.html'
+    template_name = 'apps/scg_app/clase/monitor.html'
     context_object_name = 'clases_list'
 
     paginator_class = SafePaginator
@@ -1237,7 +1235,7 @@ def show_message(request, _type="error", context=None):
 def confirmar_clases(request, context=None):
     """ confirm all classes from the ids list """
 
-    template = "apps/scg_app/clases_confirm.html"
+    template = "apps/scg_app/clase/confirm.html"
 
     ids_clases = request.session.get('ids_clases')
     deleted = request.session.pop('ids_clases', None)
@@ -1305,7 +1303,7 @@ def gestion_ausencia(request, context=None):
         seleccionado.
     """
 
-    template = "apps/scg_app/gestion_ausencia.html"
+    template = "apps/scg_app/clase/gestion_ausencia.html"
 
     ids_clases = request.session.get('ids_clases')
 
@@ -1410,7 +1408,7 @@ def gestion_ausencia(request, context=None):
 def asignar_reemplazo(request, id_clase=None, context=None):
     """ Allows assign and delete a replacement to a class. """
 
-    template = "apps/scg_app/gestion_reemplazo.html"
+    template = "apps/scg_app/clase/gestion_reemplazo.html"
 
     if not id_clase:
         return render(request, template, context)
@@ -1518,7 +1516,7 @@ def gestion_marcajes(request, id_empleado=None, fecha=None, context=None):
         removing markings.
         It is also possible to recalculate the managed day. """
 
-    template = "apps/scg_app/gestion_marcajes.html"
+    template = "apps/scg_app/clase/gestion_marcajes.html"
 
     form = MarcajeForm(request.POST if request.method == "POST" else None)
     context = context or {'form': form}
@@ -1776,6 +1774,60 @@ def tasks_management(request, context=None):
     context['tasks'] = tasks
 
     return render(request, "tasks/tasks_management.html", context)
+
+def sede_calendar(request, context=None):
+    template = 'apps/scg_app/clase/calendario.html'
+
+    if not request.user.is_superuser:
+        sedes = request.user.sedes.all()
+    else:
+        sedes = Sede.objects.all()
+
+    context = {'sedes': sedes}
+
+    if request.method != 'POST':
+        #messages.warning(request, "Debe seleccionar una sede.")
+        return render(request, template, context)
+
+    ### POST process
+    sede_view = Sede.objects.filter(nombre=request.POST.get('sede'))
+
+    if not sede_view or len(sede_view) > 1:
+        return JsonResponse({"error": "Error buscando la sede."})
+
+    #get first sede of qs
+    sede_view = sede_view.first()
+
+    #check sede permission
+    if not request.user.has_sede_permission(sede_view):
+        return JsonResponse({"error": "No tiene permisos para esta sede."})
+
+    #proccess for get classes
+    today = datetime.date.today()
+    start_date = today - datetime.timedelta(days=50)
+    end_date = today + datetime.timedelta(days=6)
+    # start_date = today - datetime.timedelta(days=today.weekday())
+    # end_date = start_date + datetime.timedelta(days=6)
+
+    classes = Clase.objects.filter(
+        sede=sede_view,
+        fecha__gte=start_date,
+        fecha__lte=end_date,
+    )
+
+    #return json data
+    return JsonResponse({"results": [clase.to_calendar() for clase in classes]})
+
+### error pages ###
+def handler404(request, exception, template_name="error/404.html"):
+    response = render_to_response(template_name)
+    response.status_code = 404
+    return response
+
+def handler500(request, template_name="error/500.html"):
+    response = render_to_response(template_name)
+    response.status_code = 500
+    return response
 
 ### from tbs ###
 # def register(request):

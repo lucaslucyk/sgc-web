@@ -1,8 +1,15 @@
-{% extends "base_generic.html" %}
+{% extends 'registration/base.html' %}
 
-{% block title %}<title>Sesion cerrada con exito</title>{% endblock %}
+{% block title %}
+  <title>SGC | Cerrar sesi&oacute;n</title>
+{% endblock title %}
 
-{% block content %}
-	<p>Sesion cerrada con exito!</p>  
-	<a href="{% url 'login'%}">Volver a ingresar</a>
-{% endblock %}
+{% block card_msg %}
+  <p class="login-box-msg">Sesi&oacute;n finalizada.</p>
+{% endblock card_msg %}
+
+{% block extra_urls %}
+  <p class="mb-1">
+    <a href="{% url 'login' %}">Iniciar sesi&oacute;n</a>
+  </p>
+{% endblock extra_urls %}

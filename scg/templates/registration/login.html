@@ -1,110 +1,47 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <title>SGC | Log in</title>
+{% extends 'registration/base.html' %}
 
-  {% load static %}
-  <!-- Tell the browser to be responsive to screen width -->
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <!-- Google Font: Source Sans Pro -->
-  <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700" rel="stylesheet">
-  <!-- Theme style -->
-  <link rel="stylesheet" href="{%  static 'dist/css/adminlte.min.css' %}">
-  <!-- Font Awesome -->
-  <link rel="stylesheet" href="{%  static 'plugins/fontawesome-free/css/all.min.css' %}">
+{% block title %}
+  <title>SGC | Ingreso</title>
+{% endblock title %}
 
-</head>
-<body class="hold-transition login-page">
-<div class="login-box">
-  <div class="login-logo">
-    <a href="{% url 'index' %}"><img src="https://megatlon.com/megatlon/images/megatlon.svg"
-           alt="Cliente Logo"
-           class="brand-image invert-color img-center"
-           style="opacity: .8;"></a>
+{% block msg_error %}Usuario o contrase&ntilde;a incorrecta.{% endblock msg_error %}
+
+{% block card_msg %}
+  <p class="login-box-msg">Inicia sesi&oacute;n para comenzar.</p>
+{% endblock card_msg %}
+
+{% block form_content %}
+<form method="POST" action="{% url 'login' %}">
+  {% csrf_token %}
+  <div class="input-group mb-3">
+    {{ form.username }}
+    <div class="input-group-append">
+      <div class="input-group-text">
+        <span class="fas fa-user"></span>
+      </div>
     </div>
-    {% if user.is_authenticated %}
-        <div class="alert alert-success alert-dismissible" >
-        <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
-          Ya estas logueado en el sitio
-      </div>
-      <!-- redirect to index -->
-      <meta http-equiv="refresh" content="1; url={% url 'index' %}">
-    {% else %}    
-    
-      {% if form.errors %}
-        <div class="alert alert-danger alert-dismissible" >
-          <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
-            Usuario o contrase&ntilde;a incorrecta.
-        </div>
-      {% endif %}
-      <!-- /.login-logo -->
-      <div class="card" style="display:none;">
-        <div class="card-body login-card-body">
-          <p class="login-box-msg">Inicia sesi&oacute;n para comenzar</p>
-
-          <form method="POST" action="{% url 'login' %}">
-            {% csrf_token %}
-            <div class="input-group mb-3">
-              {{ form.username }}
-              <!--<input type="text" class="form-control" placeholder="Usuario">-->
-
-              <div class="input-group-append">
-                <div class="input-group-text">
-                  <span class="fas fa-envelope"></span>
-                </div>
-              </div>
-            </div>
-            <div class="input-group mb-3">
-              {{ form.password }}
-              <!--<input type="password" class="form-control" placeholder="Contrase&ntilde;a">-->
-              <div class="input-group-append">
-                <div class="input-group-text">
-                  <span class="fas fa-lock"></span>
-                </div>
-              </div>
-            </div>
-            <div class="row">
-              <!-- /.col -->
-              <div class="col-12">
-                <button type="submit" class="btn btn-primary btn-block">Iniciar sesi&oacute;n</button>
-              </div>
-              <!-- /.col -->
-              <input type="hidden" name="next" value="{{ next }}" style="display:none;" />
-            </div>
-          </form>
-        
-        <div class="clearfix"><br/> </div>
-        <p class="mb-1">
-          <a href="{% url 'password_reset' %}">Olvid&eacute; mi contrase&ntilde;a</a>
-        </p>
-        <p class="mb-0">
-          <a href="#" class="text-center">Registrarme</a>
-        </p>
-      </div>
-      <!-- /.login-card-body -->
-    {% endif %}
   </div>
-</div>
-<!-- /.login-box -->
+  <div class="input-group mb-3">
+    {{ form.password }}
+    <div class="input-group-append">
+      <div class="input-group-text">
+        <span class="fas fa-lock"></span>
+      </div>
+    </div>
+  </div>
+  <div class="row">
+    <!-- /.col -->
+    <div class="col-12">
+      <button type="submit" class="btn btn-primary btn-block">Iniciar sesi&oacute;n</button>
+    </div>
+    <!-- /.col -->
+    <input type="hidden" name="next" value="{{ next }}" style="display:none;" />
+  </div>
+</form>
+{% endblock form_content %}
 
-<!-- jQuery -->
-<script src="{%  static 'plugins/jquery/jquery.min.js' %}"></script>
-<!-- Bootstrap 4 -->
-<script src="{%  static 'plugins/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
-<!-- AdminLTE App -->
-<script src="{%  static 'dist/js/adminlte.min.js' %}"></script>
-
-<script type="text/javascript">
-  $(function(){
-    $('input').addClass('form-control');
-    $('input[name="username"]').attr("placeholder", "Usuario");
-    $('input[type="password"]').attr("placeholder", "Contraseña");
-    $('.card').show("fast", "swing");
-  });
-</script>
-
-</body>
-</html>
-
+{% block extra_urls %}
+  <p class="mb-1">
+    <a href="{% url 'password_reset' %}">Olvid&eacute; mi contrase&ntilde;a</a>
+  </p>
+{% endblock extra_urls %}

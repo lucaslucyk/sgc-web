@@ -819,6 +819,10 @@ class Clase(models.Model):
         super().save(*args, **kwargs)
 
     @property
+    def ejecutor(self):
+        return self.reemplazo if self.reemplazo else self.empleado
+
+    @property
     def user_comments(self):
         return ['[{}, {} ({})]: {}'.format(
             comment.comentario.usuario.last_name,
@@ -894,6 +898,19 @@ class Clase(models.Model):
             'ausencia': self.ausencia.__str__() if self.ausencia else "",
             'confirmada': self.confirmada,
             'comentarios': self.comentarios.all().count() if self.comentarios else 0,
+        }
+
+    def to_calendar(self):
+        """ convert a instance to dict for sede calendar """
+        
+        return {
+            'id': self.id,
+            'ejecutor': str(self.ejecutor),
+            'start': utils.datetime_to_array(self.fecha, self.horario_desde),
+            'end': utils.datetime_to_array(self.fecha, self.horario_hasta),
+            # 'fecha': self.fecha,
+            # 'horario_desde': self.horario_desde.strftime("%H:%M"),
+            # 'horario_hasta': self.horario_hasta.strftime("%H:%M"),
         }
 
     def update_status(self):
