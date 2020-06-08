@@ -6,14 +6,7 @@ $(function () {
   $('#logo-big').hide("fast");
   $('#logo-small').show("fast");
 
-  /* initialize the calendar
-      -----------------------------------------------------------------*/
-  //Date for the calendar events (dummy data)
-  // var date = new Date()
-  // var d = date.getDate(),
-  //   m = date.getMonth(),
-  //   y = date.getFullYear()
-
+  /*-- initialize the calendar --*/
   var Calendar = FullCalendar.Calendar;
   var calendarEl = document.getElementById('calendar');
 
@@ -32,36 +25,28 @@ $(function () {
     //height: 600,
     allDaySlot: false,
   });
-
+  //show calendar
   calendar.render();
-
 
   //for proccess rest of data
   $('[sede-filter=true]').click(function (e) {
     e.preventDefault();
-    
     //put overlay to inform user
     $('.overlay').css('display', 'flex');
-
     //remove focus
     $(this).blur();
-
     get_classes($(this).attr("sede-name"));
-
   });
 
   async function get_classes(_sede) {
     /*  
       get classes with POST method of endpoint view 
-      after remove results table and put obtained json data with "update_table" function
-      after update paginator with function "update_paginator" and obtained json data 
+      after remove results table and put obtained json data with "update_calendar" function
     */
 
     var form = $('#filtro-sedes').serializeArray();
     form.push({ name: 'sede', value: _sede });
-
     var currentUrl = window.location.href;
-
     $.ajax({
       type: "POST",
       dataType: "json",
@@ -84,11 +69,9 @@ $(function () {
     $.each(calendar.getEvents(), function (i, item) {
       item.remove();
     })
-
     var randomColorGenerator = function () {
       return '#' + (Math.random().toString(16) + '0000000').slice(2, 8);
     };
-
     $.each(dataList, function (i, item) {
       //adding events
       calendar.addEvent({
@@ -100,7 +83,6 @@ $(function () {
         borderColor: '#d3d3d3' //Success (green)
       });
     });
-
     //hide overlay
     $('.overlay').hide("fast");
   }
