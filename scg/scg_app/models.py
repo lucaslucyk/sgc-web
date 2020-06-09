@@ -901,16 +901,14 @@ class Clase(models.Model):
         }
 
     def to_calendar(self):
-        """ convert a instance to dict for sede calendar """
-        
         return {
-            'id': self.id,
-            'ejecutor': str(self.ejecutor),
-            'start': utils.datetime_to_array(self.fecha, self.horario_desde),
-            'end': utils.datetime_to_array(self.fecha, self.horario_hasta),
-            # 'fecha': self.fecha,
-            # 'horario_desde': self.horario_desde.strftime("%H:%M"),
-            # 'horario_hasta': self.horario_hasta.strftime("%H:%M"),
+            'title': str(self.ejecutor),
+            'start': datetime.datetime.combine(
+                self.fecha, self.horario_desde
+            ).replace(second=0, microsecond=0).strftime('%Y-%m-%dT%H:%M:00'),
+            'end': datetime.datetime.combine(
+                self.fecha, self.horario_hasta
+            ).replace(second=0, microsecond=0).strftime('%Y-%m-%dT%H:%M:00'),
         }
 
     def update_status(self):

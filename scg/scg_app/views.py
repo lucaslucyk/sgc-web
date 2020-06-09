@@ -1802,10 +1802,10 @@ def sede_calendar(request, context=None):
     if not request.user.has_sede_permission(sede_view):
         return JsonResponse({"error": "No tiene permisos para esta sede."})
 
-    #proccess for get classes
+    #proccess for get classes (3 weeks)
     today = datetime.date.today()
-    start_date = today - datetime.timedelta(days=50)
-    end_date = today + datetime.timedelta(days=6)
+    start_date = today - datetime.timedelta(days=today.weekday() + 7)
+    end_date = today + datetime.timedelta(days=13 - today.weekday())
     # start_date = today - datetime.timedelta(days=today.weekday())
     # end_date = start_date + datetime.timedelta(days=6)
 

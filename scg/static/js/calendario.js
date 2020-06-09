@@ -15,7 +15,7 @@ $(function () {
     header: {
       left: 'prev,next today',
       center: 'title',
-      right: 'dayGridMonth,timeGridWeek,timeGridDay'
+      right: 'dayGridMonth,timeGridWeek,timeGridDay',
     },
     'themeSystem': 'bootstrap',
     editable: false, //change to false for dont edit
@@ -24,9 +24,15 @@ $(function () {
     contentHeight: 450,
     //height: 600,
     allDaySlot: false,
+    //firstDay: 1,
+    locale: 'es-ar',
+    columnFormat: {
+      month: 'dddd'
+    }
   });
   //show calendar
   calendar.render();
+  //calendar.setOption('locale', 'es');
 
   //for proccess rest of data
   $('[sede-filter=true]').click(function (e) {
@@ -75,9 +81,9 @@ $(function () {
     $.each(dataList, function (i, item) {
       //adding events
       calendar.addEvent({
-        title: item.ejecutor,
-        start: newInstance(Date, item.start),
-        end: newInstance(Date, item.end),
+        title: item.title,
+        start: new Date(item.start), //newInstance(Date, item.start),
+        end: new Date(item.end), //newInstance(Date, item.end),
         allDay: false,
         backgroundColor: randomColorGenerator(), //Success (green)
         borderColor: '#d3d3d3' //Success (green)
@@ -86,5 +92,8 @@ $(function () {
     //hide overlay
     $('.overlay').hide("fast");
   }
+  
 });
+
+
 

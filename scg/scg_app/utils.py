@@ -131,11 +131,13 @@ def unique_slug_generator(instance: Any, to_slug: str, field: str='slug', \
 def datetime_to_array(date: datetime.date, time: datetime.datetime=None):
     return [
         date.year,
-        date.month,
+        date.month - 1, #FIX because first month is 0 in frontend
         date.day,
         time.hour if time else None,
         time.minute if time else None,
     ]
+
+
 
 # def handle_uploaded_file(f):
 #     with open('some/file/name.txt', 'wb+') as destination:
