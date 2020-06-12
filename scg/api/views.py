@@ -18,6 +18,7 @@ from django.db.models import Q
 from django.contrib.auth.models import User, Group
 
 ### own ###
+from django.conf import settings
 from scg_app.models import *
 from api import serializers
 
@@ -175,6 +176,10 @@ class ComentarioViewSet(BaseViewSet, viewsets.ModelViewSet):
 #             qs = qs.filter(nombre__icontains=self.q)
 
 #         return qs
+
+@login_required
+def get_current_version(request):
+    return JsonResponse({"version": settings.CURRENT_VERSION })
 
 @login_required
 def get_clases_from_certificado(request, certificado_id:int, context=None):

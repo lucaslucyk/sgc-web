@@ -86,7 +86,7 @@ class ClaseAdmin(admin.ModelAdmin):
         'recurrencia', ('dia_semana', 'fecha'),
         ('horario_desde', 'horario_hasta'), 'actividad', 'sede', 'empleado',
         'modificada', 'estado', 'presencia', 'ausencia', 'reemplazo', 'horas',
-        'confirmada', 'locked', 'comentarios')
+        'confirmada', 'locked')
 
     list_display = (
         'estado', 'presencia', 'empleado', 'reemplazo', 'sede',
@@ -115,7 +115,7 @@ class ClaseAdmin(admin.ModelAdmin):
 
 @admin.register(Marcaje)
 class MarcajeAdmin(admin.ModelAdmin):
-    list_display = ('id', 'empleado', 'fecha', 'hora', 'locked')
+    list_display = ('id', 'empleado', 'fecha', 'hora', 'usuario', 'locked')
 
 @admin.register(Escala)
 class EscalaAdmin(admin.ModelAdmin):

@@ -218,8 +218,42 @@ def clase_edit(request, pk, context=None):
     return render(request, template, context)
 
 @login_required
-def index(request):
-    return render(request, "index.html", {})
+def index(request, context=None):
+
+    template = 'index.html'
+    conteo = {
+        "programadas": 0,
+        "realizadas": 0,
+        "reemplazos": 0,
+        "ausencias": 0,
+    }
+    context = {"conteo": conteo}
+
+    today = datetime.date.today()
+    periodo = Periodo.objects.filter(desde__lte=today, hasta__gte=today)
+
+    if not periodo:
+        return render(request, template, context)
+
+    periodo = periodo.first()
+    classes = Clase.objects.filter(
+        fecha__gte=periodo.desde, fecha__lte=periodo.hasta)
+
+    if not request.user.is_superuser:
+        classes = classes.filter(sede__in=request.user.sedes.all())
+    
+    # active_class = classes.exclude(estado=settings.ESTADOS_CHOICES[-1][0])
+
+    conteo["programadas"] = classes.count()
+    # conteo["activas"] = active_class.count()
+    conteo["pendientes"] = classes.filter(estado='0').count()
+    conteo["realizadas"] = classes.filter(presencia='Realizada').count()
+    conteo["reemplazos"] = classes.filter(reemplazo__isnull=False).count()
+    conteo["ausencias"] = classes.filter(ausencia__isnull=False).count()
+
+    context["conteo"] = conteo
+
+    return render(request, template, context)
 
 # @login_required
 # def wiki(request): 
@@ -395,6 +429,8 @@ def periodo_update(request, pk, context=None):
 def confirm_delete(request, model, pk, context=None):
     """ view to confirm delete an object from a specific model """
 
+    template = "apps/scg_app/confirm_delete.html"
+
     try:
         _model = apps.get_model('scg_app', model)
     except LookupError:
@@ -414,12 +450,20 @@ def confirm_delete(request, model, pk, context=None):
         "object": obj,
         "locked": False
     }
-
+    
     #check delete permission
     if not request.user.has_perm(f'scg_app.delete_{model.lower()}'):
         context["locked"] = True
         messages.error(request, 'No tiene permisos para eliminar este objeto.')
-        return render(request, "apps/scg_app/confirm_delete.html", context)
+        return render(request, template, context)
+
+    #check custom permission of model
+    if getattr(obj, 'user_can_delete', None):
+        if not obj.user_can_delete(request.user):
+            context["locked"] = True
+            messages.error(
+                request, 'No tiene permisos para eliminar este objeto.')
+            return render(request, template, context)
 
     #check locked and bloqueado properties
     if getattr(obj, 'locked', False) or getattr(obj, 'bloqueado', False):
@@ -431,8 +475,7 @@ def confirm_delete(request, model, pk, context=None):
                 context["model"],
             )
         )
-        return render(request, "apps/scg_app/confirm_delete.html", context)
-
+        return render(request, template, context)
 
     if request.method == "POST":
         messages.success(request, 'Se ha eliminado {0} {1}.'.format(
@@ -445,7 +488,7 @@ def confirm_delete(request, model, pk, context=None):
         obj.delete()
         return redirect(success_url)
 
-    return render(request, "apps/scg_app/confirm_delete.html", context)
+    return render(request, template, context)
 
 @login_required
 def saldo_update(request, pk, context=None):
@@ -1621,6 +1664,7 @@ def gestion_marcajes(request, id_empleado=None, fecha=None, context=None):
         try:    #trying save cloocking
             nuevo_marcaje = Marcaje()
             nuevo_marcaje.empleado = empleado
+            nuevo_marcaje.usuario = request.user
             nuevo_marcaje.fecha = fecha
             nuevo_marcaje.hora = hora_marcaje
             nuevo_marcaje.save()
@@ -1643,6 +1687,50 @@ def gestion_marcajes(request, id_empleado=None, fecha=None, context=None):
         messages.success(request, "Marcaje agregado y día recalculado.")
 
     return render(request, template, context)
+
+@login_required
+def sede_calendar(request, context=None):
+    template = 'apps/scg_app/clase/calendario.html'
+
+    if not request.user.is_superuser:
+        sedes = request.user.sedes.all()
+    else:
+        sedes = Sede.objects.all()
+
+    context = {'sedes': sedes}
+
+    if request.method != 'POST':
+        #messages.warning(request, "Debe seleccionar una sede.")
+        return render(request, template, context)
+
+    ### POST process
+    sede_view = Sede.objects.filter(nombre=request.POST.get('sede'))
+
+    if not sede_view or len(sede_view) > 1:
+        return JsonResponse({"error": "Error buscando la sede."})
+
+    #get first sede of qs
+    sede_view = sede_view.first()
+
+    #check sede permission
+    if not request.user.has_sede_permission(sede_view):
+        return JsonResponse({"error": "No tiene permisos para esta sede."})
+
+    #proccess for get classes (3 weeks)
+    today = datetime.date.today()
+    start_date = today - datetime.timedelta(days=today.weekday() + 50)
+    end_date = today + datetime.timedelta(days=13 - today.weekday())
+    # start_date = today - datetime.timedelta(days=today.weekday())
+    # end_date = start_date + datetime.timedelta(days=6)
+
+    classes = Clase.objects.filter(
+        sede=sede_view,
+        fecha__gte=start_date,
+        fecha__lte=end_date,
+    )
+
+    #return json data
+    return JsonResponse({"results": [clase.to_calendar() for clase in classes]})
 
 ###################
 ### front pulls ###
@@ -1774,49 +1862,6 @@ def tasks_management(request, context=None):
     context['tasks'] = tasks
 
     return render(request, "tasks/tasks_management.html", context)
-
-def sede_calendar(request, context=None):
-    template = 'apps/scg_app/clase/calendario.html'
-
-    if not request.user.is_superuser:
-        sedes = request.user.sedes.all()
-    else:
-        sedes = Sede.objects.all()
-
-    context = {'sedes': sedes}
-
-    if request.method != 'POST':
-        #messages.warning(request, "Debe seleccionar una sede.")
-        return render(request, template, context)
-
-    ### POST process
-    sede_view = Sede.objects.filter(nombre=request.POST.get('sede'))
-
-    if not sede_view or len(sede_view) > 1:
-        return JsonResponse({"error": "Error buscando la sede."})
-
-    #get first sede of qs
-    sede_view = sede_view.first()
-
-    #check sede permission
-    if not request.user.has_sede_permission(sede_view):
-        return JsonResponse({"error": "No tiene permisos para esta sede."})
-
-    #proccess for get classes (3 weeks)
-    today = datetime.date.today()
-    start_date = today - datetime.timedelta(days=today.weekday() + 7)
-    end_date = today + datetime.timedelta(days=13 - today.weekday())
-    # start_date = today - datetime.timedelta(days=today.weekday())
-    # end_date = start_date + datetime.timedelta(days=6)
-
-    classes = Clase.objects.filter(
-        sede=sede_view,
-        fecha__gte=start_date,
-        fecha__lte=end_date,
-    )
-
-    #return json data
-    return JsonResponse({"results": [clase.to_calendar() for clase in classes]})
 
 ### error pages ###
 def handler404(request, exception, template_name="error/404.html"):

@@ -153,6 +153,8 @@ class Periodo(models.Model):
             fecha__gte=self.desde,
             fecha__lte=self.hasta,
             locked=not self.bloqueado
+        ).exclude(
+            from_nettime=True
         ).update(locked=self.bloqueado)
 
         ### comentarios ###
@@ -975,8 +977,11 @@ class Clase(models.Model):
 class Marcaje(models.Model):
     empleado = models.ForeignKey(
         'Empleado', blank=True, null=True, on_delete=models.SET_NULL)
+    usuario = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
     fecha = models.DateField(blank=True, default=timezone.now)
     hora = models.TimeField(null=True, blank=True)
+
+    from_nettime = models.BooleanField(blank=True, default=False)
     locked = models.BooleanField(blank=True, default=False)
 
     class Meta:
@@ -1022,6 +1027,8 @@ class Marcaje(models.Model):
                                 empleado=employee,
                                 fecha=marc["Datetime"].date(),
                                 hora=marc["Datetime"].time(),
+                                from_nettime=True,
+                                locked=True,
                             )
                         #update if marc was be processed only
                         marc_ant = marc["Datetime"]
@@ -1045,6 +1052,16 @@ class Marcaje(models.Model):
     @property
     def get_str(self):
         return self.__str__()
+
+    def user_can_delete(self, user):
+        """ Inform if a user can delete specific clocking. """
+
+        #check delete clockings permissions
+        del_perm = user.has_perm('scg_app.delete_marcaje')
+        if del_perm and (self.usuario == user or user.is_superuser):
+            return True
+
+        return False
     
     def get_delete_url(self):
         """ construct delete url from current object """

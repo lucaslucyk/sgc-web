@@ -120,7 +120,7 @@
                       <td class="align-middle">
                         {% if bloque.inicio %}
                           {{bloque.inicio.hora}} &nbsp;
-                          {% if day_locked or lock_delete %}
+                          {% if day_locked or lock_delete or bloque.inicio.usuario != user and not user.is_superuser %}
                             <a href="#" role="button" class="btn-link disabled" aria-disabled="true">
                               <i class="fas fa-minus-circle"></i>
                             </a>
@@ -137,7 +137,7 @@
                       <td class="align-middle">
                         {% if bloque.fin %}
                           {{bloque.fin.hora}} &nbsp;
-                          {% if day_locked or lock_delete %}
+                          {% if day_locked or lock_delete or bloque.fin.usuario != user and not user.is_superuser %}
                             <a href="#" role="button" class="btn-link disabled" aria-disabled="true">
                               <i class="fas fa-minus-circle"></i>
                             </a>

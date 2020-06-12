@@ -321,7 +321,7 @@
   <!-- /.content-wrapper -->
   <footer class="main-footer">
     <div class="float-right d-none d-sm-block">
-      <b>Version</b> 0.9.3
+      <b>Version</b> <span id="current-version"></span>
     </div>
     Developed by <strong>Lucas Lucyk</strong> | 
     <strong>Copyright &copy; 2020 <a href="https://grupospec.com/es/">Grupo SPEC</a></strong>
@@ -353,6 +353,20 @@
 <!-- Start of HubSpot Embed Code -->
   {% comment %} <script type="text/javascript" id="hs-script-loader" async defer src="//js.hs-scripts.com/7857768.js"></script> {% endcomment %}
 <!-- End of HubSpot Embed Code -->
+
+<script type="text/javascript">
+  $(function(){
+    var url = window.location.origin + '/api/get/current-version/';
+    $.ajax({
+      type: "GET",
+      dataType: "json",
+      url: url,
+      success: function(response){
+        $('#current-version').html(response.version);
+      }
+    });
+  });
+</script>
 
 <!-- page script -->
 {% block extra_js %}
