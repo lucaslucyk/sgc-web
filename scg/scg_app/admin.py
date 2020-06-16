@@ -166,3 +166,4 @@ class GrupoComentarioAdmin(admin.ModelAdmin):
 #admin.site.register(BloqueDePresencia)
 admin.site.register(TipoLiquidacion)
 admin.site.register(TipoContrato)
+admin.site.register(Liquidacion)

@@ -150,6 +150,9 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(os.path.dirname(BASE_DIR), 'media_uploads')
 CKEDITOR_UPLOAD_PATH = "help/"
 
+# tmp dir
+TMP_DIR = os.path.join(os.path.dirname(BASE_DIR), 'tmp')
+
 ### reporting ###
 #REPORT_BUILDER_ASYNC_REPORT = True
 REPORT_BUILDER_INCLUDE = [

@@ -180,6 +180,17 @@ class Periodo(models.Model):
         period = cls.get_date_period(_date)
         return period.get_edit_url() if period else '#'
 
+    @property
+    def liquida_mono_url(self):
+        liq = self.liquidacion_set.filter(tipo__nombre='Monotributista')
+        return liq.first().file.url if liq else ''
+
+    @property
+    def liquida_rd_url(self):
+        liq = self.liquidacion_set.filter(
+            tipo__nombre='Relación de Dependencia')
+        return liq.first().file.url if liq else ''
+
     def get_liquid_mono_url(self):
         """ construct liquid mono url from current object """
         return reverse('liquida_mono', kwargs={"pk": self.id})
@@ -1207,6 +1218,49 @@ class Certificado(models.Model):
         return 'Certificado por {} para {} clases.'.format(
             self.motivo.nombre,
             self.clases.count()
+        )
+
+class Liquidacion(models.Model):
+    """ Differents file for a specific period. """
+
+    file = models.FileField(
+        "Archivo", null=True, blank=True, upload_to='liquidaciones/')
+    periodo = models.ForeignKey(Periodo, null=True, on_delete=models.CASCADE)
+    
+    tipo = models.ForeignKey(
+        TipoContrato, blank=True, null=True,
+        on_delete=models.SET_NULL, related_name='tipo')
+
+    class Meta:
+        verbose_name = "Liquidacion"
+        verbose_name_plural = "Liquidaciones"
+        get_latest_by = "id"
+        ordering = ["-periodo__fecha", "tipo__nombre"]
+
+    @property
+    def filename(self):
+        return os.path.basename(self.file.name)
+
+    def get_delete_url(self):
+        """ construct delete url from current object """
+        return reverse(
+            'confirm_delete',
+            kwargs={"model":self.__class__.__name__, "pk":self.pk})
+
+    def pos_delete_url(self):
+        """ construct pos delete url from current object """
+        return reverse(
+            'periodos_list',
+            kwargs={"id_clase": self.clases.first().id})
+
+    @property
+    def pronombre(self):
+        return "la"
+
+    def __str__(self):
+        return 'Liquidación de {} para el periodo {}.'.format(
+            self.tipo.nombre,
+            str(self.periodo),
         )
 
 ### user extend ###

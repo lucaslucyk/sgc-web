@@ -16,6 +16,9 @@ migrations
 # !scg/api/migrations/__init__.py
 # !scg/help/migrations/__init__.py
 
+# tmp dir
+tmp/
+
 # Django stuff:
 statics_pub/
 *.log

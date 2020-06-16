@@ -18,6 +18,9 @@
     <th>Liberado</th>
     <th>Desde</th>
     <th>Hasta</th>
+    
+    <th>Liquidacion MONO</th>
+    <th>Liquidacion RD</th>
     <th>Acciones</th>
   </tr>
 {% endblock %}
@@ -36,17 +39,74 @@
       <td class="align-middle">{{periodo.desde}}</td>
       <td class="align-middle">{{periodo.hasta}}</td>
 
+      <td class="align-middle">
+        <div class="btn-group btn-group-sm">
+          {% if periodo.bloqueado %}
+            {% if periodo.liquida_mono_url %}
+              <a href="{{ periodo.liquida_mono_url|safe }}" role="link" aria-disabled="false" class="btn btn-outline-dark"
+                download-id="{{periodo.pk}}" download-type="mono">
+                <i class="fas fa-file-download"></i> Descargar</a>
+            {% else %}
+              <a href="#" class="btn btn-outline-dark disabled" role="button" aria-disabled="true"
+                download-id="{{periodo.pk}}" download-type="mono">
+                <i class="fas fa-file-download"></i> Descargar</a>
+            {% endif %}
+
+            <a href="#" role="button" class="btn btn-outline-dark"
+              btn-get-url="true"
+              get-url="{{ periodo.get_liquid_mono_url|safe }}"
+              btn-id="{{periodo.pk}}" btn-type="mono"
+              >
+              <i class="fas fa-sync-alt"></i> Actualizar</a>
+          {% endif %}
+        </div>
+        <div 
+          loading-id="{{periodo.pk}}"
+          loading-type="mono"
+          class="spinner-border spinner-border-sm" role="status"
+          task_name="{{ task.task_name }}"
+          style="display:none;">
+          <span class="sr-only">Loading...</span>
+        </div>
+      </td>
+
+      <td class="align-middle">
+        <div class="btn-group btn-group-sm">
+          {% if periodo.bloqueado %}
+            {% if periodo.liquida_rd_url %}
+              <a href="{{ periodo.liquida_rd_url|safe }}" role="link" aria-disabled="false" class="btn btn-outline-dark"
+                download-id="{{periodo.pk}}" download-type="rd">
+                <i class="fas fa-file-download"></i> Descargar</a>
+            {% else %}
+              <a href="#" class="btn btn-outline-dark disabled" role="button" aria-disabled="true"
+                download-id="{{periodo.pk}}" download-type="rd">
+                <i class="fas fa-file-download"></i> Descargar</a>
+            {% endif %}
+
+            <a href="#" role="button" class="btn btn-outline-dark"
+              btn-get-url="true"
+              get-url="{{ periodo.get_liquid_rd_url|safe }}"
+              btn-id="{{periodo.pk}}" btn-type="rd"
+              >
+              <i class="fas fa-sync-alt"></i> Actualizar</a>
+          {% endif %}
+        </div>
+        <div 
+          loading-id="{{periodo.pk}}"
+          loading-type="rd"
+          class="spinner-border spinner-border-sm" role="status"
+          task_name="{{ task.task_name }}"
+          style="display:none;">
+          <span class="sr-only">Loading...</span>
+        </div>
+      </td>
+
       <td class="py-0 align-middle">
         <div class="btn-group btn-group-sm">
         
           <a href="{{ periodo.get_edit_url|safe }}" class="btn btn-info"><i class="fas fa-pencil-alt"></i></a>
 
           {% if periodo.bloqueado %}
-            <a href="{{ periodo.get_liquid_mono_url|safe }}" class="btn btn-outline-dark">
-              <i class="fas fa-file-download"></i> MT</a>
-            
-            <a href="{{ periodo.get_liquid_rd_url|safe }}" class="btn btn-outline-dark">
-              <i class="fas fa-file-download"></i> RD</a>
             
             <a href="#" class="btn btn-danger disabled" role="button" aria-disabled="true">
               <i class="fas fa-trash"></i>
@@ -65,6 +125,9 @@
     <th>Liberado</th>
     <th>Desde</th>
     <th>Hasta</th>
+    
+    <th>Liquidacion MONO</th>
+    <th>Liquidacion RD</th>
     <th>Acciones</th>
   </tr>
 {% endblock %}
