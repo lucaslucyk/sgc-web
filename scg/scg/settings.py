@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    
 
     #third
     'multiselectfield',
@@ -50,6 +51,7 @@ INSTALLED_APPS = [
     'ckeditor',
     'ckeditor_uploader',
     'rest_framework',
+    'django_extensions',
     #'simple_history',
     #'django_crontab',
 
@@ -70,6 +72,8 @@ MIDDLEWARE = [
 
     'simple_history.middleware.HistoryRequestMiddleware',
 ]
+
+SHELL_PLUS = 'notebook'
 
 #for user messages
 MESSAGE_STORAGE = 'django.contrib.messages.storage.cookie.CookieStorage'

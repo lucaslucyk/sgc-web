@@ -388,9 +388,12 @@ class Empleado(models.Model):
     apellido = models.CharField(max_length=20)
     nombre = models.CharField(max_length=20)
     dni = models.CharField(max_length=8, unique=True)
-    legajo = models.CharField(max_length=10, null=True, blank=True)
-    empresa = models.CharField(max_length=10, null=True, blank=True)
+    legajo = models.CharField(max_length=50, null=True, blank=True)
+    empresa = models.CharField(max_length=50, null=True, blank=True)
+    convenio = models.CharField(max_length=50, null=True, blank=True)
 
+    nro_cuenta = models.CharField(
+        "Número de cuenta", max_length=50, null=True, blank=True)
     tipo = models.ForeignKey(
         'TipoContrato', on_delete=models.CASCADE, null=True, blank=True)
     liquidacion = models.ForeignKey(
@@ -447,7 +450,7 @@ class Empleado(models.Model):
                 "Employee",  # Container
                 _fields=[
                     "id", "name", "nameEmployee", "LastName", "companyCode",
-                    "employeeCode", "persoTipo", "persoLiq",
+                    "employeeCode", "persoTipo", "persoLiq", "persoCuenta",
                 ]
             )
 
@@ -464,6 +467,8 @@ class Empleado(models.Model):
                 empleado.nombre = registro.get("nameEmployee")
                 empleado.legajo = registro.get("employeeCode")
                 empleado.empresa = registro.get("companyCode")
+                empleado.nro_cuenta = registro.get("persoCuenta")
+                
                 try:  # trying get from id_nettime
                     empleado.tipo = TipoContrato.objects.get(
                         id_netTime=registro.get("persoTipo"))
@@ -502,6 +507,8 @@ class Sede(models.Model):
         unique=True,
         help_text="Para matchear marcajes e importaciones")
     nombre = models.CharField(max_length=100)
+    empresa = models.CharField(max_length=100, null=True, blank=True)
+    sociedad = models.CharField(max_length=100, null=True, blank=True)
 
     codigo = models.CharField(max_length=50, blank=True, null=True, unique=True)
     tipo = models.CharField(max_length=30, default="Física", blank=True)
@@ -519,7 +526,7 @@ class Sede(models.Model):
         try:
             sedes_nt = utils.pull_netTime(
                 "Custom",  # Container
-                _fields=["id", "name"],
+                _fields=["id", "name", "extra_1", "extra_2"],
                 _filter='this.type == "sede"'
             )
 
@@ -531,6 +538,8 @@ class Sede(models.Model):
 
                 #update employee data
                 sede.nombre = registro.get("name")
+                sede.empresa = registro.get("extra_1")
+                sede.sociedad = registro.get("extra_2")
                 sede.save()
 
         except Exception as error:

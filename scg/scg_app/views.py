@@ -1415,13 +1415,15 @@ def gestion_ausencia(request, context=None):
         ausencia = form.cleaned_data["motivo"]
         adjunto = form.cleaned_data["adjunto"]
 
-        #if a file was added
-        if adjunto:
-            certif = Certificado.objects.create(file=adjunto, motivo=ausencia)
-            certif.clases.set(clases_to_edit)
-        elif ausencia.requiere_certificado:
-            messages.error(request, "La ausencia requiere un certificado.")
-            return render(request, template, context)
+        if ausencia:
+            #if a file was added
+            if adjunto:
+                certif = Certificado.objects.create(
+                    file=adjunto, motivo=ausencia)
+                certif.clases.set(clases_to_edit)
+            elif ausencia.requiere_certificado:
+                messages.error(request, "La ausencia requiere un certificado.")
+                return render(request, template, context)
 
         #create comment
         new_comment = None

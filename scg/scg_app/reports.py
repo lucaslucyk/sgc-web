@@ -110,7 +110,7 @@ def liquida_mono(request, pk, context=None):
         confirmada=True,
     ).exclude(
         estado=settings.ESTADOS_CHOICES[-1][0]
-    ).order_by('sede', 'empleado')
+    ).order_by('empleado', 'sede')
 
     if not clases:
         return JsonResponse(
@@ -120,40 +120,56 @@ def liquida_mono(request, pk, context=None):
 
     # process in soc (structure of classes) for get structure like:
     # { sede: { empleado: {actividad.grupo: [clases, ]} }
+    # { empleado: { sede: {actividad.grupo: [clases, ]} }
     soc = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
 
     for clase in clases:
-        soc[clase.sede][clase.empleado][clase.actividad.grupo].append(clase)
+        #soc[clase.sede][clase.empleado][clase.actividad.grupo].append(clase)
+        soc[clase.empleado][clase.sede][clase.actividad.grupo].append(clase)
 
     # base prepare
     data_grouped = []
     data_detail = []
-    head_group = ['SEDE', 'DNI', 'DNI/SEDE', 'EMPLEADO', 'MONTO']
-    head_detail = [
-        'CODIGO', 'SEDE', 'DNI', 'DNI/SEDE','EMPLEADO', 'GRUPO DE ACTIVIDAD',
-        'HORAS', 'MONTO',
-    ]
+    #head_group = ['SEDE', 'DNI', 'DNI/SEDE', 'EMPLEADO', 'MONTO']
+    # head_detail = [
+    #     'CODIGO', 'SEDE', 'DNI', 'DNI/SEDE','EMPLEADO', 'GRUPO DE ACTIVIDAD',
+    #     'HORAS', 'MONTO',
+    # ]
     
+    head_detail = [
+        'DNI', 'DNI/SEDE', 'EMPLEADO', 'SEDE', 'GRUPO DE ACTIVIDAD', 'HORAS',
+        'MONTO',
+    ]
+    head_group = [
+        'DNI', 'DNI/SEDE', 'EMPLEADO', 'MONTO', 'SEDE', 'EMPRESA', 'SOCIEDAD',
+        'NRO CUENTA',
+    ]
+
     # data proccess
-    for sede, empleado_grupos_clases in soc.items():
-        for empleado, grupos_clases in empleado_grupos_clases.items():
+    # for sede, empleado_grupos_clases in soc.items():
+    #     for empleado, grupos_clases in empleado_grupos_clases.items():
+    
+    for empleado, sede_grupos_clases in soc.items():
+        for sede, grupos_clases in sede_grupos_clases.items():
             
             # group prepare
             add_to_grouped = [
-                sede.nombre.upper(),
                 empleado.dni,
                 empleado.dni + sede.nombre.upper(),
                 str(empleado).upper().replace(',', ''),
                 0.0, #update in next step
+                sede.nombre.upper(),
+                sede.empresa.upper() if sede.empresa else '',
+                sede.sociedad.upper() if sede.sociedad else '',
+                empleado.nro_cuenta,
             ]
 
             for grupo, clases in grupos_clases.items():
                 add_to_detail = [
-                    sede.codigo.upper(),
-                    sede.nombre.upper(),
                     empleado.dni,
                     empleado.dni + sede.nombre.upper(),
                     str(empleado).upper().replace(',', ''),
+                    sede.nombre.upper(),
                     grupo.nombre.upper(),
                     round(sum(clase.horas for clase in clases), 2),
                     round(sum(clase.monto for clase in clases), 2),
@@ -161,7 +177,7 @@ def liquida_mono(request, pk, context=None):
                 data_detail.append(add_to_detail)
 
                 #group mount update
-                add_to_grouped[-1] += add_to_detail[-1]
+                add_to_grouped[3] += add_to_detail[-1]
             
             #add total of sede
             data_grouped.append(add_to_grouped)

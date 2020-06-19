@@ -19,7 +19,7 @@ UserAdmin.autocomplete_fields += ('sedes',)
 class EmpleadoAdmin(admin.ModelAdmin):
     fields = (
         'id_netTime', 'apellido', 'nombre', 'dni', 'legajo', 'empresa',
-        'escala', 'tipo', 'liquidacion')
+        'escala', 'tipo', 'liquidacion', 'nro_cuenta')
     list_display = (
         'dni', 'apellido', 'nombre', 'legajo', 'empresa', 'id_netTime', 'tipo',
         'liquidacion',
@@ -30,8 +30,9 @@ class EmpleadoAdmin(admin.ModelAdmin):
     #readonly_fields = ('apellido', 'nombre', 'dni', 'legajo', 'empresa', )
     # def has_delete_permission(self, request, obj=None):
     #     return True
-    # def has_add_permission(self, request, obj=None):
-    #    return False
+
+    def has_add_permission(self, request, obj=None):
+       return False
 
 @admin.register(Sede)
 class SedeAdmin(admin.ModelAdmin):
