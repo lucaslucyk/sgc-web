@@ -1019,7 +1019,7 @@ class ClasesView(LoginRequiredMixin, ListView):
     def post(self, request, *args, **kwargs):
         """ return json format for ajax request """
 
-        self.results_pp = int(request.POST.get('rpp')) or self.results_pp
+        self.results_pp = int(request.POST.get('rpp', self.results_pp))
 
         form = FiltroForm(request.POST)
         if not form.is_valid():

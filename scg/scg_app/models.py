@@ -426,10 +426,13 @@ class Empleado(models.Model):
             #excludes classes that end before the start time -including it-
             #or canceled
             Q(horario_hasta__lte=inicio) | Q(estado='5')
-        ).exclude(
-            #ignore if is editing self object
-            recurrencia=rec_ignore
         )
+        
+        if rec_ignore:
+            clases = clases.exclude(
+                #ignore if is editing self object
+                recurrencia=rec_ignore
+            )
 
         return clases.exists()
 
@@ -834,8 +837,19 @@ class Clase(models.Model):
 
     def save(self, *args, **kwargs):
         #set hours of class in float(hs)
-        hf = datetime.datetime.combine(self.fecha, self.horario_hasta) 
-        hi = datetime.datetime.combine(self.fecha, self.horario_desde)
+
+        fecha = self.fecha
+        desde = self.horario_desde
+        hasta = self.horario_hasta
+        if isinstance(fecha, str):
+            fecha = datetime.date.fromisoformat(fecha)
+        if isinstance(desde, str):
+            desde = datetime.datetime.fromisoformat(f'{fecha} {desde}').time()
+        if isinstance(hasta, str):
+            hasta = datetime.datetime.fromisoformat(f'{fecha} {hasta}').time()
+
+        hf = datetime.datetime.combine(fecha, hasta) 
+        hi = datetime.datetime.combine(fecha, desde)
         self.horas = round((hf - hi).total_seconds() / 3600, 2)
 
         super().save(*args, **kwargs)
