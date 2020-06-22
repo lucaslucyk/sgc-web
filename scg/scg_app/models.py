@@ -7,6 +7,7 @@ import datetime
 
 ### third ###
 from multiselectfield import MultiSelectField
+from python_field.fields import PythonCodeField
 #from simple_history.models import HistoricalRecords
 
 ### django ###
@@ -780,8 +781,11 @@ class Clase(models.Model):
     fecha = models.DateField(blank=True, default=timezone.now)
     horario_desde = models.TimeField(blank=True, default=timezone.now)
     horario_hasta = models.TimeField(blank=True, default=timezone.now)
+    
     horas = models.FloatField(default=0.0)
-    #monto = models.FloatField(blank=True, null=True)
+    horas_nocturnas = models.FloatField(default=0.0)
+    horas_diurnas = models.FloatField(default=0.0)
+
     actividad = models.ForeignKey(
         Actividad, blank=True, null=True, on_delete=models.SET_NULL)
     sede = models.ForeignKey(
@@ -836,21 +840,12 @@ class Clase(models.Model):
         )
 
     def save(self, *args, **kwargs):
-        #set hours of class in float(hs)
+        """ Set hours attributes with start and end properties. """
 
-        fecha = self.fecha
-        desde = self.horario_desde
-        hasta = self.horario_hasta
-        if isinstance(fecha, str):
-            fecha = datetime.date.fromisoformat(fecha)
-        if isinstance(desde, str):
-            desde = datetime.datetime.fromisoformat(f'{fecha} {desde}').time()
-        if isinstance(hasta, str):
-            hasta = datetime.datetime.fromisoformat(f'{fecha} {hasta}').time()
-
-        hf = datetime.datetime.combine(fecha, hasta) 
-        hi = datetime.datetime.combine(fecha, desde)
-        self.horas = round((hf - hi).total_seconds() / 3600, 2)
+        self.horas = self.get_hours()
+        self.horas_nocturnas = self.get_time_intersection(
+            settings.HORARIOS_NOCTURNOS)
+        self.horas_diurnas = self.horas - self.horas_nocturnas
 
         super().save(*args, **kwargs)
 
@@ -915,6 +910,84 @@ class Clase(models.Model):
         #
         return bool(blocks)
 
+    def get_hours(self):
+        """ 
+        Return hours of class based on 'horario_hasta' - 'horario_desde'.
+        """
+        
+        fecha = self.fecha
+        desde = self.horario_desde
+        hasta = self.horario_hasta
+        if isinstance(fecha, str):
+            fecha = datetime.date.fromisoformat(fecha)
+        if isinstance(desde, str):
+            desde = datetime.datetime.fromisoformat(f'{fecha} {desde}').time()
+        if isinstance(hasta, str):
+            hasta = datetime.datetime.fromisoformat(f'{fecha} {hasta}').time()
+
+        hf = datetime.datetime.combine(fecha, hasta)
+        hi = datetime.datetime.combine(fecha, desde)
+
+        return round((hf - hi).total_seconds() / 3600, 2)
+
+    def is_time_intersection(self, time_ranges):
+        """ Check if class match with a timerange in a tuple of timeranges. """
+        
+        time_format = "%H:%M"
+        
+        desde = self.horario_desde
+        hasta = self.horario_hasta
+        if isinstance(desde, str):
+            desde = datetime.datetime.strptime(desde, time_format).time()
+        if isinstance(hasta, str):
+            hasta = datetime.datetime.strptime(hasta, time_format).time()
+
+        for time_range in time_ranges:
+            #recived parameters
+            start = datetime.datetime.strptime(time_range[0], time_format)
+            end = datetime.datetime.strptime(time_range[1], time_format)
+
+            #class parameters
+            cl_ini = datetime.datetime.combine(start.date(), desde)
+            cl_end = datetime.datetime.combine(end.date(), hasta)
+
+            #Check overlap
+            if cl_ini <= end and cl_end > start:
+                return True
+        
+        return False
+
+    def get_time_intersection(self, time_ranges):
+        """ 
+        Get hours of class match with a timerange in a tuple of timeranges.
+        """
+
+        time_format = "%H:%M"
+        total_seconds = 0
+
+        desde = self.horario_desde
+        hasta = self.horario_hasta
+        if isinstance(desde, str):
+            desde = datetime.datetime.strptime(desde, time_format).time()
+        if isinstance(hasta, str):
+            hasta = datetime.datetime.strptime(hasta, time_format).time()
+
+        for time_range in time_ranges:
+            #recived parameters
+            start = datetime.datetime.strptime(time_range[0], time_format)
+            end = datetime.datetime.strptime(time_range[1], time_format)
+
+            #class parameters
+            cl_ini = datetime.datetime.combine(start.date(), desde)
+            cl_end = datetime.datetime.combine(end.date(), hasta)
+
+            # get offsets
+            diff = min(cl_end, end) - max(cl_ini, start)
+            if diff.total_seconds() > 0:
+                total_seconds += diff.total_seconds()
+
+        return round(total_seconds / 3600, 2)
+
     def to_monitor(self):
         """ convert a instance to dict for class monitor """
 
@@ -938,7 +1011,7 @@ class Clase(models.Model):
 
     def to_calendar(self):
         return {
-            'title': str(self.ejecutor),
+            'title': f'{self.actividad.nombre} | {self.ejecutor}',
             'start': datetime.datetime.combine(
                 self.fecha, self.horario_desde
             ).replace(second=0, microsecond=0).strftime('%Y-%m-%dT%H:%M:00'),
@@ -1285,6 +1358,13 @@ class Liquidacion(models.Model):
             self.tipo.nombre,
             str(self.periodo),
         )
+
+class Script(models.Model):
+    description = models.CharField(max_length=100, null=True, blank=True)
+    content = models.TextField(null=True, blank=True)
+
+    def __str__(self):
+        return self.description
 
 ### user extend ###
 User.add_to_class('sedes', models.ManyToManyField(Sede))

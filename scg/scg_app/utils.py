@@ -138,6 +138,22 @@ def datetime_to_array(date: datetime.date, time: datetime.datetime=None):
     ]
 
 
+def overlap(start1, end1, start2, end2):
+    TIME_FORMAT = '%H:%M'
+    #transform time
+    # start1_time = datetime.strptime(start1, TIME_FORMAT)
+    # end1_time = datetime.strptime(end1, TIME_FORMAT)
+    # start2_time = datetime.strptime(start2, TIME_FORMAT)
+    # end2_time = datetime.strptime(end2, TIME_FORMAT)
+
+    match_one = min(start1_time, end1_time) <= max(start2_time, end2_time)
+    match_two = max(start1_time, end1_time) >= min(start2_time, end2_time)
+
+    #checking conditions
+    if match_one and match_two:
+        return True
+    else:
+        return False
 
 # def handle_uploaded_file(f):
 #     with open('some/file/name.txt', 'wb+') as destination:

@@ -249,7 +249,9 @@ def liquida_rd(request, pk, context=None):
     data_list = []
     header = [
         'Estado', 'Sede', 'Legajo', 'Apellido, Nombre', 'Actividad',
-        'Agrupador', 'Código', 'Tipo', 'Fecha', 'Día', 'Inicio', 'Fin', 'Horas',
+        'Agrupador', 'Código', 'Tipo', 'Fecha', 'Día', 'Inicio', 'Fin',
+        'Horas', 'Horas Nocturnas', 'Horas Diurnas',
+        'Grupo liquidación', 'Modalidad',
         'Ausencia', 'Adjuntos', 'Comentario',
     ]
 
@@ -268,6 +270,10 @@ def liquida_rd(request, pk, context=None):
             clase.horario_desde.strftime("%H:%M"),
             clase.horario_hasta.strftime("%H:%M"),
             clase.horas,
+            clase.horas_nocturnas,
+            clase.horas_diurnas,
+            clase.empleado.convenio,
+            clase.empleado.liquidacion.nombre,
             clase.ausencia.nombre if clase.ausencia else '',
             clase.url_certificados,
             clase.format_user_comments,
@@ -287,6 +293,10 @@ def liquida_rd(request, pk, context=None):
                 clase.horario_desde.strftime("%H:%M"),
                 clase.horario_hasta.strftime("%H:%M"),
                 clase.horas,
+                clase.horas_nocturnas,
+                clase.horas_diurnas,
+                clase.reemplazo.convenio,
+                clase.reemplazo.liquidacion.nombre,
                 '', #ausencia
                 clase.url_certificados,
                 clase.format_user_comments,

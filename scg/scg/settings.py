@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/3.0/ref/settings/
 """
 
 import os
+from datetime import datetime
 from django.contrib.messages import constants as message_constants
 try:
     from . import credentials
@@ -100,7 +101,7 @@ TEMPLATES = [
         },
     },
 ]
-
+FORM_RENDERER = 'django.forms.renderers.DjangoTemplates'
 WSGI_APPLICATION = 'scg.wsgi.application'
 
 # Database
@@ -201,6 +202,11 @@ SERVER_URL = "http://192.168.1.104:8091/webservice?"
 
 MINS_TOLERACIA = 15
 MINS_BTW_CLOCKS = 5 #minutes between clockings
+
+HORARIOS_NOCTURNOS = (
+    ('21:00', '23:59'),
+    ('00:00', '06:00'),
+)
 
 DIA_SEMANA_CHOICES = (
     ("0", "Lunes"),
