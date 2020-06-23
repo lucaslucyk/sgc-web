@@ -19,7 +19,7 @@ from django.core.files import File
 
 ### own ###
 from django.conf import settings
-from scg_app import models
+from apps.scg_app import models
 
 def json_to_rows(data_json):
     pass

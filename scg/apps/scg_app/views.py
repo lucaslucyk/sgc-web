@@ -28,9 +28,9 @@ from django.http import HttpResponseRedirect
 
 ### own ###
 from django.conf import settings
-from scg_app.forms import *
-from scg_app.models import *
-import scg_app.tasks as task_mgmt
+from apps.scg_app.forms import *
+from apps.scg_app.models import *
+import apps.scg_app.tasks as task_mgmt
 
 def check_admin(user):
     return user.is_superuser

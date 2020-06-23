@@ -23,7 +23,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes.fields import GenericRelation
 
 ### own ###
-from scg_app import utils
+from apps.scg_app import utils
 
 ### models ###
 class Comentario(models.Model):

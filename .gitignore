@@ -6,15 +6,15 @@ __pycache__/
 migrations
 
 # migrations
-# !scg/scg_app/migrations/
-# !scg/api/migrations/
-# !scg/help/migrations/
-# scg/scg_app/migrations/*
-# scg/api/migrations/*
-# scg/help/migrations/*
-# !scg/scg_app/migrations/__init__.py
-# !scg/api/migrations/__init__.py
-# !scg/help/migrations/__init__.py
+# !scg/apps/scg_app/migrations/
+# !scg/apps/api/migrations/
+# !scg/apps/help/migrations/
+# scg/apps/scg_app/migrations/*
+# scg/apps/api/migrations/*
+# scg/apps/help/migrations/*
+# !scg/apps/scg_app/migrations/__init__.py
+# !scg/apps/api/migrations/__init__.py
+# !scg/apps/help/migrations/__init__.py
 
 # tmp dir
 tmp/

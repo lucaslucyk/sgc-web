@@ -1,8 +1,10 @@
+### django
 from django.contrib import admin
 from ckeditor.widgets import CKEditorWidget
 
-from .models import Help
-from .forms import HelpForm
+### own
+from apps.help.models import Help
+from apps.help.forms import HelpForm
 
 @admin.register(Help)
 class HelpAdmin(admin.ModelAdmin):

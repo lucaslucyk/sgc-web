@@ -1,7 +1,7 @@
 from django.urls import path, include
 #from django.conf.urls.static import static
 #from django.conf import settings
-from . import views
+from apps.help import views
 
 urlpatterns = [
     path('create/', views.help_create, name='help_create'),

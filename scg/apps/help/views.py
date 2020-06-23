@@ -14,9 +14,9 @@ from django.contrib import messages
 from django.db.models import Q
 
 ### own ###
-from scg_app.utils import unique_slug_generator
-from .models import Help
-from .forms import HelpForm
+from apps.scg_app.utils import unique_slug_generator
+from apps.help.models import Help
+from apps.help.forms import HelpForm
 
 # Create your views here.
 @login_required

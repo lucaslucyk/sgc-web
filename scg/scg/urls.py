@@ -26,19 +26,19 @@ urlpatterns = [
     # path('select2/', include('django_select2.urls')),
 
     #for custom api functions
-    path('api/', include('api.urls')),
+    path('api/', include('apps.api.urls')),
     path('api-auth/',include('rest_framework.urls',namespace='rest_framework')),
 
-    path('help/', include('help.urls')),
+    path('help/', include('apps.help.urls')),
     
     path('report_builder/', include('report_builder.urls')),
     path('ckeditor/', include('ckeditor_uploader.urls')),
 
-    path('', include('scg_app.urls')),
+    path('', include('apps.scg_app.urls')),
     
     path('accounts/', include('django.contrib.auth.urls'))
 ]
 
 
-handler404 = 'scg_app.views.handler404'
-handler500 = 'scg_app.views.handler500'
+handler404 = 'apps.scg_app.views.handler404'
+handler500 = 'apps.scg_app.views.handler500'

@@ -1,13 +1,20 @@
 """ Utils for internal use """
+
+### built-in
 import datetime
-from zeep import Client
-from django.conf import settings
-from scg_app import models
 from string import digits as str_digits, ascii_lowercase as str_letters
 from random import choice as r_choice
-
-from django.utils.text import slugify
 from typing import Any
+
+### third
+from zeep import Client
+
+### django
+from django.conf import settings
+from django.utils.text import slugify
+
+### own
+from apps.scg_app import models
 
 def grouped(iterable, n=2):
     """ Agrupa los elementos de un iterable para obtener conjuntos

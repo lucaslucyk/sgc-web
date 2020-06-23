@@ -19,8 +19,8 @@ from django.contrib.auth.models import User, Group
 
 ### own ###
 from django.conf import settings
-from scg_app.models import *
-from api import serializers
+from apps.scg_app.models import *
+from apps.api import serializers
 
 ### v2.0 ###
 

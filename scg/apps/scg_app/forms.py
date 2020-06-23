@@ -15,7 +15,7 @@ from django.contrib.auth.models import User
 from django.utils import timezone as tz
 
 ### own ###
-from scg_app.models import *
+from apps.scg_app.models import *
 
 class PeriodoForm(forms.Form):
     widget_date = forms.TextInput(attrs={

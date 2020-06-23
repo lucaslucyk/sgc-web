@@ -3,7 +3,7 @@ import datetime
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
-from scg_app.models import Clase
+from apps.scg_app.models import Clase
 
 @receiver(post_save, sender=Clase)
 def time_updates(sender, instance, **kwargs):

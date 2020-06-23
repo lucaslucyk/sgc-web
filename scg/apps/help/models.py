@@ -14,7 +14,7 @@ from django.shortcuts import reverse
 # from django.contrib.contenttypes.models import ContentType
 
 ### own ###
-from scg_app.utils import unique_slug_generator
+from apps.scg_app.utils import unique_slug_generator
 
 class Help(models.Model):
     """ Help for scg_app """

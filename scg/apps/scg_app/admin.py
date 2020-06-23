@@ -2,7 +2,7 @@
 import threading
 
 ### own
-from scg_app import models
+from apps.scg_app import models
 
 ### django
 from django.contrib import admin

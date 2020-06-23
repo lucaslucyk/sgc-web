@@ -10,7 +10,7 @@ from rest_framework import serializers
 from django.contrib.auth.models import User, Group
 
 ### own ###
-from scg_app import models
+from apps.scg_app import models
 
 ### example ###
 class UserSerializer(serializers.HyperlinkedModelSerializer):
@@ -88,7 +88,7 @@ class ClaseSerializer(serializers.HyperlinkedModelSerializer):
         fields = [
             'get_dia_semana_display', 'fecha', 'horario_desde', 'horario_hasta',
             'empleado', 'reemplazo', 'sede', 'actividad', 'horas', 'monto',
-            'get_estado_display', 'get_presencia_display', 'comentario',
+            'get_estado_display', 'get_presencia_display',
             'ausencia', 'recurrencia', 'confirmada', 'modificada',
             'certificado_set', 'locked',
         ]

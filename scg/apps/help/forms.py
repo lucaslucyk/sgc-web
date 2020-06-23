@@ -1,8 +1,10 @@
+### django
 from django import forms
 from ckeditor.widgets import CKEditorWidget
 from ckeditor_uploader.widgets import CKEditorUploadingWidget
 
-from .models import Help
+### own
+from apps.help.models import Help
 
 
 class HelpForm(forms.ModelForm):

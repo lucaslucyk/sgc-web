@@ -1,7 +1,10 @@
+### django
 from django.urls import path, include
 from django.conf.urls.static import static
 from django.conf import settings
-from scg_app import views, reports
+
+### own
+from apps.scg_app import views, reports
 
 list_urls = [
     ### lists ###

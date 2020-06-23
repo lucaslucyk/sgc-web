@@ -10,7 +10,7 @@ from datetime import datetime
 from django.core.management.base import BaseCommand, CommandError
 
 ### own ###
-from scg_app.models import Empleado, Sede, MotivoAusencia, Marcaje
+from apps.scg_app.models import Empleado, Sede, MotivoAusencia, Marcaje
 
 class Command(BaseCommand):
     help = 'Import data from netTime'

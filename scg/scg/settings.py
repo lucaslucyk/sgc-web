@@ -57,9 +57,9 @@ INSTALLED_APPS = [
     #'django_crontab',
 
     #own
-    'scg_app',
-    'api',
-    'help',
+    'apps.scg_app',
+    'apps.api',
+    'apps.help',
 ]
 
 MIDDLEWARE = [
@@ -162,11 +162,12 @@ TMP_DIR = os.path.join(os.path.dirname(BASE_DIR), 'tmp')
 #REPORT_BUILDER_ASYNC_REPORT = True
 REPORT_BUILDER_INCLUDE = [
     'user',
-    'scg_app.clase', 'scg_app.empleado', 'scg_app.actividad', 'scg_app.escala',
-    'scg_app.grupoactividad', 'scg_app.marcaje', 'scg_app.motivoausencia',
-    'scg_app.recurrencia', 'scg_app.saldo', 'scg_app.sede', 
-    'scg_app.tipocontrato', 'scg_app.tipoliquidacion',
-    'scg_app.bloquedepresencia', 'scg_app.certificado',
+    'apps.scg_app.clase', 'apps.scg_app.empleado', 'apps.scg_app.actividad', 
+    'apps.scg_app.escala', 'apps.scg_app.grupoactividad', 
+    'apps.scg_app.marcaje', 'apps.scg_app.motivoausencia',
+    'apps.scg_app.recurrencia', 'apps.scg_app.saldo', 'apps.scg_app.sede', 
+    'apps.scg_app.tipocontrato', 'apps.scg_app.tipoliquidacion',
+    'apps.scg_app.bloquedepresencia', 'apps.scg_app.certificado',
 ] # Allow only the model user to be accessed
 #REPORT_BUILDER_FRONTEND = False
 

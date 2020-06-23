@@ -2,7 +2,7 @@ from django.test import Client, RequestFactory, TestCase
 from django.contrib.auth.models import AnonymousUser, User
 from django.urls import reverse
 
-from scg_app import models
+from apps.scg_app import models
 
 class PeriodosTest(TestCase):
     
