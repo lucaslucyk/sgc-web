@@ -1,9 +1,43 @@
+### built-in
+import threading
+
 ### own
 from scg_app import models
 
 ### django
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
+from django.contrib import messages
+
+class Scripting(threading.Thread):
+    """
+    Using:
+        - thread = Scripting(str_script=sciprt)
+        - thread.is_alive() --> True
+        - result = thread.execute()
+        - thread.kill = True
+        - thread.join()
+        - thread.is_alive() --> False
+    """
+
+    def __init__(self, str_script: str, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.str_script = str_script
+        self.result = None
+        self.kill = False
+        self.start()
+
+    def execute(self):
+        try:
+            exec(self.str_script)
+            self.result = True
+        except Exception as error:
+            self.result = error
+
+    def run(self):
+        while not self.kill:
+            pass
+        return
 
 ### user extend ###
 UserAdmin.fieldsets += (
@@ -13,7 +47,6 @@ UserAdmin.fieldsets += (
     }),
 )
 UserAdmin.autocomplete_fields += ('sedes',)
-
 
 @admin.register(models.Empleado)
 class EmpleadoAdmin(admin.ModelAdmin):
@@ -176,19 +209,22 @@ class GrupoComentarioAdmin(admin.ModelAdmin):
     list_display = (
         'content_type', 'content_object', 'comentario')
 
-@admin.register(models.Script)
-class ScriptAdmin(admin.ModelAdmin):
+# @admin.register(models.Script)
+# class ScriptAdmin(admin.ModelAdmin):
     
-    actions = ["execute_script"]
+#     actions = ["execute_script"]
 
-    def execute_script(self, request, queryset):
-        if not queryset:
-            return
+#     def execute_script(self, request, queryset):
+#         if not queryset:
+#             return
 
-        script = queryset.first()
-        exec(script.content)
+#         _script = queryset.first()
+#         try:
+#             exec(_script.content)
+#         except Exception as error:
+#             messages.error(request, error)
 
-    execute_script.short_description = "Ejecutar Script"
+#     execute_script.short_description = "Ejecutar Script"
 
 admin.site.register(models.TipoLiquidacion)
 admin.site.register(models.TipoContrato)
