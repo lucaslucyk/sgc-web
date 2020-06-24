@@ -24,45 +24,51 @@
 							{% if locked %}<fieldset disabled>{% endif %}
 							<fieldset disabled>
 								<div class="form-row">
-							    <div class="form-group col-md-4">
+							    <div class="form-group col-sm-6">
 							      <label for="disabledEmpleado">Empleado</label>
-							      <input type="text" id="disabledEmpleado" class="form-control" placeholder="{{empleado}}">
+							      <input type="text" id="disabledEmpleado" class="form-control" placeholder="{{empleado|title}}">
 							    </div>
-							    <div class="form-group col-md-4">
-							      <label for="disabledSede">Sede</label>
-							      <input type="text" id="disabledSede" class="form-control" placeholder="{{sede}}">
-							    </div>
-							    <div class="form-group col-md-4">
+							    <div class="form-group col-sm-6">
 							      <label for="disabledActividad">Actividad</label>
-							      <input type="text" id="disabledActividad" class="form-control" placeholder="{{actividad}}">
+							      <input type="text" id="disabledActividad" class="form-control" placeholder="{{actividad|title}}">
+							    </div>
+						    </div>
+								<div class="form-row">
+ 									<div class="form-group col-sm-6">
+							      <label for="disabledSede">Sede</label>
+							      <input type="text" id="disabledSede" class="form-control" placeholder="{{sede|title}}">
+							    </div>
+									<div class="form-group col-sm-6">
+							      <label for="disabledLugar">Lugar</label>
+							      <input type="text" id="disabledLugar" class="form-control" placeholder="{{lugar|title}}">
 							    </div>
 						    </div>
 							</fieldset>
 
 							<div class="form-row">
-                <div class="form-group col-md-6 col-lg-6">
+                <div class="form-group col-sm-6">
 									<label for="dia_inicio">Día inicio</label>
 									{{form.fecha_desde}}
 								</div>
-								<div class="form-group col-md-6 col-lg-6">
+								<div class="form-group col-sm-6">
 									<label for="dia_fin">Día Fin</label>
 									{{form.fecha_hasta}}
 								</div>
               </div>
 
               <div class="form-row">
-                <div class="form-group col-md-6 col-lg-6">
+                <div class="form-group col-sm-6">
 									<label for="hora_inicio">Hora inicio</label>
 									{{form.horario_desde}}
 								</div>
-								<div class="form-group col-md-6 col-lg-6">
+								<div class="form-group col-sm-6">
 									<label for="hora_fin">Hora fin</label>
 									{{form.horario_hasta}}
 								</div>
               </div>
 
               <div class="form-row text-center">
-                <div class="form-group col-md-12 col-lg-12 mb-0">	
+                <div class="form-group col-sm-12 mb-0">	
 									<!--<label for="">Día de la semana: &nbsp;&nbsp;</label>-->
 
 									{% for dia in form.weekdays %}

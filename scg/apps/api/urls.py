@@ -31,12 +31,12 @@ get_urls = [
 		'actividades/<str:_filter>/', views.get_actividades,
 		name='get_actividades'),
 	path('sedes/<str:_filter>/', views.get_sedes, name='get_sedes'),
+	path('lugares/<str:_filter>/', views.get_lugares, name='get_lugares'),
 	path('day_classes/', views.get_day_classes, name='get_day_classes'),
 	path(
 		'clases_from_certificado/<int:certificado_id>/',
 		views.get_clases_from_certificado, name='clases_from_certificado'),
 	path('comment/<int:comment>',views.get_comment_data, name='get_comment'),
-
 	path('current-version/', views.get_current_version, name='current_version'),
 ]
 

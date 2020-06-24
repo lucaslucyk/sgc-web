@@ -162,7 +162,7 @@ class ComentarioViewSet(BaseViewSet, viewsets.ModelViewSet):
         
         return Response(self.get_serializer(instance).data)
 
-### v1.0 ###
+### v1.0 OR internal ###
 
 # class EmployeeAutocomplete(autocomplete.Select2QuerySetView):
 #     def get_queryset(self):
@@ -277,6 +277,21 @@ def get_sedes(request, _filter, context=None):
     } for sede in sedes]
     
     return JsonResponse({"results":results})
+
+
+@login_required
+def get_lugares(request, _filter, context=None):
+    """ return activitys what match with filter in JSON format """
+
+    lugares = get_model_data(
+        Lugar, _filter, _fields=('nombre',), _order='nombre')
+
+    results = [{
+        "id": lugar.id,
+        "text": lugar.__str__(),
+    } for lugar in lugares]
+
+    return JsonResponse({"results": results})
 
 @login_required
 def get_comment_data(request, comment, context=None):

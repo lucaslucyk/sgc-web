@@ -620,11 +620,15 @@ def programar(request, context=None):
             "empleado": request.POST.get('empleados-search'),
             "actividad": request.POST.get('actividades-search'),
             "sede": request.POST.get('sedes-search'),
+            "lugar": request.POST.get('lugares-search'),
         }
         context["search_data"] = search_data
 
-        if ("empleados-results" and "actividades-results" and 
-                "sedes-results" not in request.POST.keys()):
+        _keywords = (
+            "empleados-results", "actividades-results",
+            "sedes-results", "lugares-results"
+        )
+        if any(_ not in request.POST.keys() for _ in _keywords):
             messages.warning(
                 request, "Busque y seleccione los datos en desplegables.")
             return render(request, template, context)
@@ -637,12 +641,15 @@ def programar(request, context=None):
                     Actividad, pk=request.POST.get("actividades-results")),
                 "sede": get_object_or_404(
                     Sede, pk=request.POST.get("sedes-results")),
+                "lugar": get_object_or_404(
+                    Lugar, pk=request.POST.get("lugares-results")),
             }
 
             #update selected data
             context["empleado_selected"] = fields.get("empleado")
             context["actividad_selected"] = fields.get("actividad")
             context["sede_selected"] = fields.get("sede")
+            context["lugar_selected"] = fields.get("lugar")
         except:
             messages.error(request, "Error en campos de búsqueda.")
             return render(request, template, context)
@@ -735,6 +742,7 @@ def programar(request, context=None):
             empleado=fields["empleado"], 
             actividad=fields["actividad"], 
             sede=fields["sede"],
+            lugar=fields["lugar"],
         )
 
         _not_success, _rejecteds, _creadas = False, False, 0
@@ -788,6 +796,7 @@ def programacion_update(request, pk, context=None):
         "empleado": rec.empleado,
         "actividad": rec.actividad,
         "sede": rec.sede,
+        "lugar": rec.lugar,
     }
 
     #check change permission
@@ -824,6 +833,7 @@ def programacion_update(request, pk, context=None):
             "empleado": rec.empleado,
             "actividad": rec.actividad,
             "sede": rec.sede,
+            "lugar": rec.lugar,
         }
 
         if fields.get("fecha_hasta") < datetime.date.today() and not settings.DEBUG:

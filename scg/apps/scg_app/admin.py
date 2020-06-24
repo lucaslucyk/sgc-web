@@ -101,12 +101,12 @@ class SaldoAdmin(admin.ModelAdmin):
 class RecurrenciaAdmin(admin.ModelAdmin):
     fields = (
         ('fecha_desde', 'horario_desde'), ('fecha_hasta', 'horario_hasta'),
-        'empleado', 'sede', 'actividad', 'weekdays', 'locked')
+        'empleado', 'sede', 'lugar', 'actividad', 'weekdays', 'locked')
     list_display = (
         'id', 'empleado', 'fecha_desde', 'fecha_hasta',
-        'horario_desde', 'horario_hasta', 'sede',
+        'horario_desde', 'horario_hasta', 'sede', 'lugar',
         'actividad', 'get_dias_str', 'locked')
-    list_filter = ['empleado', 'sede', 'actividad', 'locked']
+    list_filter = ['empleado', 'sede', 'lugar', 'actividad', 'locked']
 
 
 # class ComentariosInLine(admin.InlineModelAdmin):
@@ -229,3 +229,4 @@ class GrupoComentarioAdmin(admin.ModelAdmin):
 admin.site.register(models.TipoLiquidacion)
 admin.site.register(models.TipoContrato)
 admin.site.register(models.Liquidacion)
+admin.site.register(models.Lugar)

@@ -25,7 +25,45 @@ from django.contrib.contenttypes.fields import GenericRelation
 ### own ###
 from apps.scg_app import utils
 
-### models ###
+# ### models ###
+class Lugar(models.Model):
+    nombre = models.CharField(max_length=100)
+    codigo = models.CharField(max_length=50, blank=True, null=True, unique=True)
+    tipo = models.CharField(
+        max_length=50, choices=settings.LUGARES_CHOICES, blank=True, null=True,
+        default=settings.LUGARES_CHOICES[0])
+
+    class Meta:
+        verbose_name = "Lugar"
+        verbose_name_plural = "Lugares"
+        ordering = ["nombre", "tipo"]
+        get_latest_by = 'nombre'
+
+    def __str__(self):
+        return self.nombre
+    
+    def __repr__(self):
+        return "{}(nombre='{}', codigo='{}', tipo='{}')".format(
+            self.__class__.__name__,
+            self.nombre,
+            self.codigo,
+            self.tipo,
+        )
+    
+    def get_delete_url(self):
+        """ construct delete url from current object """
+        return reverse(
+            'confirm_delete',
+            kwargs={"model": self.__class__.__name__, "pk": self.id})
+
+    def pos_delete_url(self):
+        """ construct pos delete url from current object """
+        return reverse('index')
+
+    @property
+    def pronombre(self):
+        return "el"
+
 class Comentario(models.Model):
     usuario = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
     contenido = models.TextField(blank=True)
@@ -674,6 +712,7 @@ class Recurrencia(models.Model):
     actividad = models.ForeignKey(
         'Actividad', on_delete=models.SET_NULL, null=True)
     sede = models.ForeignKey('Sede', on_delete=models.SET_NULL, null=True)
+    lugar = models.ForeignKey('Lugar', on_delete=models.SET_NULL, null=True)
     weekdays = MultiSelectField(
         'Días de la semana', choices=settings.DIA_SEMANA_CHOICES,
         null=True, blank=True)

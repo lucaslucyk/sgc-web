@@ -244,6 +244,11 @@ ACCIONES_CHOICES = (
     ("comentario", "Comentario"),   #keep last
 )
 
+LUGARES_CHOICES = (
+    ("Real", "Real"),
+    ("Virtual", "Virtual"),  # keep last
+)
+
 #help editor
 CKEDITOR_CONFIGS = {
     "default": {
