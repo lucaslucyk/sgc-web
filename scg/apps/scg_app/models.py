@@ -889,6 +889,10 @@ class Clase(models.Model):
         super().save(*args, **kwargs)
 
     @property
+    def lugar(self):
+        return self.recurrencia.lugar.nombre if self.recurrencia.lugar else ''
+
+    @property
     def ejecutor(self):
         return self.reemplazo if self.reemplazo else self.empleado
 

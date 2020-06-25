@@ -248,7 +248,7 @@ def liquida_rd(request, pk, context=None):
     # base prepare
     data_list = []
     header = [
-        'Estado', 'Sede', 'Legajo', 'Apellido, Nombre', 'Actividad',
+        'Estado', 'Sede', 'Lugar', 'Legajo', 'Apellido, Nombre', 'Actividad',
         'Agrupador', 'Código', 'Tipo', 'Fecha', 'Día', 'Inicio', 'Fin',
         'Horas', 'Horas Nocturnas', 'Horas Diurnas',
         'Grupo liquidación', 'Modalidad',
@@ -259,6 +259,7 @@ def liquida_rd(request, pk, context=None):
         data_list.append([
             clase.get_estado_display(),
             clase.sede.nombre.upper(),
+            clase.lugar.upper(),
             clase.empleado.legajo,
             str(clase.empleado),
             clase.actividad.nombre,
@@ -274,7 +275,7 @@ def liquida_rd(request, pk, context=None):
             clase.horas_diurnas,
             clase.empleado.convenio,
             clase.empleado.liquidacion.nombre,
-            clase.ausencia.nombre if clase.ausencia else '',
+            getattr(clase.ausencia, 'nombre', ''),
             clase.url_certificados,
             clase.format_user_comments,
         ])
@@ -282,7 +283,8 @@ def liquida_rd(request, pk, context=None):
             data_list.append([
                 'Realizada',    #estado
                 clase.sede.nombre.upper(),
-                clase.reemplazo.legajo if clase.reemplazo.legajo else '',
+                clase.lugar.upper(),
+                getattr(clase.reemplazo, 'legajo', ''),
                 str(clase.reemplazo),
                 clase.actividad.nombre,
                 clase.actividad.grupo.nombre,
