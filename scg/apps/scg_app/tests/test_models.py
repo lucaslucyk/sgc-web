@@ -167,3 +167,170 @@ class EmpleadosTest(TestCase):
             busy = self.empleado.is_busy(self.clase.fecha, *horarios)
             self.assertTrue(busy)
 
+
+class SaldosTest(TestCase):
+    
+    def setUp(self):
+        self.t_types = ('2020-01-01', '2020-03-01', '2020-03-02', '2020-03-31')
+        self.t_refer = ('2020-03-01', '2020-03-15', '2020-03-31', '2020-04-01')
+        self.no_overlap = (
+            {"_desde": "2020-01-01", "_hasta": "2020-02-29"},
+            {"_desde": "2020-04-01", "_hasta": "2020-04-15"},
+        )
+
+        self.activity = models.Actividad.objects.create(nombre="T_1")
+        self.sede = models.Sede.objects.create(nombre="T_1", id_netTime=1)
+
+        self.activity_two = models.Actividad.objects.create(nombre="T_2")
+        self.sede_two = models.Sede.objects.create(nombre="T_2", id_netTime=2)
+
+        self.saldo_one = models.Saldo.objects.create(
+            desde='2020-03-01',
+            hasta='2020-03-31',
+            sede=self.sede,
+            actividad=self.activity,
+        )
+        # second test
+        self.saldo_two = models.Saldo.objects.create(
+            desde='2020-05-01',
+            hasta='2020-05-31',
+            sede=self.sede,
+            actividad=self.activity,
+            saldo_asignado=2,
+        )
+        self.empleado = models.Empleado.objects.all().first()
+        self.clase_one = models.Clase.objects.create(
+            dia_semana='0',
+            fecha='2020-05-15',
+            horario_desde='10:00',
+            horario_hasta='11:00',
+            empleado=self.empleado,
+            sede=self.sede,
+            actividad=self.activity,
+        )
+
+    def test_overlap_all(self, callback=False):
+        """
+        Test all overlap types:
+            - Comming before, on 'desde', between, on 'hasta' and indexed:
+                - ending on 'desde'.
+                - ending between 'desde' and 'hasta'.
+                - ending on 'hasta'.
+                - ending after 'hasta'.
+        """
+
+        for test_type in self.t_types:
+            for refer in self.t_refer:
+                is_overlap = models.Saldo.check_overlap(
+                    _sede=self.sede,
+                    _actividad=self.activity,
+                    _desde=test_type,
+                    _hasta=refer,
+                )
+                self.assertTrue(is_overlap if not callback else not is_overlap)
+
+    def test_overlap_excluding(self):
+        """ Test all overlaps using exclude_id. """
+
+        # excluding bad id
+        for test_type in self.t_types:
+            for refer in self.t_refer:
+                is_overlap = models.Saldo.check_overlap(
+                    _sede=self.sede,
+                    _actividad=self.activity,
+                    _desde=test_type,
+                    _hasta=refer,
+                    id_exclude=self.saldo_two.pk,
+                )
+                self.assertTrue(is_overlap)
+
+        # excluding right id
+        for test_type in self.t_types:
+            for refer in self.t_refer:
+                is_overlap = models.Saldo.check_overlap(
+                    _sede=self.sede,
+                    _actividad=self.activity,
+                    _desde=test_type,
+                    _hasta=refer,
+                    id_exclude=self.saldo_one.pk,
+                )
+                self.assertFalse(is_overlap)
+        
+    def test_no_overlap(self):
+        """ Test dates what must be pass the test. """
+
+        for dates in self.no_overlap:
+            is_overlap = models.Saldo.check_overlap(
+                _sede=self.sede,
+                _actividad=self.activity,
+                **dates,
+            )
+            self.assertFalse(is_overlap)
+
+    def test_no_overlap_changing_values(self):
+        """ Test no overlap with another sede and/or activity. """
+
+        # change sede only
+        self.sede, self.sede_two = self.sede_two, self.sede
+        self.test_overlap_all(callback=True)
+
+        # change sede and activity
+        self.activity, self.activity_two = self.activity_two, self.activity
+        self.test_overlap_all(callback=True)
+
+        # change activity only
+        self.sede, self.sede_two = self.sede_two, self.sede
+        self.test_overlap_all(callback=True)
+
+    def test_saldo_actual(self):
+        """ Test what values informed are right. """
+
+        # positive default
+        self.assertEqual(self.saldo_two.saldo_disponible, 1)
+        
+        # zero
+        self.saldo_two.saldo_asignado = 1
+        self.assertEqual(self.saldo_two.saldo_disponible, 0)
+
+        # negative
+        self.saldo_two.saldo_asignado = 0
+        self.assertEqual(self.saldo_two.saldo_disponible, -1)
+
+        # no classes
+        self.assertEqual(self.saldo_one.saldo_disponible, 0)
+
+    def test_saldo_available(self):
+        """ Test if have available saldo in a time period. """
+
+        # negative available
+        self.assertFalse(models.Saldo.check_saldos(
+            _sede=self.saldo_two.sede,
+            _actividad=self.saldo_two.actividad,
+            _desde=self.saldo_two.fecha,
+            _hasta=self.saldo_two.fecha,
+        ))
+        
+        # zero available
+        self.saldo_two.saldo_asignado = 1
+        self.assertFalse(models.Saldo.check_saldos(
+            _sede=self.saldo_two.sede,
+            _actividad=self.saldo_two.actividad,
+            _desde=self.saldo_two.fecha,
+            _hasta=self.saldo_two.fecha,
+        ))
+
+        # positivive available
+        self.saldo_two.saldo_asignado = 2
+        self.assertTrue(models.Saldo.check_saldos(
+            _sede=self.saldo_two.sede,
+            _actividad=self.saldo_two.actividad,
+            _desde=self.saldo_two.fecha,
+            _hasta=self.saldo_two.fecha,
+        ))
+
+
+
+
+    
+
+        

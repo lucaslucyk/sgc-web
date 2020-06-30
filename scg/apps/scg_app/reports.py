@@ -21,9 +21,6 @@ from django.core.files import File
 from django.conf import settings
 from apps.scg_app import models
 
-def json_to_rows(data_json):
-    pass
-
 
 def excel_in_tmp(data: list, filename='hardcoded.xlsx', *args, **kwargs):
     """ 
@@ -54,26 +51,6 @@ def excel_in_tmp(data: list, filename='hardcoded.xlsx', *args, **kwargs):
     writer.save()
 
     return file_dir
-
-
-    # generate excel response type
-    # response = HttpResponse(
-    #     content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    #     charset='iso-8859-1')
-    # response['Content-Disposition'] = f'attachment; filename={filename}'
-
-    # #convert data to Pandas DataFrame and write in excel response
-    # for sheet in data:
-    #     df = pd.DataFrame(sheet.get('data'))
-    #     df.to_excel(
-    #         response,
-    #         sheet_name=sheet.get('sheet_name'),
-    #         header=sheet.get('header'),
-    #         index=sheet.get('index'),
-    #         engine='xlsxwriter',
-    #     )
-    
-    # return response
 
 def generate_excel(data_list, sheet_name='SGC-APP', header=None, index=False):
     """ Generate excel response from data_list recived """
@@ -119,22 +96,15 @@ def liquida_mono(request, pk, context=None):
         )
 
     # process in soc (structure of classes) for get structure like:
-    # { sede: { empleado: {actividad.grupo: [clases, ]} }
     # { empleado: { sede: {actividad.grupo: [clases, ]} }
     soc = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
 
     for clase in clases:
-        #soc[clase.sede][clase.empleado][clase.actividad.grupo].append(clase)
         soc[clase.empleado][clase.sede][clase.actividad.grupo].append(clase)
 
     # base prepare
     data_grouped = []
     data_detail = []
-    #head_group = ['SEDE', 'DNI', 'DNI/SEDE', 'EMPLEADO', 'MONTO']
-    # head_detail = [
-    #     'CODIGO', 'SEDE', 'DNI', 'DNI/SEDE','EMPLEADO', 'GRUPO DE ACTIVIDAD',
-    #     'HORAS', 'MONTO',
-    # ]
     
     head_detail = [
         'DNI', 'DNI/SEDE', 'EMPLEADO', 'SEDE', 'GRUPO DE ACTIVIDAD', 'HORAS',
@@ -146,9 +116,6 @@ def liquida_mono(request, pk, context=None):
     ]
 
     # data proccess
-    # for sede, empleado_grupos_clases in soc.items():
-    #     for empleado, grupos_clases in empleado_grupos_clases.items():
-    
     for empleado, sede_grupos_clases in soc.items():
         for sede, grupos_clases in sede_grupos_clases.items():
             
@@ -329,6 +296,3 @@ def liquida_rd(request, pk, context=None):
     liquidacion.file.save('liquida_rd.xlsx', File(open(excel_dir, 'rb')))
 
     return JsonResponse({'fileUrl': liquidacion.file.url})
-
-    # generate and return excel
-    #return generate_excel(data_list, sheet_name='Presentismo RD', header=header)

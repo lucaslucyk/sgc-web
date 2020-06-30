@@ -15,7 +15,7 @@ from django.contrib.auth.models import User
 from django.utils import timezone as tz
 
 ### own ###
-from apps.scg_app.models import *
+from apps.scg_app import models
 
 class PeriodoForm(forms.Form):
     widget_date = forms.TextInput(attrs={
@@ -37,7 +37,7 @@ class PeriodoForm(forms.Form):
 
 class PeriodoUpdForm(PeriodoForm, forms.ModelForm):
     class Meta:
-        model = Periodo
+        model = models.Periodo
         fields = ['desde', 'hasta', 'bloqueado']
 
 class SaldoForm(forms.Form):
@@ -48,12 +48,12 @@ class SaldoForm(forms.Form):
     })
 
     sede = forms.ModelChoiceField(
-        queryset=Sede.objects.all().order_by('nombre'), 
+        queryset=models.Sede.objects.all().order_by('nombre'), 
         required=True, label="Sede", 
         empty_label="Seleccione una sede..."
     )
     actividad = forms.ModelChoiceField(
-        queryset=Actividad.objects.all().order_by('nombre'), 
+        queryset=models.Actividad.objects.all().order_by('nombre'), 
         required=True, label="Sede", 
         empty_label="Seleccione una actividad..."
     )
@@ -71,7 +71,7 @@ class SaldoForm(forms.Form):
 class SaldoUpdForm(SaldoForm, forms.ModelForm):
 
     class Meta:
-        model = Saldo
+        model = models.Saldo
         fields = ['sede', 'actividad', 'desde', 'hasta', 'saldo_asignado']
 
 class ClaseUpdForm(forms.ModelForm):
@@ -92,30 +92,40 @@ class ClaseUpdForm(forms.ModelForm):
     })
 
     class Meta:
-        model = Clase
+        model = models.Clase
         fields = ['horario_desde', 'horario_hasta', 'comentario']
 
 class RecurrenciaForm(forms.Form):
-    #empleado = forms.ModelMultipleChoiceField(queryset=Empleado.objects.all(), widget=Select2MultipleWidget)
     widget_date = forms.TextInput(attrs={
         'type': 'date',
         'class': 'form-control',
         'placeholder':'aaaa-mm-dd',
     })
     
-    fecha_desde = forms.CharField(max_length=10, help_text="", required=True, widget=widget_date)
-    fecha_hasta = forms.CharField(max_length=10, help_text="", required=True, widget=widget_date)
+    fecha_desde = forms.CharField(
+        max_length=10, help_text="", required=True, widget=widget_date)
+    fecha_hasta = forms.CharField(
+        max_length=10, help_text="", required=True, widget=widget_date)
 
-    horario_desde = forms.TimeField(widget=forms.TimeInput(format="%H:%M"),
-        help_text="Horario de inicio de clase", required=True)#, initial="00:00")
-    horario_desde.widget.attrs.update({'class': 'form-control hour-input', 'placeholder':'00:00'})
+    horario_desde = forms.TimeField(
+        widget=forms.TimeInput(format="%H:%M"),
+        help_text="Horario de inicio de clase",
+        required=True)
+    horario_desde.widget.attrs.update(
+        {'class': 'form-control hour-input', 'placeholder':'00:00'})
 
-    horario_hasta = forms.TimeField(widget=forms.TimeInput(format="%H:%M"), 
-        help_text="Horario de fin de clase", required=True)
-    horario_hasta.widget.attrs.update({'class': 'form-control hour-input', 'placeholder':'23:59'})
+    horario_hasta = forms.TimeField(
+        widget=forms.TimeInput(format="%H:%M"), 
+        help_text="Horario de fin de clase",
+        required=True)
+    horario_hasta.widget.attrs.update(
+        {'class': 'form-control hour-input', 'placeholder':'23:59'})
 
-    weekdays = forms.MultipleChoiceField(widget=forms.CheckboxSelectMultiple, 
-        choices=settings.DIA_SEMANA_CHOICES, required=True, initial=None
+    weekdays = forms.MultipleChoiceField(
+        widget=forms.CheckboxSelectMultiple,
+        choices=settings.DIA_SEMANA_CHOICES,
+        required=True,
+        initial=None
     )
     weekdays.widget.attrs.update({'class':'form-check-input'})
 
@@ -126,7 +136,7 @@ class RecurrenciaForm(forms.Form):
 class RecurrenciaUpdForm(RecurrenciaForm, forms.ModelForm):
 
     class Meta:
-        model = Recurrencia
+        model = models.Recurrencia
         fields = ['fecha_desde', 'fecha_hasta', 
             'horario_desde', 'horario_hasta', 'weekdays',
         ]
@@ -134,11 +144,11 @@ class RecurrenciaUpdForm(RecurrenciaForm, forms.ModelForm):
 class SignUpForm(UserCreationForm):
     username = forms.CharField(
         max_length=50, 
-        help_text="Obligatorio. 50 caracteres sin símbolos especiales."
+        help_text="Obligatorio. Hasta 50 caracteres sin símbolos especiales."
     )
     email = forms.EmailField(
         max_length=200, 
-        help_text="Obligatorio. 200 caracteres máximo."
+        help_text="Obligatorio. Hasta 200 caracteres máximo."
     )
 
     class Meta:
@@ -165,26 +175,38 @@ class FiltroForm(forms.Form):
         'tri-state-check': '',
     } 
 
-    empleado = forms.CharField(max_length=50, help_text="", required=False, widget=widget_search)
-    empleado.widget.attrs.update({'placeholder': "Algún dato del empleado asignado...",})
+    empleado = forms.CharField(
+        max_length=50, help_text="", required=False, widget=widget_search)
+    empleado.widget.attrs.update(
+        {'placeholder': "Algún dato del empleado asignado...",})
 
-    reemplazo = forms.CharField(max_length=50, help_text="", required=False, widget=widget_search)
-    reemplazo.widget.attrs.update({'placeholder': "Algún dato del reemplazo...",})
+    reemplazo = forms.CharField(
+        max_length=50, help_text="", required=False, widget=widget_search)
+    reemplazo.widget.attrs.update(
+        {'placeholder': "Algún dato del reemplazo...",})
 
-    actividad = forms.CharField(max_length=50, help_text="", required=False, widget=widget_search)
-    actividad.widget.attrs.update({'placeholder': "Algún dato de la actividad o grupo...",})
+    actividad = forms.CharField(
+        max_length=50, help_text="", required=False, widget=widget_search)
+    actividad.widget.attrs.update(
+        {'placeholder': "Algún dato de la actividad o grupo...",})
 
-    dia_inicio = forms.CharField(max_length=10, initial=datetime.date.today().strftime("%Y-%m-%d"),
+    dia_inicio = forms.CharField(
+        max_length=10, initial=dt.date.today().strftime("%Y-%m-%d"),
         required=False, widget=widget_date)
-    dia_fin = forms.CharField(max_length=10, help_text="", required=False, widget=widget_date)
+    dia_fin = forms.CharField(
+        max_length=10, help_text="", required=False, widget=widget_date)
 
-    hora_inicio = forms.TimeField(widget=forms.TimeInput(format="%H:%M"), 
+    hora_inicio = forms.TimeField(
+        widget=forms.TimeInput(format="%H:%M"), 
         initial="00:00", help_text="Horario de inicio de clase")
-    hora_inicio.widget.attrs.update({'class': 'form-control  hour-input', 'placeholder':'00:00'})
+    hora_inicio.widget.attrs.update(
+        {'class': 'form-control  hour-input', 'placeholder':'00:00'})
 
-    hora_fin = forms.TimeField(widget=forms.TimeInput(format="%H:%M"), 
+    hora_fin = forms.TimeField(
+        widget=forms.TimeInput(format="%H:%M"), 
         initial="23:59", help_text="Horario de fin de clase")
-    hora_fin.widget.attrs.update({'class': 'form-control  hour-input', 'placeholder':'23:59'})
+    hora_fin.widget.attrs.update(
+        {'class': 'form-control  hour-input', 'placeholder':'23:59'})
 
     dia_semana = forms.ChoiceField(
         widget=forms.Select, 
@@ -197,12 +219,12 @@ class FiltroForm(forms.Form):
         required=False, label="Estado", initial=None,
     )
     motivo_ausencia = forms.ModelChoiceField(
-        queryset=MotivoAusencia.objects.all().order_by("nombre"), 
+        queryset=models.MotivoAusencia.objects.all().order_by("nombre"),
         required=False, label="Motivo de ausencia", 
         empty_label="Todos"
     )
     sede = forms.ModelChoiceField(
-        queryset=Sede.objects.all().order_by("nombre"),
+        queryset=models.Sede.objects.all().order_by("nombre"),
         required=False, label="Sede", 
         empty_label="Todas"
     )
@@ -220,7 +242,8 @@ class FiltroForm(forms.Form):
     solo_bloqueadas.widget.attrs.update(tri_state_check)
 
 class MarcajeForm(forms.Form):
-    hora_marcaje = forms.TimeField(widget=forms.TimeInput(format="%H:%M"), required=False, help_text="")
+    hora_marcaje = forms.TimeField(
+        widget=forms.TimeInput(format="%H:%M"), required=False, help_text="")
     hora_marcaje.widget.attrs.update({
         'class': 'form-control hour-input',
         'placeholder': "00:00",
@@ -230,14 +253,13 @@ class MarcajeForm(forms.Form):
 
 class MotivoAusenciaForm(forms.Form):
     motivo = forms.ModelChoiceField(
-        queryset=MotivoAusencia.objects.all().order_by("nombre"), 
+        queryset=models.MotivoAusencia.objects.all().order_by("nombre"),
         required=False, 
         empty_label="Ninguno", 
         label="Motivo de Ausencia",
         )
     motivo.widget.attrs.update({'class': 'form-control custom-select'})
 
-    #adjunto = forms.FileField(widget=forms.ClearableFileInput(attrs={'multiple': True}), required=False)
     adjunto = forms.FileField(required=False)
     adjunto.widget.attrs.update({'class':'custom-file-input', 'id':'adjunto'})
 
@@ -249,7 +271,7 @@ class MotivoAusenciaForm(forms.Form):
     })
 
     class Meta:
-        model = MotivoAusencia
+        model = models.MotivoAusencia
         fields = ("id", "nombre")
 
 class ComentarioForm(forms.Form):

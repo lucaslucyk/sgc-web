@@ -2,7 +2,7 @@
 
 ### built-in ###
 from collections import defaultdict
-import datetime
+import datetime as dt
 import re
 import math
 
@@ -10,21 +10,19 @@ import math
 #...
 
 ### django ###
-from django.contrib.auth import login, authenticate
 from django.contrib.auth.decorators import login_required, \
     permission_required, user_passes_test
 from django.shortcuts import render, redirect, get_object_or_404,\
     render_to_response
-from requests.exceptions import ConnectionError, HTTPError
+from requests.exceptions import ConnectionError
 from django.core.paginator import EmptyPage, Paginator
 from django.views.generic.list import ListView
 from django.views.generic.edit import UpdateView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import JsonResponse, Http404
 from django.views.decorators.csrf import csrf_exempt
-from django.contrib import messages
+from django.contrib import messages as msgs
 from django.apps import apps
-from django.http import HttpResponseRedirect
 
 ### own ###
 from django.conf import settings
@@ -44,8 +42,7 @@ def comments_of_class(request, id_clase: int, context=None):
 
     #check sede permission
     if not request.user.has_sede_permission(clase.sede):
-        messages.error(
-            request, "No tiene permisos para la sede de esta clase.")
+        msgs.error(request, "No tiene permisos para la sede de esta clase.")
         return render(request, template, context)
 
     #if clase is locked, doesn't support actions
@@ -55,7 +52,7 @@ def comments_of_class(request, id_clase: int, context=None):
             form = ComentarioForm(request.POST)
 
             if not form.is_valid():
-                messages.error(request, 'Error de formulario.')
+                msgs.error(request, 'Error de formulario.')
                 return render(request, template, context)
 
             #create comment
@@ -76,16 +73,16 @@ def comments_of_class(request, id_clase: int, context=None):
                 form_update = ComentarioForm(request.POST)
 
                 if not form_update.is_valid():
-                    messages.error(request, 'Error de formulario.')
+                    msgs.error(request, 'Error de formulario.')
                     return render(request, template, context)
                 
                 #update comment
                 upd_comm.contenido = form_update.cleaned_data["comentario"]
-                upd_comm.fecha = datetime.date.today()
-                upd_comm.hora = datetime.datetime.now().time()
+                upd_comm.fecha = dt.date.today()
+                upd_comm.hora = dt.datetime.now().time()
                 upd_comm.save()
             else:
-                messages.error(request, "No puede editar este comentario")
+                msgs.error(request, "No puede editar este comentario")
 
     #reset form
     form = ComentarioForm()
@@ -112,8 +109,7 @@ def certificados_list(request, id_clase: int, context=None):
 
     #check sede permission
     if not request.user.has_sede_permission(clase.sede):
-        messages.error(
-            request, "No tiene permisos para la sede de esta clase.")
+        msgs.error(request, "No tiene permisos para la sede de esta clase.")
         return render(request, template, context)
 
     #after permission checks
@@ -151,7 +147,7 @@ def clase_edit(request, pk, context=None):
     if clase.locked or not request.user.has_perm('scg_app.change_clase'):
         context["locked"] = True
 
-        messages.error(
+        msgs.error(
             request,
             'El <a href="{}" class="no-decore">periodo</a> esta bloqueado o no \
             tiene permiso para editar clases.'.format(
@@ -161,7 +157,7 @@ def clase_edit(request, pk, context=None):
 
     #check sede permission
     if not request.user.has_sede_permission(clase.sede):
-        messages.error(request, "No tiene permisos para la sede de esta clase.")
+        msgs.error(request, "No tiene permisos para la sede de esta clase.")
         context["locked"] = True
         return render(request, template, context)
 
@@ -170,7 +166,7 @@ def clase_edit(request, pk, context=None):
         comment_form = ComentarioForm(request.POST)
 
         if not form.is_valid() or not comment_form.is_valid():
-            messages.error(request, 'Error de formulario.')
+            msgs.error(request, 'Error de formulario.')
             context = context or {'form': ClaseUpdForm(instance=clase)}
             return render(request, template, context)
 
@@ -185,17 +181,17 @@ def clase_edit(request, pk, context=None):
                         clase.horario_desde, clase.horario_hasta,
                         rec_ignore=clase.recurrencia):
 
-                    messages.error(
+                    msgs.error(
                         request, "La edición se superpone con otra clase.")
                     return render(request, template, context)
 
                 clase.modificada = True
-                messages.success(
+                msgs.success(
                     request,
                     f'La clase ha sido modificada como excepción a la serie.')
             else:
                 clase.modificada = False
-                messages.success(request, f'La clase ha sido modificada.')
+                msgs.success(request, f'La clase ha sido modificada.')
 
         #create comment
         if comment_form.cleaned_data["comentario"]:
@@ -229,7 +225,7 @@ def index(request, context=None):
     }
     context = {"conteo": conteo}
 
-    today = datetime.date.today()
+    today = dt.date.today()
     periodo = Periodo.objects.filter(desde__lte=today, hasta__gte=today)
 
     if not periodo:
@@ -328,22 +324,22 @@ def periodo_create(request, context=None):
 
     if not request.user.has_perm('scg_app.add_periodo'):
         context["locked"] = True
-        messages.error(request, 'No tiene permisos para crear periodos')
+        msgs.error(request, 'No tiene permisos para crear periodos')
         return render(request, "apps/scg_app/create/periodo.html", context)
 
     if request.method == 'POST':
         if not form.is_valid():
-            messages.error(request, "Error en datos del formulario.")
+            msgs.error(request, "Error en datos del formulario.")
             return render(request, "apps/scg_app/create/periodo.html", context)
 
         fields = {
-            "desde":datetime.date.fromisoformat(form.cleaned_data.get("desde")),
-            "hasta":datetime.date.fromisoformat(form.cleaned_data.get("hasta")),
+            "desde":dt.date.fromisoformat(form.cleaned_data.get("desde")),
+            "hasta":dt.date.fromisoformat(form.cleaned_data.get("hasta")),
         }
 
         ### security dates check ###
         if fields.get("desde") >= fields.get("hasta"):
-            messages.error(request, "El fin debe ser mayor al inicio.")
+            msgs.error(request, "El fin debe ser mayor al inicio.")
             return render(request, "apps/scg_app/create/periodo.html", context)
 
         ### overlap checks ###
@@ -351,7 +347,7 @@ def periodo_create(request, context=None):
             fields.get("desde"), fields.get("hasta"))
 
         if is_overlap:
-            messages.error(request, "El periodo se solapa con uno ya creado.")
+            msgs.error(request, "El periodo se solapa con uno ya creado.")
             return render(request, "apps/scg_app/create/periodo.html", context)
 
         ### after of all security checks ###
@@ -364,7 +360,7 @@ def periodo_create(request, context=None):
         #lock or allor related objects
         affecteds = new_period.update_related()
 
-        messages.success(
+        msgs.success(
             request,
             '<a href="{}" class="no-recore">Periodo</a> creado.'.format(
                 new_period.get_edit_url()))
@@ -383,7 +379,7 @@ def periodo_update(request, pk, context=None):
 
     #check edit permission
     if not request.user.has_perm('scg_app.change_periodo'):
-        messages.error(request, 'No tiene permiso para editar periodos.')
+        msgs.error(request, 'No tiene permiso para editar periodos.')
         form = PeriodoUpdForm(instance=periodo)
         context = {'form': form}
         context["locked"] = True
@@ -395,7 +391,7 @@ def periodo_update(request, pk, context=None):
         context = context or {'form': form}
 
         if not form.is_valid():
-            messages.error(request, 'Error de formulario.')
+            msgs.error(request, 'Error de formulario.')
             return render(request, 'apps/scg_app/create/periodo.html', context)
 
         periodo = form.save(commit=False)
@@ -404,8 +400,7 @@ def periodo_update(request, pk, context=None):
                 _desde=periodo.desde,
                 _hasta=periodo.hasta,
                 id_exclude=periodo.pk):
-            messages.error(request,
-                           "El periodo se superpone con otro ya creado.")
+            msgs.error(request, "El periodo se superpone con otro ya creado.")
             return render(request, "apps/scg_app/create/periodo.html", context)
 
         #after of all checks
@@ -414,7 +409,7 @@ def periodo_update(request, pk, context=None):
         #lock or allor related objects
         affecteds = periodo.update_related()
 
-        messages.success(
+        msgs.success(
             request,
             '<a href="{}" class="no-decore">Periodo</a> actualizado.'.format(
                 periodo.get_edit_url()))
@@ -454,21 +449,20 @@ def confirm_delete(request, model, pk, context=None):
     #check delete permission
     if not request.user.has_perm(f'scg_app.delete_{model.lower()}'):
         context["locked"] = True
-        messages.error(request, 'No tiene permisos para eliminar este objeto.')
+        msgs.error(request, 'No tiene permisos para eliminar este objeto.')
         return render(request, template, context)
 
     #check custom permission of model
     if getattr(obj, 'user_can_delete', None):
         if not obj.user_can_delete(request.user):
             context["locked"] = True
-            messages.error(
-                request, 'No tiene permisos para eliminar este objeto.')
+            msgs.error(request, 'No tiene permisos para eliminar este objeto.')
             return render(request, template, context)
 
     #check locked and bloqueado properties
     if getattr(obj, 'locked', False) or getattr(obj, 'bloqueado', False):
         context["locked"] = True
-        messages.error(
+        msgs.error(
             request,
             '{0} {1} pertenece a un periodo bloqueado.'.format(
                 context["pronoun"].capitalize(),
@@ -478,7 +472,7 @@ def confirm_delete(request, model, pk, context=None):
         return render(request, template, context)
 
     if request.method == "POST":
-        messages.success(request, 'Se ha eliminado {0} {1}.'.format(
+        msgs.success(request, 'Se ha eliminado {0} {1}.'.format(
             context["pronoun"], context["model"]))
         try:
             success_url = obj.pos_delete_url()
@@ -504,13 +498,13 @@ def saldo_update(request, pk, context=None):
     
     #check change permission
     if not request.user.has_perm('scg_app.change_saldo'):
-        messages.error(request, 'No tiene permiso para editar saldos.')
+        msgs.error(request, 'No tiene permiso para editar saldos.')
         context["locked"] = True
         return render(request, template, context)
 
     #check sede permission
     if not request.user.has_sede_permission(saldo.sede):
-        messages.error(request, "No tiene permisos para esta sede.")
+        msgs.error(request, "No tiene permisos para esta sede.")
         context["locked"] = True
         return render(request, template, context)
 
@@ -519,7 +513,7 @@ def saldo_update(request, pk, context=None):
         context = context or {'form': SaldoUpdForm(instance=saldo)}
 
         if not form.is_valid():
-            messages.error(request, 'Error de formulario.')
+            msgs.error(request, 'Error de formulario.')
             return render(request, template, context)
 
         saldo = form.save(commit=False)
@@ -530,14 +524,13 @@ def saldo_update(request, pk, context=None):
                 _desde=saldo.desde,
                 _hasta=saldo.hasta,
                 id_exclude=saldo.pk):
-            messages.error(request,
-                "El periodo se superpone con otro ya creado.")
+            msgs.error(request, "El periodo se superpone con otro ya creado.")
             return render(request, template, context)
 
         #after of all checks
         saldo.save()
 
-        messages.success(
+        msgs.success(
             request,
             '<a href="{}" class="no-decore">Saldo</a> actualizado.'.format(
                 saldo.get_edit_url()))
@@ -562,17 +555,17 @@ def generar_saldo(request, context=None):
     #check add permission
     if not request.user.has_perm('scg_app.add_saldo'):
         context["locked"] = True
-        messages.error(request, 'No tiene permisos para crear saldos')
+        msgs.error(request, 'No tiene permisos para crear saldos')
         return render(request, template, context)
 
     if request.method == 'POST':
         if not form.is_valid():
-            messages.error(request, "Error en datos del formulario.")
+            msgs.error(request, "Error en datos del formulario.")
             return render(request, template, context)
 
         #check sede permission
         if not request.user.has_sede_permission(form.cleaned_data.get("sede")):
-            messages.error(request, "No tiene permisos para esta sede.")
+            msgs.error(request, "No tiene permisos para esta sede.")
             return render(request, template, context)
 
         if Saldo.check_overlap(
@@ -580,8 +573,7 @@ def generar_saldo(request, context=None):
                 _actividad=form.cleaned_data.get("actividad"),
                 _desde=form.cleaned_data.get("desde"),
                 _hasta=form.cleaned_data.get("hasta")):
-            messages.error(request,
-                "El periodo se superpone con otro ya creado.")
+            msgs.error(request, "El periodo se superpone con otro ya creado.")
             return render(request, template, context)
 
         #after of security checks
@@ -593,7 +585,7 @@ def generar_saldo(request, context=None):
             saldo_asignado = form.cleaned_data.get("saldo_asignado"), 
         )
 
-        messages.success(
+        msgs.success(
             request,
             '<a href="{}" class="no-decore">Saldo</a> generado.'.format(
                 new_saldo.get_edit_url()))
@@ -611,7 +603,7 @@ def programar(request, context=None):
 
     if not request.user.has_perm('scg_app.add_recurrencia'):
         context["locked"] = True
-        messages.error(request, 'No tiene permisos para crear programaciones')
+        msgs.error(request, 'No tiene permisos para crear programaciones')
         return render(request, template, context)
 
     if request.method == 'POST':
@@ -629,7 +621,7 @@ def programar(request, context=None):
             "sedes-results", "lugares-results"
         )
         if any(_ not in request.POST.keys() for _ in _keywords):
-            messages.warning(
+            msgs.warning(
                 request, "Busque y seleccione los datos en desplegables.")
             return render(request, template, context)
 
@@ -651,26 +643,25 @@ def programar(request, context=None):
             context["sede_selected"] = fields.get("sede")
             context["lugar_selected"] = fields.get("lugar")
         except:
-            messages.error(request, "Error en campos de búsqueda.")
+            msgs.error(request, "Error en campos de búsqueda.")
             return render(request, template, context)
 
         ###validate info and process more data
         if not form.is_valid():
-            messages.error(request, "Error en datos del formulario.")
+            msgs.error(request, "Error en datos del formulario.")
             return render(request, template, context)
 
         #check sede permission
         if not request.user.has_sede_permission(fields.get('sede')):
-            messages.error(
-                request, "No tiene permisos para la sede seleccionada.")
+            msgs.error(request, "No tiene permisos para la sede seleccionada.")
             return render(request, template, context)
 
         fields.update({
             #"dia_semana": form.cleaned_data["dia_semana"],
             "weekdays": form.cleaned_data["weekdays"],
-            "fecha_desde": datetime.date.fromisoformat(
+            "fecha_desde": dt.date.fromisoformat(
                 form.cleaned_data["fecha_desde"]),
-            "fecha_hasta": datetime.date.fromisoformat(
+            "fecha_hasta": dt.date.fromisoformat(
                 form.cleaned_data["fecha_hasta"]),
             "horario_desde": form.cleaned_data["horario_desde"].replace(
                 second=0, microsecond=0),
@@ -679,18 +670,18 @@ def programar(request, context=None):
         })
 
         ### dates validate
-        if fields["fecha_hasta"] < datetime.date.today() and not settings.DEBUG:
-            messages.error(
+        if fields["fecha_hasta"] < dt.date.today() and not settings.DEBUG:
+            msgs.error(
                 request, "No se pueden programar clases para fechas pasadas.")
             return render(request, template, context)
 
         if fields["fecha_desde"] >= fields["fecha_hasta"]:
-            messages.error(
+            msgs.error(
                 request, "La fecha de fin debe ser mayor a la de inicio.")
             return render(request, template, context)
 
         if fields["horario_desde"] >= fields["horario_hasta"]:
-            messages.error(
+            msgs.error(
                 request, "La hora de fin debe ser mayor a la de inicio.")
             return render(request, template, context)
 
@@ -700,7 +691,7 @@ def programar(request, context=None):
                     sede=fields["sede"],
                     desde__lte=fields["fecha_desde"],
                     hasta__gte=fields["fecha_hasta"]).exists():
-                messages.error(
+                msgs.error(
                     request,
                     f'No hay saldos para la actividad en la sede seleccionada.')
                 return render(request, template, context)
@@ -715,7 +706,7 @@ def programar(request, context=None):
             hora_end=fields["horario_hasta"]
         )
         if overlays:
-            messages.error(
+            msgs.error(
                 request,
                 f'La programación se superpone con {overlays} ya creada/s.')
             return render(request, template, context)
@@ -727,7 +718,7 @@ def programar(request, context=None):
             locked_only=True
         )
         if period_locked:
-            messages.error(
+            msgs.error(
                 request, f'La programación se solapa con un periodo bloqueado.')
             return render(
                 request, template, context)
@@ -758,22 +749,22 @@ def programar(request, context=None):
         if not Saldo.check_saldos(
                 fields["sede"], fields["actividad"], 
                 fields["fecha_desde"], fields["fecha_hasta"]):
-            messages.warning(
+            msgs.warning(
                 request, 'Ya no dispone de saldo en periodos puntuales.')
 
         if _not_success:
-            messages.warning(
+            msgs.warning(
                 request,
                 'Programación creada pero no se crearon clases puntuales.')
         elif _rejecteds:
-            messages.warning(
+            msgs.warning(
                 request, 
                 'No se crearon algunas clases porque el empleado no estaba \
                 disponible ciertos días y horarios.'.replace('\t', '')
             )
 
         #generated
-        messages.success(
+        msgs.success(
             request,
             '<a href="{}" class="no-decore">Programación</a> generada.'.format(
                 rec.get_edit_url()))
@@ -801,13 +792,13 @@ def programacion_update(request, pk, context=None):
 
     #check change permission
     if not request.user.has_perm('scg_app.change_recurrencia'):
-        messages.error(request, 'No tiene permiso para editar programaciones.')
+        msgs.error(request, 'No tiene permiso para editar programaciones.')
         context["locked"] = True
         return render(request, template, context)
 
     #check sede permission
     if not request.user.has_sede_permission(rec.sede):
-        messages.error(request, "No tiene permisos para esta sede.")
+        msgs.error(request, "No tiene permisos para esta sede.")
         context["locked"] = True
         return render(request, template, context)
 
@@ -816,14 +807,14 @@ def programacion_update(request, pk, context=None):
         context["form"] = form
 
         if not form.is_valid():
-            messages.error(request, 'Error de formulario.')
+            msgs.error(request, 'Error de formulario.')
             return render(request, template, context)
 
         ### dates and times validate
         fields = {
-            "fecha_desde": datetime.date.fromisoformat(
+            "fecha_desde": dt.date.fromisoformat(
                 form.cleaned_data.get("fecha_desde")),
-            "fecha_hasta": datetime.date.fromisoformat(
+            "fecha_hasta": dt.date.fromisoformat(
                 form.cleaned_data.get("fecha_hasta")),
             "horario_desde": form.cleaned_data.get(
                 "horario_desde").replace(second=0, microsecond=0),
@@ -836,23 +827,23 @@ def programacion_update(request, pk, context=None):
             "lugar": rec.lugar,
         }
 
-        if fields.get("fecha_hasta") < datetime.date.today() and not settings.DEBUG:
-            messages.error(
+        if fields.get("fecha_hasta") < dt.date.today() and not settings.DEBUG:
+            msgs.error(
                 request, "No se pueden programar clases para fechas pasadas.")
             return render(request, template, context)
 
         if fields.get("fecha_desde") >= fields.get("fecha_hasta"):
-            messages.error(
+            msgs.error(
                 request, "La fecha de fin debe ser mayor a la de inicio.")
             return render(request, template, context)
 
         if fields.get("horario_desde") >= fields.get("horario_hasta"):
-            messages.error(
+            msgs.error(
                 request, "La hora de fin debe ser mayor a la de inicio.")
             return render(request, template, context)
 
         if fields.get("fecha_desde") < old_rec.fecha_desde:
-            messages.error(
+            msgs.error(
                 request, "No se puede extender una programación hacia atrás.")
             return render(request, template, context)
 
@@ -867,35 +858,35 @@ def programacion_update(request, pk, context=None):
         )
 
         if overlays:
-            messages.error(
+            msgs.error(
                 request,
                 f'La programación se superpone con {overlays} ya creada/s.')
             return render(request, template, context)
 
         ### dates actions ###
-        if fields.get("fecha_hasta") < old_rec.fecha_hasta: #delete end differences
+        if fields.get("fecha_hasta") < old_rec.fecha_hasta:
+            #delete end differences
             classes_to_delete = Clase.objects.filter(
                 recurrencia=old_rec, 
                 fecha__gt=fields.get("fecha_hasta"))
 
             #prevent blocked delete
             if classes_to_delete.filter(locked=True):
-                messages.error(
-                    request, "No se pueden eliminar clases bloqueadas.")
+                msgs.error(request, "No se pueden eliminar clases bloqueadas.")
                 return render(request, template, context)
             
             #delete after of checks
             classes_to_delete.delete()
 
-        if fields.get("fecha_desde") > old_rec.fecha_desde: #delete coming differences
+        #delete coming differences
+        if fields.get("fecha_desde") > old_rec.fecha_desde:
             classes_to_delete = Clase.objects.filter(
                 recurrencia=old_rec,
                 fecha__lt=fields.get("fecha_desde"))
             
             #prevent blocked delete
             if classes_to_delete.filter(locked=True):
-                messages.error(
-                    request, "No se pueden eliminar clases bloqueadas.")
+                msgs.error(request, "No se pueden eliminar clases bloqueadas.")
                 return render(request, template, context)
             
             #delete after of checks
@@ -916,8 +907,7 @@ def programacion_update(request, pk, context=None):
             clases_to_edit = Clase.objects.filter(recurrencia=old_rec)
 
             if clases_to_edit.filter(locked=True):
-                messages.error(
-                    request, "No se pueden editar clases bloqueadas.")
+                msgs.error(request, "No se pueden editar clases bloqueadas.")
                 return render(request, template, context)
             
             for clase in clases_to_edit:
@@ -932,7 +922,7 @@ def programacion_update(request, pk, context=None):
 
         #if employee is busy in specific days or times
         if exis_overlaps_classes:
-            messages.warning(
+            msgs.warning(
                 request,
                 "No se pudo editar una o más clases por falta de disponibilidad"
             )
@@ -951,7 +941,7 @@ def programacion_update(request, pk, context=None):
         if not Saldo.check_saldos(
                 fields["sede"], fields["actividad"],
                 fields["fecha_desde"], fields["fecha_hasta"]):
-            messages.warning(
+            msgs.warning(
                 request, 'Ya no dispone de saldo en periodos puntuales.')
 
         ### Recurrencia update ###
@@ -964,7 +954,7 @@ def programacion_update(request, pk, context=None):
         rec.save()
 
         #after of all checks
-        messages.success(
+        msgs.success(
             request,
             '<a href="{}" class="{}">Programación</a> actualizada.'.format(
                 rec.get_edit_url(), "no-decore"))
@@ -982,7 +972,7 @@ def generar_clases(_fields, _dia, _recurrencia, editing=None):
         num_dias = (_fields["fecha_hasta"] - _fields["fecha_desde"]).days + 1
 
         for i in range(num_dias):
-            dia_actual = _fields["fecha_desde"] + datetime.timedelta(days=i)
+            dia_actual = _fields["fecha_desde"] + dt.timedelta(days=i)
 
             if str(dia_actual.weekday()) == str(_dia):
 
@@ -1033,7 +1023,7 @@ class ClasesView(LoginRequiredMixin, ListView):
 
         form = FiltroForm(request.POST)
         if not form.is_valid():
-            messages.warning(self.request, "Datos no válidos.")
+            msgs.warning(self.request, "Datos no válidos.")
             return JsonResponse({"error": "error on form"})
 
         ### get form data ###
@@ -1108,9 +1098,9 @@ class ClasesView(LoginRequiredMixin, ListView):
             querys["dia_inicio"] = Q(fecha__gte=dia_inicio)
         if dia_fin:
             querys["dia_fin"] = Q(fecha__lte=dia_fin)
-        if hora_inicio != datetime.time(0, 0):
+        if hora_inicio != dt.time(0, 0):
             querys["hora_inicio"] = Q(horario_hasta__gte=hora_inicio)
-        if hora_fin != datetime.time(23, 59):
+        if hora_fin != dt.time(23, 59):
             querys["hora_fin"] = Q(horario_desde__lt=hora_fin)
 
         ### checks ###
@@ -1175,7 +1165,7 @@ class ClasesView(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         qs = Clase.objects.filter(
-            fecha__gte=datetime.date.today()).order_by('fecha')
+            fecha__gte=dt.date.today()).order_by('fecha')
         return qs
 
     def get_context_data(self, *args, **kwargs):     
@@ -1199,7 +1189,7 @@ def action_process(request, context=None):
         ids = get_ids(request.POST.keys())
 
         if not ids:
-            messages.error(
+            msgs.error(
                 request,
                 "Seleccione uno o más registros para ejecutar una acción.")
             return redirect('show_message', _type='error')
@@ -1207,14 +1197,14 @@ def action_process(request, context=None):
         ### actions ###
         if _accion == 'ver_certificados':
             if len(ids) != 1: 
-                messages.error(
+                msgs.error(
                     request, "Debe seleccionar solo un registro para editarlo.")
                 return redirect('show_message', _type='error')
             return redirect('certificados_list', id_clase=ids[0])
 
         if _accion == 'editar_clases':
             if len(ids) != 1:
-                messages.error(
+                msgs.error(
                     request, "Debe seleccionar solo un registro para editarlo.")
                 return redirect('show_message', _type='error')
             return redirect('clase_update', pk=ids[0])
@@ -1225,7 +1215,7 @@ def action_process(request, context=None):
 
         if _accion == 'asignar_reemplazo':
             if len(ids) != 1:
-                messages.error(
+                msgs.error(
                     request,
                     "Seleccione solo un registro para asignar un reemplazo.")
                 return redirect('show_message', _type='error')
@@ -1237,7 +1227,7 @@ def action_process(request, context=None):
 
         if _accion == 'gestion_recurrencia':
             if len(ids) != 1:
-                messages.error(
+                msgs.error(
                     request,
                     "Seleccione solo una clase para gestionar su programación.")
                 return redirect('show_message', _type='error')
@@ -1249,7 +1239,7 @@ def action_process(request, context=None):
 
         if _accion == 'gestion_marcajes':
             if len(ids) != 1:
-                messages.error(
+                msgs.error(
                     request,
                     "Seleccione solo una clase para ver los marcajes del día.")
                 return redirect('show_message', _type='error')
@@ -1264,14 +1254,14 @@ def action_process(request, context=None):
         
         if _accion == 'ver_comentarios':
             if len(ids) != 1:
-                messages.error(
+                msgs.error(
                     request,
                     "Seleccione solo un registro para ver los comentarios.")
                 return redirect('show_message', _type='error')
             return redirect('comments_of_class', id_clase=ids[0])
 
     # if accessed by url or method is not POST
-    messages.error(request, "Acción o método no soportado.")
+    msgs.error(request, "Acción o método no soportado.")
     return redirect('show_message', _type='error')
 
 @login_required
@@ -1294,14 +1284,14 @@ def confirmar_clases(request, context=None):
     deleted = request.session.pop('ids_clases', None)
 
     if not ids_clases:
-        messages.error(request, "No se ha seleccionado ninguna clase.")
+        msgs.error(request, "No se ha seleccionado ninguna clase.")
         return render(request, template, context)
 
     clases = Clase.objects.filter(pk__in=ids_clases)
     
     #check confirm permission
     if not request.user.has_perm('scg_app.confirm_classes'):
-        messages.error(request, "No tiene permiso para confirmar clases.")
+        msgs.error(request, "No tiene permiso para confirmar clases.")
         context = {
             "classes_error": clases,
         }
@@ -1319,7 +1309,7 @@ def confirmar_clases(request, context=None):
             _success.append(clase)
 
     if _success:
-        messages.success(
+        msgs.success(
             request,
             'Se {0} {1} {2}.'.format(
                 "confirmaron" if len(_success) > 1 else "confirmó",
@@ -1329,7 +1319,7 @@ def confirmar_clases(request, context=None):
         )
 
     if _error:
-        messages.error(
+        msgs.error(
             request, 
             'No se {} confirmar {} {} porque {} {}, {} o no tiene permisos \
             sobre su sede'.format(
@@ -1362,7 +1352,7 @@ def gestion_ausencia(request, context=None):
 
     #with errors only
     if not ids_clases:
-        messages.error(request, "No se ha seleccionado ninguna clase.")
+        msgs.error(request, "No se ha seleccionado ninguna clase.")
         return render(request, template, context)
 
     #print(ids)
@@ -1378,7 +1368,7 @@ def gestion_ausencia(request, context=None):
     #check absence manage permission
     if not request.user.has_perm('scg_app.absence_management'):
         context["locked"] = True
-        messages.error(request, "No tiene permiso para gestionar ausencias")
+        msgs.error(request, "No tiene permiso para gestionar ausencias")
         return render(request, template, context)
 
     clases_to_edit = Clase.objects.filter(pk__in=ids_clases)
@@ -1389,7 +1379,7 @@ def gestion_ausencia(request, context=None):
     lockeds_count = lockeds.count() if lockeds else 0
 
     if lockeds:
-        messages.warning(
+        msgs.warning(
             request,
             "No tiene permiso para la sede de {} {} o {} {} y {} {}.".format(
                 lockeds_count,
@@ -1419,7 +1409,7 @@ def gestion_ausencia(request, context=None):
         
         #check valid form
         if not form.is_valid():
-            messages.error(request, "Error de formulario.")
+            msgs.error(request, "Error de formulario.")
             return render(request, template, context)
 
         ausencia = form.cleaned_data["motivo"]
@@ -1432,7 +1422,7 @@ def gestion_ausencia(request, context=None):
                     file=adjunto, motivo=ausencia)
                 certif.clases.set(clases_to_edit)
             elif ausencia.requiere_certificado:
-                messages.error(request, "La ausencia requiere un certificado.")
+                msgs.error(request, "La ausencia requiere un certificado.")
                 return render(request, template, context)
 
         #create comment
@@ -1452,7 +1442,7 @@ def gestion_ausencia(request, context=None):
             clase.save()
             clase.update_status()
 
-        messages.success(request, "Acción finalizada.")
+        msgs.success(request, "Acción finalizada.")
         return render(request, template, context)
 
     #clean session data
@@ -1481,17 +1471,17 @@ def asignar_reemplazo(request, id_clase=None, context=None):
     #check absence manage permission
     if not request.user.has_perm('scg_app.asign_replacement'):
         context["locked"] = True
-        messages.error(request, "No tiene permiso para gestionar reemplazos")
+        msgs.error(request, "No tiene permiso para gestionar reemplazos")
         return render(request, template, context)
 
     #check sede permission
     if not request.user.has_sede_permission(clase_to_edit.sede):
         context["locked"] = True
-        messages.error(request, "No tiene permiso sobre esta sede")
+        msgs.error(request, "No tiene permiso sobre esta sede")
         return render(request, template, context)
 
     if clase_to_edit.locked:
-        messages.error(
+        msgs.error(
             request,
             'El <a href="{}" class="no-decore">periodo</a> esta bloqueado y la \
             clase no puede ser editada.'.format(
@@ -1512,7 +1502,7 @@ def asignar_reemplazo(request, id_clase=None, context=None):
                 )
                 context["reemplazo_selected"] = reemplazante
             except:
-                messages.error(request, "Error en campos de búsqueda.")
+                msgs.error(request, "Error en campos de búsqueda.")
                 return render(request, template, context)
         else:
             reemplazante = None
@@ -1520,18 +1510,18 @@ def asignar_reemplazo(request, id_clase=None, context=None):
         #check comment form
         form = ComentarioForm(request.POST)
         if not form.is_valid():
-            messages.error(request, "Error en el comentario.")
+            msgs.error(request, "Error en el comentario.")
             return render(request, template, context)
 
         if not reemplazante:
             clase_to_edit.reemplazo = None
             clase_to_edit.save()
             clase_to_edit.update_status()
-            messages.success(request, "Se ha borrado el reemplazo.")
+            msgs.success(request, "Se ha borrado el reemplazo.")
             return render(request, template, context)
 
         if clase_to_edit.empleado == reemplazante:
-            messages.error(
+            msgs.error(
                 request, "El reemplazante no puede ser el empleado asignado.")
             return render(request, template, context)
 
@@ -1539,7 +1529,7 @@ def asignar_reemplazo(request, id_clase=None, context=None):
                 fecha=clase_to_edit.fecha,
                 inicio=clase_to_edit.horario_desde,
                 fin=clase_to_edit.horario_hasta):
-            messages.error(
+            msgs.error(
                 request,
                 "El reemplazante no está disponible en este rango horario")
             return render(request, template, context)
@@ -1561,7 +1551,7 @@ def asignar_reemplazo(request, id_clase=None, context=None):
         clase_to_edit.save()
         clase_to_edit.update_status()
 
-        messages.success(request, "Reemplazo cargado con éxito!")
+        msgs.success(request, "Reemplazo cargado con éxito!")
 
     return render(request, template, context)
 
@@ -1578,14 +1568,14 @@ def gestion_marcajes(request, id_empleado=None, fecha=None, context=None):
 
     try:
         id_empleado = int(id_empleado)
-        fecha = datetime.date.fromisoformat(fecha)
+        fecha = dt.date.fromisoformat(fecha)
     except:
-        messages.error(request, "Error en parámetros recibidos")
+        msgs.error(request, "Error en parámetros recibidos")
         return render(request, template, context)
 
     empleado = Empleado.objects.filter(pk=id_empleado)
     if not empleado:
-        messages.error(request, "El empleado no existe")
+        msgs.error(request, "El empleado no existe")
         return render(request, template, context)
 
     empleado = empleado.first() #checked what exists
@@ -1602,7 +1592,7 @@ def gestion_marcajes(request, id_empleado=None, fecha=None, context=None):
 
     if Periodo.blocked_day(fecha):        
         context["day_locked"] = True
-        messages.error(
+        msgs.error(
             request,
             'El <a href="{}" class="no-decore">periodo</a> esta bloqueado y el \
             día no puede ser modificado.'.format(
@@ -1628,14 +1618,13 @@ def gestion_marcajes(request, id_empleado=None, fecha=None, context=None):
 
         #check recalculate_blocks permission
         if not request.user.has_perm('scg_app.recalculate_blocks'):
-            messages.error(
-                request, "No tiene permisos para recalcular el día")
+            msgs.error(request, "No tiene permisos para recalcular el día")
             return render(request, template, context)
 
         if 'recalcular' in request.POST:
             # recalculate blocks
             if not BloqueDePresencia.recalcular_bloques(empleado, fecha):
-                messages.error(request, "Hubo un error recalculando el día.")
+                msgs.error(request, "Hubo un error recalculando el día.")
                 return render(request, template, context)
 
             #update status
@@ -1645,23 +1634,22 @@ def gestion_marcajes(request, id_empleado=None, fecha=None, context=None):
                 empleado__pk=id_empleado, fecha=fecha
             ).order_by('inicio')
             context["day_blocks"] = day_blocks
-            messages.success(
+            msgs.success(
                 request, "Se recalcularon las clases y bloques del día.")
             return render(request, template, context)
 
         #check add clocking permission
         if not request.user.has_perm('scg_app.add_marcaje'):
-            messages.error(request, "No tiene permiso para agregar marcajes.")
+            msgs.error(request, "No tiene permiso para agregar marcajes.")
             return render(request, template, context)
 
         #check valid form
         if not form.is_valid():
-            messages.error(request, "Error de formulario.")
+            msgs.error(request, "Error de formulario.")
             return render(request, template, context)
 
         if not form.cleaned_data["hora_marcaje"]:
-            messages.error(
-                request, "Ingrese un horario para agregar el marcaje.")
+            msgs.error(request, "Ingrese un horario para agregar el marcaje.")
             return render(request, template, context)
 
         hora_marcaje = form.cleaned_data["hora_marcaje"].replace(second=0)
@@ -1669,7 +1657,7 @@ def gestion_marcajes(request, id_empleado=None, fecha=None, context=None):
         #clocking exists
         if Marcaje.objects.filter(
                 fecha=fecha, hora=hora_marcaje, empleado=empleado):
-            messages.error(request, "Ya existe un marcaje en este horario.")
+            msgs.error(request, "Ya existe un marcaje en este horario.")
             return render(request, template, context)
 
             
@@ -1681,12 +1669,12 @@ def gestion_marcajes(request, id_empleado=None, fecha=None, context=None):
             nuevo_marcaje.hora = hora_marcaje
             nuevo_marcaje.save()
         except:
-            messages.error(request, "Hubo un error agregando el marcaje.")
+            msgs.error(request, "Hubo un error agregando el marcaje.")
             return render(request, template, context)
 
         # recalculate blocks
         if not BloqueDePresencia.recalcular_bloques(empleado, fecha):
-            messages.error(request, "Hubo un error recalculando el día.")
+            msgs.error(request, "Hubo un error recalculando el día.")
             return render(request, template, context)
 
         #update status
@@ -1696,7 +1684,7 @@ def gestion_marcajes(request, id_empleado=None, fecha=None, context=None):
         day_blocks = BloqueDePresencia.objects.filter(
             empleado__pk=id_empleado, fecha=fecha).order_by('inicio')
         context["day_blocks"] = day_blocks
-        messages.success(request, "Marcaje agregado y día recalculado.")
+        msgs.success(request, "Marcaje agregado y día recalculado.")
 
     return render(request, template, context)
 
@@ -1712,7 +1700,7 @@ def sede_calendar(request, context=None):
     context = {'sedes': sedes}
 
     if request.method != 'POST':
-        #messages.warning(request, "Debe seleccionar una sede.")
+        #msgs.warning(request, "Debe seleccionar una sede.")
         return render(request, template, context)
 
     ### POST process
@@ -1729,11 +1717,11 @@ def sede_calendar(request, context=None):
         return JsonResponse({"error": "No tiene permisos para esta sede."})
 
     #proccess for get classes (3 weeks)
-    today = datetime.date.today()
-    start_date = today - datetime.timedelta(days=today.weekday() + 50)
-    end_date = today + datetime.timedelta(days=13 - today.weekday())
-    # start_date = today - datetime.timedelta(days=today.weekday())
-    # end_date = start_date + datetime.timedelta(days=6)
+    today = dt.date.today()
+    start_date = today - dt.timedelta(days=today.weekday() + 50)
+    end_date = today + dt.timedelta(days=13 - today.weekday())
+    # start_date = today - dt.timedelta(days=today.weekday())
+    # end_date = start_date + dt.timedelta(days=6)
 
     classes = Clase.objects.filter(
         sede=sede_view,
@@ -1754,15 +1742,15 @@ def get_nt_empleados(request, context=None):
 
     try: 
         Empleado.update_from_nettime()  # internal method
-        messages.success(request, "Se actualizaron empleados desde netTime.")
+        msgs.success(request, "Se actualizaron empleados desde netTime.")
 
     except ConnectionError:
-        messages.error(
+        msgs.error(
             request,
             "No se pudo establecer conexión con el servidor de netTime.")
 
     except Exception as error:
-        messages.error(request, f"{error}")
+        msgs.error(request, f"{error}")
 
     return redirect('empleados_view')
 
@@ -1772,15 +1760,15 @@ def get_nt_sedes(request, context=None):
 
     try:
         Sede.update_from_nettime()  # internal method
-        messages.success(request, "Se actualizaron las sedes desde NetTime.")
+        msgs.success(request, "Se actualizaron las sedes desde NetTime.")
 
     except ConnectionError:
-        messages.error(
+        msgs.error(
             request,
             "No se pudo establecer conexión con el servidor de netTime.")
 
     except Exception as error:
-        messages.error(request, f"{error}")
+        msgs.error(request, f"{error}")
 
     return redirect('index')
 
@@ -1792,16 +1780,16 @@ def get_nt_incidencias(request, context=None):
 
     try:
         MotivoAusencia.update_from_nettime()
-        messages.success(
+        msgs.success(
             request, "Se actualizaron los motivos de ausencia desde NetTime.")
 
     except ConnectionError:
-        messages.error(
+        msgs.error(
             request,
             "No se pudo establecer conexión con el servidor de netTime.")
 
     except Exception as error:
-        messages.error(request, f"{error}")
+        msgs.error(request, f"{error}")
 
     return redirect('motivos_ausencia_view')
 
@@ -1812,16 +1800,16 @@ def get_nt_marcajes(request, context=None):
     """
     try:
         Marcaje.update_from_nettime()   #internal method
-        messages.success(request, "Se importaron marcajes desde NetTime.")
+        msgs.success(request, "Se importaron marcajes desde NetTime.")
 
     except ConnectionError:
-        messages.error(
+        msgs.error(
             request, 
             "No se pudo establecer conexión con el servidor de netTime."
         )
 
     except Exception as error:
-        messages.error(request, f"{error}")
+        msgs.error(request, f"{error}")
 
     return redirect('clases_view')
 
@@ -1885,19 +1873,3 @@ def handler500(request, template_name="error/500.html"):
     response = render_to_response(template_name)
     response.status_code = 500
     return response
-
-### from tbs ###
-# def register(request):
-#     form = SignUpForm()
-#     context = {'form': form}
-#     if request.method == 'POST':
-#         form = SignUpForm(request.POST)
-#         if form.is_valid():
-#             form.save()
-#             username = form.cleaned_data.get('username')
-#             raw_password = form.cleaned_data.get('password1')
-#             user = authenticate(username=username, password=raw_password)
-#             login(request, user)
-#             return redirect('/')
-#         else: context = {'form': form}
-#     return render(request, "scg_app/register.html", context)

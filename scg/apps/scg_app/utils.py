@@ -1,7 +1,7 @@
 """ Utils for internal use """
 
 ### built-in
-import datetime
+import datetime as dt
 from string import digits as str_digits, ascii_lowercase as str_letters
 from random import choice as r_choice
 from typing import Any
@@ -23,13 +23,13 @@ def grouped(iterable, n=2):
     aux = iter(iterable)
     return zip(*[aux] * n)
 
-def get_min_offset(_time: datetime.time, _mins: int, _sub=False) -> datetime.time:
+def get_min_offset(_time: dt.time, _mins: int, _sub=False) -> dt.time:
     """ return datetime.time object adding mins to hour received """
-    fulldate = datetime.datetime(100, 1, 1, _time.hour, _time.minute, _time.second)
+    fulldate = dt.datetime(100, 1, 1, _time.hour, _time.minute, _time.second)
     if _sub:
-        fulldate = fulldate - datetime.timedelta(minutes=_mins)
+        fulldate = fulldate - dt.timedelta(minutes=_mins)
     else:
-        fulldate = fulldate + datetime.timedelta(minutes=_mins)
+        fulldate = fulldate + dt.timedelta(minutes=_mins)
     return fulldate.time()
 
 def get_dia_display(*args):
@@ -135,7 +135,7 @@ def unique_slug_generator(instance: Any, to_slug: str, field: str='slug', \
 
     return slug
         
-def datetime_to_array(date: datetime.date, time: datetime.datetime=None):
+def datetime_to_array(date: dt.date, time: dt.datetime=None):
     return [
         date.year,
         date.month - 1, #FIX because first month is 0 in frontend
@@ -148,10 +148,10 @@ def datetime_to_array(date: datetime.date, time: datetime.datetime=None):
 def overlap(start1, end1, start2, end2):
     TIME_FORMAT = '%H:%M'
     #transform time
-    # start1_time = datetime.strptime(start1, TIME_FORMAT)
-    # end1_time = datetime.strptime(end1, TIME_FORMAT)
-    # start2_time = datetime.strptime(start2, TIME_FORMAT)
-    # end2_time = datetime.strptime(end2, TIME_FORMAT)
+    # start1_time = dt.strptime(start1, TIME_FORMAT)
+    # end1_time = dt.strptime(end1, TIME_FORMAT)
+    # start2_time = dt.strptime(start2, TIME_FORMAT)
+    # end2_time = dt.strptime(end2, TIME_FORMAT)
 
     match_one = min(start1_time, end1_time) <= max(start2_time, end2_time)
     match_two = max(start1_time, end1_time) >= min(start2_time, end2_time)
@@ -159,14 +159,10 @@ def overlap(start1, end1, start2, end2):
     #checking conditions
     if match_one and match_two:
         return True
-    else:
-        return False
+    
+    return False
 
 # def handle_uploaded_file(f):
 #     with open('some/file/name.txt', 'wb+') as destination:
 #         for chunk in f.chunks():
 #             destination.write(chunk)
-
-# if __name__ == '__main__':
-#   for x, y in grouped(range(11), 2):
-#       print(x, y)

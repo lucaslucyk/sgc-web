@@ -7,7 +7,7 @@ from apps.scg_app import models
 ### django
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from django.contrib import messages
+#from django.contrib import messages
 
 class Scripting(threading.Thread):
     """

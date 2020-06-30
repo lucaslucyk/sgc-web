@@ -3,18 +3,15 @@
 ### built-in ###
 import os
 import datetime
-#from collections import defaultdict
 
 ### third ###
 from multiselectfield import MultiSelectField
-from python_field.fields import PythonCodeField
-#from simple_history.models import HistoricalRecords
 
 ### django ###
 from django.contrib.auth.models import User
 from django.db import models
 from django.utils import timezone
-from django.core.validators import MinValueValidator    #, MaxValueValidator
+from django.core.validators import MinValueValidator #, MaxValueValidator
 from django.shortcuts import reverse
 from django.db.models import Q
 from django.conf import settings
@@ -632,8 +629,10 @@ class Saldo(models.Model):
     
     @classmethod
     def check_overlap(cls, _sede, _actividad, _desde, _hasta, id_exclude=None):
-        """ informs if a period generates an overlap with one already
-            created. """
+        """ 
+        Informs if a period generates an overlap with one already
+        created in right place and activity.
+        """
 
         start_before = Q()
         start_before.add(Q(desde__lte=_desde), Q.AND)
@@ -643,32 +642,19 @@ class Saldo(models.Model):
         start_after.add(Q(desde__gte=_desde), Q.AND)
         start_after.add(Q(desde__lte=_hasta), Q.AND)
 
-        period = Q()
-        period.add(start_before, Q.OR)
-        period.add(start_after, Q.OR)
+        qs = Q()
+        qs.add(start_before, Q.OR)
+        qs.add(start_after, Q.OR)
 
         _saldos = cls.objects.filter(
             sede = _sede,
             actividad = _actividad,
-        ).filter(period)
+        ).filter(qs)
 
         if id_exclude:
             _saldos = _saldos.exclude(pk=id_exclude)
 
         return _saldos.count()
-
-    @property
-    def saldo_disponible(self):
-        clases = Clase.objects.filter(
-            actividad=self.actividad,
-            sede=self.sede,
-            fecha__gte=self.desde,
-            fecha__lte=self.hasta,
-        ).exclude(
-            estado="5"    #canceladas
-        ).count()
-
-        return self.saldo_asignado - clases
 
     @classmethod
     def check_saldos(cls, _sede, _actividad, _desde, _hasta):
@@ -685,6 +671,19 @@ class Saldo(models.Model):
             saf = False if _saldo.saldo_disponible < 1 else saf
 
         return saf
+
+    @property
+    def saldo_disponible(self):
+        clases = Clase.objects.filter(
+            actividad=self.actividad,
+            sede=self.sede,
+            fecha__gte=self.desde,
+            fecha__lte=self.hasta,
+        ).exclude(
+            estado="5"    #canceladas
+        ).count()
+
+        return self.saldo_asignado - clases
 
     @property
     def pronombre(self):

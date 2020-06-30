@@ -1,13 +1,10 @@
+### built-in
 import pythoncom
 import win32com.client as wc
 from subprocess import check_output
 import datetime as dt
 import os
 
-#DEFAULT_ROUTE = r'"C:\Users\LucasLucyk\Documents\Programming\Python\spec\sgc-web\scg\scripts\run_pull.vbs"'
-# DEFAULT_ROUTE  = os.path.normpath(
-#     os.getcwd() + os.sep + os.pardir
-#     ) + '\\scg\\scripts\\run_pull.vbs'
 
 DEFAULT_ROUTE = os.path.normpath(
     os.getcwd() + os.sep + os.pardir
@@ -203,8 +200,8 @@ def task_delete(task_name):
 
 
 if __name__ == "__main__":
-
-    #TASK_NAME = 'sgc_pull_nettime'
+    """ for test only """
+    
     TASK_NAME = 'sgc_nettime_sync'
     task_data = task_get_data(TASK_NAME)
     if not task_data: 
