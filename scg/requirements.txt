@@ -10,3 +10,5 @@ django-filter
 pandas
 django-extensions
 selenium
+psycopg2==2.8
+gunicorn==19.9

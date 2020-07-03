@@ -148,11 +148,11 @@ STATICFILES_DIRS = [
     os.path.join(BASE_DIR, "static"),
     #'/var/www/static/',
 ]
-STATIC_ROOT = os.path.join(os.path.dirname(BASE_DIR),'statics_pub')
+STATIC_ROOT = os.path.join(os.path.dirname(BASE_DIR),'publish/statics')
 
 #media files
 MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(os.path.dirname(BASE_DIR), 'media_uploads')
+MEDIA_ROOT = os.path.join(os.path.dirname(BASE_DIR), 'publish/media')
 CKEDITOR_UPLOAD_PATH = "help/"
 
 # tmp dir

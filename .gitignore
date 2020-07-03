@@ -20,12 +20,13 @@ migrations
 tmp/
 
 # Django stuff:
+publish/
 statics_pub/
 *.log
 #migrate to os.path
 credentials.py
-#db.sqlite3
-#db.sqlite3-journal
+db.sqlite3
+db.sqlite3-journal
 db.sqlite3.old
 
 # MEDIA
