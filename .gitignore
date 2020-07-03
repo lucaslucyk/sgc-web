@@ -25,9 +25,9 @@ statics_pub/
 *.log
 #migrate to os.path
 credentials.py
-db.sqlite3
-db.sqlite3-journal
-db.sqlite3.old
+scg/db.sqlite3
+scg/db.sqlite3-journal
+scg/db.sqlite3.old
 
 # MEDIA
 # media_uploads/certificados/
