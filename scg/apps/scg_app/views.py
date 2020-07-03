@@ -746,9 +746,13 @@ def programar(request, context=None):
             _rejecteds = True if rejected != 0 else _rejecteds
 
         #checks saldos
-        if not Saldo.check_saldos(
-                fields["sede"], fields["actividad"], 
-                fields["fecha_desde"], fields["fecha_hasta"]):
+        checked = Saldo.check_saldos(
+            _sede=fields["sede"],
+            _actividad=fields["actividad"],
+            _desde=fields["fecha_desde"],
+            _hasta=fields["fecha_hasta"]
+        )
+        if not checked:
             msgs.warning(
                 request, 'Ya no dispone de saldo en periodos puntuales.')
 

@@ -290,10 +290,12 @@ class SaldosTest(TestCase):
         
         # zero
         self.saldo_two.saldo_asignado = 1
+        self.saldo_two.save()
         self.assertEqual(self.saldo_two.saldo_disponible, 0)
 
         # negative
         self.saldo_two.saldo_asignado = 0
+        self.saldo_two.save()
         self.assertEqual(self.saldo_two.saldo_disponible, -1)
 
         # no classes
@@ -302,34 +304,28 @@ class SaldosTest(TestCase):
     def test_saldo_available(self):
         """ Test if have available saldo in a time period. """
 
-        # negative available
-        self.assertFalse(models.Saldo.check_saldos(
-            _sede=self.saldo_two.sede,
-            _actividad=self.saldo_two.actividad,
-            _desde=self.saldo_two.fecha,
-            _hasta=self.saldo_two.fecha,
-        ))
-        
-        # zero available
-        self.saldo_two.saldo_asignado = 1
-        self.assertFalse(models.Saldo.check_saldos(
-            _sede=self.saldo_two.sede,
-            _actividad=self.saldo_two.actividad,
-            _desde=self.saldo_two.fecha,
-            _hasta=self.saldo_two.fecha,
-        ))
+        values_test = {
+            0: False, # negative available
+            1: False, # zero available
+            2: True,  # positivive available
+        }
 
-        # positivive available
-        self.saldo_two.saldo_asignado = 2
-        self.assertTrue(models.Saldo.check_saldos(
-            _sede=self.saldo_two.sede,
-            _actividad=self.saldo_two.actividad,
-            _desde=self.saldo_two.fecha,
-            _hasta=self.saldo_two.fecha,
-        ))
+        for saldo_asignado, test in values_test.items():
+            self.saldo_two.saldo_asignado = saldo_asignado
+            self.saldo_two.save()
+
+            checked = models.Saldo.check_saldos(
+                _sede=self.saldo_two.sede,
+                _actividad=self.saldo_two.actividad,
+                _desde=self.clase_one.fecha,
+                _hasta=self.clase_one.fecha,
+            )
+
+            self.assertEqual(checked, test)
 
 
-
+class ClasesTest(TestCase):
+    pass
 
     
 

@@ -661,8 +661,9 @@ class Saldo(models.Model):
         _saldos = cls.objects.filter(
             sede=_sede,
             actividad=_actividad,
-            desde__gte=_desde,
-            hasta__lte=_hasta)
+            desde__lte=_hasta,
+            hasta__gte=_desde,
+        )
         
         #saldo_a_favor
         saf = True if _saldos else False
@@ -699,6 +700,16 @@ class Saldo(models.Model):
             self.saldo_asignado,
             self.actividad.nombre,
             self.sede.nombre
+        )
+
+    def __repr__(self):
+        return '{}({}, {}, {}, {}, {})'.format(
+            self.__class__.__name__,
+            f'sede={self.sede.nombre}',
+            f'actividad={self.actividad.nombre}',
+            f'desde={self.desde}',
+            f'hasta={self.hasta}',
+            f'saldo_asignado={self.saldo_asignado}',
         )
 
 class Recurrencia(models.Model):
@@ -807,6 +818,21 @@ class Recurrencia(models.Model):
             self.horario_hasta.strftime("%H:%M"),
             self.fecha_desde, self.fecha_hasta,
             self.empleado
+        )
+
+    def __repr__(self):
+        return '{}({}, {}, {}, {}, {}, {}, {}, {}, {}, {})'.format(
+            self.__class__.__name__,
+            f'fecha_desde={self.fecha_desde}',
+            f'fecha_hasta={self.fecha_hasta}',
+            f'horario_desde={self.horario_desde}',
+            f'horario_hasta={self.horario_hasta}',
+            f'empleado={self.empleado.pk}',
+            f'actividad={self.actividad.pk}',
+            f'sede={self.sede.pk}',
+            f'lugar={self.lugar.pk if self.lugar else "None"}',
+            f'weekdays={self.weekdays}',
+            f'locked={self.locked}',
         )
 
 class Clase(models.Model):

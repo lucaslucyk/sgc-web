@@ -18,7 +18,7 @@ try:
 except:
     pass
 
-CURRENT_VERSION = '0.9.7'
+CURRENT_VERSION = '0.9.8'
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -160,15 +160,15 @@ TMP_DIR = os.path.join(os.path.dirname(BASE_DIR), 'tmp')
 
 ### reporting ###
 #REPORT_BUILDER_ASYNC_REPORT = True
-REPORT_BUILDER_INCLUDE = [
-    'user',
-    'apps.scg_app.clase', 'apps.scg_app.empleado', 'apps.scg_app.actividad', 
-    'apps.scg_app.escala', 'apps.scg_app.grupoactividad', 
-    'apps.scg_app.marcaje', 'apps.scg_app.motivoausencia',
-    'apps.scg_app.recurrencia', 'apps.scg_app.saldo', 'apps.scg_app.sede', 
-    'apps.scg_app.tipocontrato', 'apps.scg_app.tipoliquidacion',
-    'apps.scg_app.bloquedepresencia', 'apps.scg_app.certificado',
-] # Allow only the model user to be accessed
+# REPORT_BUILDER_INCLUDE = [
+#     'user',
+#     'apps.scg_app.clase', 'apps.scg_app.empleado', 'apps.scg_app.actividad', 
+#     'apps.scg_app.escala', 'apps.scg_app.grupoactividad', 
+#     'apps.scg_app.marcaje', 'apps.scg_app.motivoausencia',
+#     'apps.scg_app.recurrencia', 'apps.scg_app.saldo', 'apps.scg_app.sede', 
+#     'apps.scg_app.tipocontrato', 'apps.scg_app.tipoliquidacion',
+#     'apps.scg_app.bloquedepresencia', 'apps.scg_app.certificado',
+# ] # Allow only the model user to be accessed
 #REPORT_BUILDER_FRONTEND = False
 
 LOGIN_REDIRECT_URL = '/'
