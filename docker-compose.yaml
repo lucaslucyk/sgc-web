@@ -9,7 +9,8 @@ services:
   django_app:
     build: .
     volumes:
-      - static: /code/static
+      - static: /code/publish/static
+      - media: /code/publish/media
       - .: /code
     depends_on: 
       - db_postgres
@@ -20,7 +21,8 @@ services:
       - 8000:80
     volumes:
       - ./config/nginx/conf.d: /etc/nginx/conf.d
-      - static: /code/static
+      - static: /code/publish/static
+      - media: /code/publish/media
     depends_on: 
       - django_app
 
@@ -28,3 +30,4 @@ volumes:
   .:
   postgres_data:
   static:
+  media:

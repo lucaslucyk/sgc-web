@@ -21,7 +21,6 @@ tmp/
 
 # Django stuff:
 publish/
-statics_pub/
 *.log
 #migrate to os.path
 credentials.py
