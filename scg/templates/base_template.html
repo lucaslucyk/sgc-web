@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  {% block title %}<title>SGC APP | By Grupo SPEC</title>{% endblock %}
+  <!-- Tell the browser to be responsive to screen width -->
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  {% load static %}
+  <!-- icon -->
+  <link rel="shortcut icon" type="image/png" href="https://megatlon.com/megatlon/images/favicon.png" />
+
+  <!-- main css -->
+  <link rel="stylesheet" href="{%  static 'css/main.css' %}">
+  
+  <!-- Google Font: Roboto -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap">
+  <!-- Google Font: Source Sans Pro -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700">
+
+  <!-- Ionicons -->
+  <link rel="stylesheet" href="{% static 'plugins/ionicons/ionicons.min.css' %}">
+  <!-- Theme style -->
+  <link rel="stylesheet" href="{%  static 'dist/css/adminlte.min.css' %}">
+  <!-- Charts -->
+  <link rel="stylesheet" href="{% static 'plugins/chart.js/Chart.min.css' %}" />
+  <!-- Bootstrap core CSS -->
+  <link rel="stylesheet" href="{% static 'plugins/bootstrap/css/bootstrap.min.css' %}" />
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="{%  static 'plugins/fontawesome-free/css/all.min.css' %}">
+  
+  {% block extra_css %}
+  {% endblock %}
+  
+</head>
+
+<body class="hold-transition sidebar-mini layout-fixed .layout-footer-fixed .layout-navbar-fixed">
+{% block body %}
+
+<div class="wrapper">
+
+  <!-- Navbar -->
+  <nav class="main-header navbar navbar-expand navbar-dark navbar-dark">
+    <!-- Left navbar links -->
+    <ul class="navbar-nav">
+      <li class="nav-item">
+        <a class="nav-link" data-widget="pushmenu" href="#" role="button"><i class="fas fa-bars"></i></a>
+      </li>
+      <li class="nav-item d-none d-sm-inline-block">
+        <a href="{% url 'index' %}" class="nav-link">Inicio</a>
+      </li>
+      <li class="nav-item d-none d-sm-inline-block">
+        <a href="{% url 'clases_view'%}" class="nav-link">Monitor de clases</a>
+      </li>
+    </ul>
+
+    <!-- SEARCH FORM -->
+    <form class="form-inline ml-3" action="{% url 'help_list' %}">
+      <div class="input-group input-group-sm">
+        <input class="form-control form-control-navbar" type="search" placeholder="Buscar ayuda..." aria-label="Buscar" name="q">
+        <div class="input-group-append">
+          <button class="btn btn-navbar" type="submit">
+            <i class="fas fa-search"></i>
+          </button>
+        </div>
+      </div>
+    </form>
+
+    <!-- Right navbar links -->
+    <ul class="navbar-nav ml-auto">
+      {% if user.is_authenticated %}
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'logout'%}?next={{request.path}}">
+          Cerrar sesi&oacute;n
+          </a>
+        </li>
+      {% endif %}
+      
+    </ul>
+  </nav>
+  <!-- /.navbar -->
+
+  <!-- Main Sidebar Container -->
+  <aside class="main-sidebar sidebar-dark-primary elevation-4">
+    <!-- Brand Logo -->
+    <a id="logo-big" href="{% url 'index' %}" class="brand-link text-center" style="display:none;">
+      <img src="https://megatlon.com/megatlon/images/megatlon.svg"
+           alt="Cliente Logo"
+           class="brand-image elevation-3 invert-color img-center"
+           style="opacity: .8;">
+      <span class="brand-text font-weight-light">&nbsp;</span>
+    </a>
+
+    <a id="logo-small" href="{% url 'index' %}" class="brand-link" style="display:none;">
+    <img src="https://megatlon.com/megatlon/images/favicon.png"
+           alt="Cliente Logo"
+           class="brand-image img-circle elevation-3"
+           style="opacity: .8;">
+      <span class="brand-text font-weight-light">MEGATLON</span>
+    </a>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <!-- Sidebar user panel (optional) -->
+      <div class="user-panel mt-3 pb-3 mb-3 d-flex">
+        <div class="image">
+          <img src="{% static 'img/python.png' %}" class="img-circle elevation-2" alt="User Image">
+        </div>
+        <div class="info">
+          <a href="#" class="d-block">{{ user.last_name }}, {{ user.first_name }}</a>
+        </div>
+      </div>
+
+      <!-- Sidebar Menu -->
+      <nav class="mt-2">
+        <ul class="nav nav-pills nav-sidebar flex-column nav-child-indent" data-widget="treeview" role="menu" data-accordion="false">
+          <!-- Add icons to the links using the .nav-icon class
+               with font-awesome or any other icon font library -->
+          <li class="nav-item">
+            <a href="{% url 'index' %}" class="nav-link {% block active_home %}{% endblock %}">
+              <i class="nav-icon fas fa-home"></i>
+              <p>Inicio</p>
+            </a>
+          </li>
+
+          <li class="nav-item">
+            <a href="{% url 'clases_view'%}" class="nav-link {% block active_monitor %}{% endblock %}">
+              <i class="nav-icon fas fa-tv"></i>
+              <p>Monitor de clases</p>
+            </a>
+          </li>
+
+          <li class="nav-item">
+            <a href="{% url 'sede_calendar'%}" class="nav-link {% block active_sede_calendar %}{% endblock %}">
+              <i class="nav-icon far fa-calendar-alt"></i>
+              <p>Calendario de sedes</p>
+            </a>
+          </li>
+
+          <li class="nav-item has-treeview {% block open_ver %}{% endblock %}">
+            <a href="#" class="nav-link">
+              <i class="nav-icon far fa-eye"></i>
+              <p>
+                Listar
+                <i class="fas fa-angle-left right"></i>
+                <!--<span class="badge badge-info right">6</span>-->
+              </p>
+            </a>
+            <ul class="nav nav-treeview">
+              <li class="nav-item">
+                <a href="{% url 'empleados_view'%}" class="nav-link {% block active_ver_empleados %}{% endblock %}">
+                  <i class="far fa-user nav-icon"></i>
+                  <p>Empleados</p>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="{% url 'motivos_ausencia_view'%}" class="nav-link {% block active_ver_mot_aus %}{% endblock %}">
+                  <i class="fas fa-business-time nav-icon"></i>
+                  <p>Motivos de ausencia</p>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="{% url 'programaciones_view'%}" class="nav-link {% block active_ver_program %}{% endblock %}">
+                  <i class="far fa-calendar-alt nav-icon"></i>
+                  <p>Programaciones</p>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="{% url 'saldos_view'%}" class="nav-link {% block active_ver_saldos %}{% endblock %}">
+                  <i class="fas fa-balance-scale nav-icon"></i>
+                  <p>Saldos</p>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="{% url 'periodos_view'%}" class="nav-link {% block active_ver_periodos %}{% endblock %}">
+                  <i class="fas fa-calendar-check nav-icon"></i>
+                  <p>Periodos</p>
+                </a>
+              </li>
+            </ul>
+          </li>
+          <li class="nav-item has-treeview {% block open_crear %}{% endblock %}">
+            <a href="#" class="nav-link">
+              <i class="nav-icon fas fa-plus-square"></i>
+              <p>
+                Generar
+                <i class="right fas fa-angle-left"></i>
+              </p>
+            </a>
+            <ul class="nav nav-treeview">
+              <li class="nav-item">
+                <a href="{% url 'programar'%}" class="nav-link {% block active_programar %}{% endblock %}">
+                  <i class="far fa-calendar-alt nav-icon"></i>
+                  <p>Programación</p>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="{% url 'generar_saldo'%}" class="nav-link {% block active_saldo %}{% endblock %}">
+                  <i class="fas fa-balance-scale nav-icon"></i>
+                  <p>Saldo</p>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="{% url 'periodo_create'%}" class="nav-link {% block active_periodo %}{% endblock %}">
+                  <i class="fas fa-calendar-check nav-icon"></i>
+                  <p>Periodo</p>
+                </a>
+              </li>
+            </ul>
+          </li>
+
+          <li class="nav-item">
+            <a href="{% url 'help_list'%}" class="nav-link {% block active_help %}{% endblock %}">
+              <i class="nav-icon fas fa-question-circle"></i>
+              <p>Ayuda</p>
+            </a>
+          </li>
+          
+          {% if user.is_superuser %}
+            <li class="nav-header">SUPERUSUARIOS</li>
+
+            <li class="nav-item has-treeview">
+              <a href="#" class="nav-link">
+                <i class="nav-icon fas fa-database"></i>
+                <p>
+                  Sincronizar netTime
+                  <i class="right fas fa-angle-left"></i>
+                </p>
+              </a>
+              <ul class="nav nav-treeview">
+                <li class="nav-item">
+                  <a href="{% url 'get_nt_empleados'%}" class="nav-link">
+                    <i class="far fa-user nav-icon"></i>
+                    <p>Empleados</p>
+                  </a>
+                </li>
+                <li class="nav-item">
+                  <a href="{% url 'get_nt_sedes'%}" class="nav-link">
+                    <i class="far fa-building nav-icon"></i>
+                    <p>Sedes</p>
+                  </a>
+                </li>
+                <li class="nav-item">
+                  <a href="{% url 'get_nt_marcajes'%}" class="nav-link">
+                    <i class="fas fa-user-clock nav-icon"></i>
+                    <p>Marcajes</p>
+                  </a>
+                </li>
+                <li class="nav-item">
+                  <a href="{% url 'get_nt_incidencias'%}" class="nav-link">
+                    <i class="fas fa-business-time nav-icon"></i>
+                    <p>Motivos de ausencia</p>
+                  </a>
+                </li>
+              </ul>
+            </li>
+
+            <li class="nav-item">
+              <a href="/admin/" target="_blank" class="nav-link">
+                <i class="nav-icon fas fa-tools"></i>
+                <p>Panel de Admin</p>
+              </a>
+            </li>
+
+            <li class="nav-item">
+              <a href="/report_builder/" class="nav-link">
+                <i class="nav-icon fas fa-table"></i>
+                <p>Reportes</p>
+              </a>
+            </li>
+
+            <li class="nav-item">
+              <a href="{% url 'tasks_management' %}" class="nav-link {% block active_tareas %}{% endblock %}">
+                <i class="nav-icon fas fa-tasks"></i>
+                <p>Tareas programadas</p>
+              </a>
+            </li>
+          {% endif %}
+        </ul>
+      </nav>
+      <!-- /.sidebar-menu -->
+    </div>
+    <!-- /.sidebar -->
+  </aside>
+
+  <!-- Content Wrapper. Contains page content -->
+  <div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1>{% block namepage %}Inicio{% endblock %}</h1>
+          </div>
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+              {% block route %}
+                <li class="breadcrumb-item active">Inicio</li>
+              {% endblock %}
+            </ol>
+          </div>
+        </div>
+      </div><!-- /.container-fluid -->
+    </section>
+
+    <!-- Main content -->
+    <section class="content">
+      <div class="container-fluid">
+
+        {% block content %}
+        
+          <!-- content data-->
+
+        {% endblock %}
+
+      </div><!-- /.container-fluid -->
+    </section>
+    <!-- /.content -->
+  </div>
+  <!-- /.content-wrapper -->
+  <footer class="main-footer">
+    <div class="float-right d-none d-sm-block">
+      <b>Version</b> <span id="current-version"></span>
+    </div>
+    Developed by <strong>Lucas Lucyk</strong> | 
+    <strong>Copyright &copy; 2020 <a href="https://grupospec.com/es/">Grupo SPEC</a></strong>
+    | Contact info: <a href="mailto:llucyk@grupospec.com">llucyk@grupospec.com</a>
+  </footer>
+
+  <!-- Control Sidebar -->
+  <aside class="control-sidebar control-sidebar-dark">
+    <!-- Add Content Here -->
+  </aside>
+  <!-- /.control-sidebar -->
+</div>
+<!-- ./wrapper -->
+
+<!-- jQuery -->
+<script src="{%  static 'plugins/jquery/jquery.min.js' %}"></script>
+<!-- Bootstrap tooltips -->
+<script type="text/javascript" src="{% static 'plugins/bootstrap/umd/popper.min.js' %}"></script>
+<!-- Bootstrap 4 -->
+<script src="{%  static 'plugins/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+<!-- ChartJS -->
+<script src="{% static 'plugins/chart.js/Chart.bundle.min.js' %}"></script>
+<!-- AdminLTE App -->
+<script src="{%  static 'dist/js/adminlte.min.js' %}"></script>
+<!-- AdminLTE for demo purposes -->
+<script src="{%  static 'dist/js/demo.js' %}"></script>
+<script src="{%  static 'js/main.min.js' %}"></script>
+
+<!-- Start of HubSpot Embed Code -->
+  {% comment %} <script type="text/javascript" id="hs-script-loader" async defer src="//js.hs-scripts.com/7857768.js"></script> {% endcomment %}
+<!-- End of HubSpot Embed Code -->
+
+<script type="text/javascript">
+  $(function(){
+    var url = '/api/get/current-version/';
+    $.ajax({
+      type: "GET",
+      dataType: "json",
+      url: url,
+      success: function(response){
+        $('#current-version').html(response.version);
+      }
+    });
+  });
+</script>
+
+<!-- page script -->
+{% block extra_js %}
+
+{% endblock %}
+
+{% endblock body %}
+</body>
+</html>

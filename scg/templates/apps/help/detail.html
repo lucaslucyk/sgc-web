@@ -1,0 +1,90 @@
+{% extends "base_template.html" %}
+
+{% block namepage %}Ayuda{% endblock %}
+{% block active_help %}active{% endblock %}
+
+{% block route %}
+  <li class="breadcrumb-item"><a href="{% url 'index' %}">Inicio</a></li>
+  <li class="breadcrumb-item"><a href="{% url 'help_list' %}">Ayuda</a></li>
+  <li class="breadcrumb-item active">{{ help_detail.id }}</li>
+{% endblock route %}
+
+{% block content %}
+ <div class="row">
+    <div class="col-md-12">
+
+	{% if messages %}
+		<section id="mensajes">
+			{% for message in messages %}
+				<div class="alert alert-{% if message.tags %}{{ message.tags }}{% endif %} alert-dismissible" >
+					<a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+			  		{{ message }}
+				</div>
+		    {% endfor %}
+	    </section>
+	{% endif %}
+	
+	<section class="content">
+      <div class="container-fluid">
+        <div class="row">
+          <div class="col-12">
+            
+            <div class="callout callout-info">
+              <h5><i class="fas fa-info"></i> {{ help_detail.title|capfirst }}</h5>
+              {{ help_detail.short_description|capfirst }}
+            </div>
+
+
+            <!-- Main content -->
+            <div class="invoice p-3">
+              <!-- info row -->
+              <div class="row invoice-info">
+                <div class="col-12">
+                  {{ help_detail.content|safe }}
+                </div>
+                
+              </div>
+              <!-- /.row -->
+
+              <!-- this row will not appear when printing -->
+              <div class="row no-print">
+                <div class="col-12">
+                  <a class="btn btn-secondary" href="javascript: window.history.back();" role="button">Volver</a>
+                  <a href="{{ help_detail.get_print_url }} " target="_blank" class="btn btn-outline-dark">
+                    <i class="fas fa-print"></i> Imprimir</a>
+
+                  <a href="{{ help_detail.get_edit_url }}" class="btn btn-info float-right">
+                    <i class="fas fa-pencil-alt"></i> Editar ayuda</a>
+                  
+                  <button type="button" class="btn btn-primary float-right" style="margin-right: 5px;">
+                    <i class="fas fa-download"></i> Generar PDF
+                  </button>
+                </div>
+              </div>
+            </div>
+            <!-- /.invoice -->
+          </div><!-- /.col -->
+        </div><!-- /.row -->
+      </div><!-- /.container-fluid -->
+    </section>
+    <!-- /.content -->
+
+  </div> <!-- principal col -->
+</div> <!-- principal row -->
+
+{% endblock %}
+
+{% block extra_js %}
+	{% load static %}
+	<!-- Bootstrap Switch -->
+	<script src="{%  static 'plugins/bootstrap-switch/js/bootstrap-switch.min.js' %}"></script>
+
+	<script>
+		$(function(){
+			$("input[data-bootstrap-switch]").each(function(){
+				$(this).bootstrapSwitch('state', $(this).prop('checked'));
+			});
+		});
+	</script>
+ 
+{% endblock %}

@@ -1,0 +1,169 @@
+{% extends "base_template.html" %}
+
+{% block namepage %}Creaci&oacute;n/Edici&oacute;n{% endblock %}
+{% block active_help %}active{% endblock %}
+
+{% block extra_css %}
+  {% load static %}
+  <!-- summernote -->
+  <link rel="stylesheet" href="{% static 'plugins/summernote/summernote-bs4.css' %}">
+{% endblock extra_css %}
+
+{% block content %}
+ <div class="row">
+    <div class="col-md-12">
+
+	{% if messages or form.errors %}
+		<section id="mensajes">
+			{% for message in messages %}
+				<div class="alert alert-{% if message.tags %}{{ message.tags }}{% endif %} alert-dismissible" >
+					<a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+			  		{{ message }}
+				</div>
+      {% endfor %}
+
+      {% for field in form %}
+          {% for error in field.errors %}
+            <div class="alert alert-danger alert-dismissible" >
+              <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+                {{ error|escape }}
+            </div>
+          {% endfor %}
+      {% endfor %}
+      {% for error in form.non_field_errors %}
+          <div class="alert alert-danger alert-dismissible" >
+            <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+              {{ error|escape }}
+          </div>
+      {% endfor %}
+
+    </section>
+	{% endif %}
+	
+	<section id="creacion">
+    {% if form %}
+      <div class="row">
+        <div class="col-md-12">
+          <form method="POST" class="needs-validation" novalidate>
+            {% csrf_token %}
+            <div class="card card-info">
+              <div class="card-header align-middle">
+                <h3 class="card-title align-middle">Generar/Editar Ayuda</h3>
+              </div><!-- /.card-header -->
+
+              <div class="card-body">
+                {{ form.media }}
+                
+                <div class="form-row">
+                  <div class="form-group col-12">
+                    <label for="title">T&iacute;tulo</label>
+                    {{form.title}}
+
+                    <div class="invalid-feedback">
+                      Debe ingresar un título.
+                    </div>
+                  </div>
+                </div>
+                <div class="form-row" style="display:none;">
+                  <div class="form-group col-12">
+                    <label for="slug">Slug</label>
+                    {{form.slug}}
+
+                    <div class="invalid-feedback">
+                      Slug no permitido.
+                    </div>
+                  </div>
+                </div>
+                <div class="form-row">
+                  <div class="form-group col-12">
+                    <label for="short_description">Descripci&oacute;n breve</label>
+                    {{form.short_description}}
+
+                    <div class="invalid-feedback">
+                      Debe ingresar un resumen.
+                    </div>
+                  </div>
+                </div>
+                <div class="form-row">
+                  <div class="form-group col-12">
+                    <label for="tags">Etiquetas</label>
+                    {{form.tags}}
+
+                    <div class="invalid-feedback">
+                      Debe ingresar una o más etiquetas.
+                    </div>
+                  </div>
+                </div>
+                <div class="form-row">
+                  <div class="form-group col-12">
+                    <label for="content">Contenido</label>
+                    <br>
+                    {{form.content}}
+
+                    <div class="invalid-feedback">
+                      Ingrese un contenido.
+                    </div>
+                  </div>
+                </div>
+
+              </div><!-- /.card-body -->
+              <div class="card-footer text-center">
+                {% comment %} <input class="btn btn-info" type="submit" value="Guardar"> {% endcomment %}
+                <button type="submit" class="btn btn-info" {% if locked %}disabled{% endif %}>Guardar</button>
+                <a class="btn btn-secondary" href="javascript: window.history.back();" role="button">Atras</a>
+              </div>
+              <!-- /.card-footer -->
+            </div><!-- /.card -->
+          </form>
+
+        </div>
+      </div>
+      
+    {% endif %}
+	</section>
+
+  </div> <!-- principal col -->
+</div> <!-- principal row -->
+
+{% endblock %}
+
+{% block extra_js %}
+	{% load static %}
+	<!-- Bootstrap Switch -->
+	<script src="{%  static 'plugins/bootstrap-switch/js/bootstrap-switch.min.js' %}"></script>
+  <script src="{% static 'plugins/summernote/summernote-bs4.min.js' %}"></script>
+
+	<script>
+		(function() {
+		  'use strict';
+		  window.addEventListener('load', function() {
+		    // Fetch all the forms we want to apply custom Bootstrap validation styles to
+		    var forms = document.getElementsByClassName('needs-validation');
+		    // Loop over them and prevent submission
+		    var validation = Array.prototype.filter.call(forms, function(form) {
+		      form.addEventListener('submit', function(event) {
+		        if (form.checkValidity() === false) {
+		          event.preventDefault();
+		          event.stopPropagation();
+		        }
+		        form.classList.add('was-validated');
+		      }, false);
+		    });
+		  }, false);
+
+		})();
+	</script>
+	<script>
+		$(function(){
+			$("input[data-bootstrap-switch]").each(function(){
+				$(this).bootstrapSwitch('state', $(this).prop('checked'));
+			});
+		});
+	</script>
+  <script>
+    $(function () {
+      // Summernote
+      $('.textarea').summernote()
+    });
+  </script>
+{% endblock %}

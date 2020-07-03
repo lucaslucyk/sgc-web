@@ -1,0 +1,83 @@
+.table-middle>tbody>tr>td, .table-middle>thead>tr>th{
+  vertical-align: middle;
+}
+
+.django-ckeditor-widget{
+  display: block !important;
+}
+.cke_chrome{
+  width: 100% !important;
+}
+.nav-sidebar > .nav-item > .nav-link.active {
+  background-color: #17a2b8 !important;
+  color: #fff;
+}
+.no-decore{
+  color: #007bff !important;
+  text-decoration: none !important;
+}
+sup{
+  font-family: 'Roboto';
+}
+footer{
+  font-size: .9rem;
+}
+
+table td {
+    font-size: .95rem;
+    font-weight: 300;
+}
+table th {
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+th[view-model-order="true"]{
+  cursor: pointer;
+}
+th[view-model-order="true"]:hover{
+    text-decoration: underline;
+    text-underline-position: under;
+    background-color: rgba(190,190,190,0.15);
+    border-radius: 0.2em;
+}
+/*fontawesome*/
+.fa-check-circle{
+  color: green !important;
+}
+.fa-times-circle{
+  color: red !important;
+}
+.fa-times-circle{
+  color: red !important;
+}
+.fa-exclamation-circle{
+  color: orange !important;
+}
+
+.invert-color{
+  -webkit-filter: invert(1);
+   filter: invert(1);
+}
+.img-center{
+  float: none !important;
+}
+
+.flipper{
+
+  -webkit-transform: rotateX(180deg);
+  transform: rotateX(180deg);
+  vertical-align: bottom !important;
+}
+.flipp{
+  vertical-align: top !important;
+}
+
+/*for paginator fix*/
+li.active.page-item a.page-link{
+  background-color: #4285f4 !important;
+}
+
+label:not(.form-check-label):not(.custom-file-label) {
+    font-weight: 400 !important;
+}

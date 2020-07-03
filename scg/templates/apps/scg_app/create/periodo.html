@@ -1,0 +1,64 @@
+{% extends "apps/scg_app/create/base.html" %}
+
+{% block active_periodo %}active{% endblock %}
+
+{% block route %}
+  <li class="breadcrumb-item"><a href="{% url 'index' %}">Inicio</a></li>
+  <li class="breadcrumb-item active">Periodo</li>
+{% endblock route %}
+
+{% block formulario %}
+	{% if form %}
+		<div class="row">
+			<div class="col-md-2"></div>
+			<div class="col-md-8">
+				<form method="POST" class="needs-validation" novalidate>
+					{% csrf_token %}
+					<div class="card card-info">
+			      <div class="card-header align-middle">
+			        <h3 class="card-title align-middle">Generar/Editar Periodo</h3>
+						</div><!-- /.card-header -->
+
+						<div class="card-body">
+							{% if locked %}<fieldset disabled>{% endif %}
+              <div class="form-row">
+                <div class="form-group col-md-6 col-sm-12">
+                  <label for="desde">Desde</label>
+                  {{form.desde}}
+                  <div class="invalid-feedback">
+						        Debe indicar una fecha de inicio.
+						      </div>
+                </div>
+                 
+                <div class="form-group col-md-6 col-sm-12">
+                  <label for="hasta">Hasta</label>
+                  {{form.hasta}}
+                  <div class="invalid-feedback">
+						        Debe indicar una fecha de fin.
+						      </div>
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group col-12 text-center mb-0">
+                	<label for="bloqueado">Bloqueado</label>
+                	{{form.bloqueado}}
+                </div>
+              </div>
+							{% if locked %}</fieldset>{% endif %}
+						</div><!-- /.card-body -->
+						<div class="card-footer text-center">
+		          {% comment %} <input class="btn btn-info" type="submit" value="Guardar"> {% endcomment %}
+							<button type="submit" class="btn btn-info" {% if locked %}disabled{% endif %}>Guardar</button>
+		          <a class="btn btn-secondary" href="javascript: window.history.back();" role="button">Atras</a>
+		        </div>
+		        <!-- /.card-footer -->
+		    	</div><!-- /.card -->
+		    </form>
+
+			</div>
+			<div class="col-md-2"></div>
+		</div>
+		
+	{% endif %}
+{% endblock %}

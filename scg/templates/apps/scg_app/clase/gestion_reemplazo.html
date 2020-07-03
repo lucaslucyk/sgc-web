@@ -1,0 +1,131 @@
+{% extends "base_template.html" %}
+{% block namepage %}Gestión de Reemplazo{% endblock %}
+
+{% block route %}
+  <li class="breadcrumb-item"><a href="{% url 'index' %}">Inicio</a></li>
+  <li class="breadcrumb-item"><a href="{% url 'clases_view' %}">Monitor</a></li>
+  <li class="breadcrumb-item active">Reemplazo</li>
+{% endblock route %}
+
+{% block content %}
+  <div class="row">
+    <div class="col-md-12">
+
+    	{% if messages %}
+    		{% for message in messages %}
+    			<div class="alert alert-{% if message.tags %}{{ message.tags }}{% endif %} alert-dismissible" >
+    				<a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+    		  		{{ message|safe }}
+    			</div>
+    	    {% endfor %}
+    	{% endif %}
+			
+			<div class="row">
+      	<div class="col-md-1 col-xs-0 col-sm-0"></div>
+      		<div class="col-md-10 col-xs-12 col-sm-12">
+						{% if clase_to_edit %}
+							{% comment %} <p> Se asignar&aacute; un reemplazo a la clase: {{ clase_to_edit }}</p> {% endcomment %}
+							<div class="card card-info">
+								<div class="card-header">
+									<h3 class="card-title">Clase a gestionar</h3>
+									<div class="card-tools">
+										<button type="button" class="btn btn-tool" data-card-widget="collapse">
+											<i class="fas fa-minus"></i>
+										</button>
+									</div>
+								</div>
+								<div class="card-body">
+									
+									<table class="table table-sm">
+										<thead>
+											<tr>
+												<th>Actividad</th>
+												<th>D&iacute;a</th>
+												<th>Fecha</th>
+												<th>Inicio</th>
+												<th>Fin</th>
+												<th>Empleado</th>
+												<th>Ejecutor</th>
+											</tr>
+										</thead>
+										<tbody>
+												<tr>
+													<td>{{ clase_to_edit.actividad.nombre }}</td>
+													<td>{{ clase_to_edit.get_dia_semana_display }}</td>
+													<td>{{ clase_to_edit.fecha }}</td>
+													<td>{{ clase_to_edit.horario_desde }}</td>
+													<td>{{ clase_to_edit.horario_hasta }}</td>
+													<td>{{ clase_to_edit.empleado }}</td>
+													<td>
+														{% if clase_to_edit.reemplazo %}
+															<strong>{{ clase_to_edit.reemplazo }}</strong>
+														{% else %}
+															{{clase_to_edit.empleado}}
+														{% endif %} 
+													</td>
+												</tr>
+										</tbody>
+									</table>
+
+								</div><!-- /.card-body -->
+							</div><!-- /.card -->
+						{% endif %}
+
+						{% comment %} {% if form %} {% endcomment %}
+							<form method="POST" class="needs-validation" novalidate> 
+								{% csrf_token %}
+								<div class="card card-info">
+									<div class="card-header">
+										<h3 class="card-title">Reemplazo</h3>
+									</div>
+									<div class="card-body">
+										{% if clase_to_edit.locked or locked %}<fieldset disabled>{% endif %}
+										<div class="form-row mt-3">
+											<div class="form-group col-6">
+														<div class="input-group">
+													<div class="input-group-prepend">
+													<span class="input-group-text" id="basic-addon1">@</span>
+													</div>
+													<input id="empleados-search" type="text" name="empleados-search" value="{{search_data.empleado}}" 
+														api-model-search="true" model-search="empleados" put-in="empleados-results"
+														class="form-control" placeholder="Algún dato del empleado" 
+														aria-label="Algún dato del empleado" aria-describedby="basic-addon1">
+												</div>
+											</div>
+											<div class="form-group col-6">
+												<div class="input-group">
+													<select id="empleados-results" class="custom-select" name="empleados-results">
+														{% if reemplazo_selected %}
+															<option value="{{reemplazo_selected.pk}}" selected="">{{reemplazo_selected.get_str}}</option>
+														{% else %}
+															<option value="" selected="">Ninguno</option>
+														{% endif %}
+													</select>
+												</div>
+											</div>
+											<div class="form-group col-12">
+												<label for="comentario">Comentario</label>
+												{{ form.comentario }}
+											</div>
+										</div>
+										{% if clase_to_edit.locked or locked %}</fieldset>{% endif %}
+									</div><!-- /.card-body -->
+									<div class="card-footer text-center">
+										<button type="submit" class="btn btn-info" {% if clase_to_edit.locked or locked %}disabled{% endif %} >Confirmar</button>
+										<a class="btn btn-secondary" href="javascript: window.history.back();" role="button">Volver</a>
+									</div>
+									<!-- /.card-footer -->
+								</div><!-- /.card -->
+							</form>
+						{% comment %} {% endif %} {% endcomment %}
+					</div><!-- /.col -->
+      <div class="col-md-1 col-xs-0 col-sm-0"></div>
+    </div><!-- /.row -->
+  </div> <!-- principal col -->
+</div> <!-- principal row -->
+
+{% endblock %}
+
+{% block extra_js %}
+	<!-- for dont charge extra js-->
+{% endblock %}
