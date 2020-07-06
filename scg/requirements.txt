@@ -3,6 +3,7 @@ zeep
 django-multiselectfield
 django-report-builder
 pywin32
+pythoncom
 django-ckeditor
 djangorestframework
 markdown
@@ -10,5 +11,5 @@ django-filter
 pandas
 django-extensions
 selenium
-psycopg2==2.8
-gunicorn==19.9
+#psycopg2==2.8
+#gunicorn==19.9

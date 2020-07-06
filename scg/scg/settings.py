@@ -31,6 +31,8 @@ SECRET_KEY = 'y=yxaf=l5p)+ogu1d3n2tn59$z(+%z)##uql@*pe5i^dhzmc7%'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
+PRODUCTION = False
+
 ALLOWED_HOSTS = ['*']
 PROTOCOL = 'http'
 BASE_URL = 'localhost:8000'
@@ -44,7 +46,6 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    
 
     #third
     'multiselectfield',
@@ -53,9 +54,9 @@ INSTALLED_APPS = [
     'ckeditor_uploader',
     'rest_framework',
     'django_extensions',
-    #'simple_history',
     #'django_crontab',
-
+    #'simple_history',
+    
     #own
     'apps.scg_app',
     'apps.api',
@@ -70,8 +71,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-
-    'simple_history.middleware.HistoryRequestMiddleware',
+    #'simple_history.middleware.HistoryRequestMiddleware',
 ]
 
 SHELL_PLUS = 'notebook'
@@ -106,7 +106,7 @@ WSGI_APPLICATION = 'scg.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/3.0/ref/settings/#databases
-if DEBUG:
+if not PRODUCTION:
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
@@ -163,7 +163,7 @@ STATICFILES_DIRS = [
 CKEDITOR_UPLOAD_PATH = "help/"
 
 # publish directories
-if DEBUG:
+if not PRODUCTION:
     STATIC_ROOT = os.path.join(os.path.dirname(BASE_DIR),'publish/static')
     MEDIA_ROOT = os.path.join(os.path.dirname(BASE_DIR), 'publish/media')
 else:
@@ -174,17 +174,17 @@ else:
 TMP_DIR = os.path.join(os.path.dirname(BASE_DIR), 'tmp')
 
 ### reporting ###
-#REPORT_BUILDER_ASYNC_REPORT = True
-# REPORT_BUILDER_INCLUDE = [
-#     'user',
-#     'apps.scg_app.clase', 'apps.scg_app.empleado', 'apps.scg_app.actividad', 
-#     'apps.scg_app.escala', 'apps.scg_app.grupoactividad', 
-#     'apps.scg_app.marcaje', 'apps.scg_app.motivoausencia',
-#     'apps.scg_app.recurrencia', 'apps.scg_app.saldo', 'apps.scg_app.sede', 
-#     'apps.scg_app.tipocontrato', 'apps.scg_app.tipoliquidacion',
-#     'apps.scg_app.bloquedepresencia', 'apps.scg_app.certificado',
-# ] # Allow only the model user to be accessed
-#REPORT_BUILDER_FRONTEND = False
+REPORT_BUILDER_ASYNC_REPORT = True
+REPORT_BUILDER_INCLUDE = [
+    'user',
+    'scg_app.clase', 'scg_app.empleado', 'scg_app.actividad', 
+    'scg_app.escala', 'scg_app.grupoactividad', 
+    'scg_app.marcaje', 'scg_app.motivoausencia',
+    'scg_app.recurrencia', 'scg_app.saldo', 'scg_app.sede', 
+    'scg_app.tipocontrato', 'scg_app.tipoliquidacion',
+    'scg_app.bloquedepresencia', 'scg_app.certificado',
+] # Allow only the model user to be accessed
+REPORT_BUILDER_FRONTEND = False
 
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/accounts/logout/?next=/'

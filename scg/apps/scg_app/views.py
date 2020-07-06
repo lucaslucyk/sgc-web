@@ -1817,9 +1817,9 @@ def get_nt_marcajes(request, context=None):
 
     return redirect('clases_view')
 
-###################
-### tasks  mgmt ###
-###################
+#########################################################
+###################### tasks  mgmt ######################
+#########################################################
 
 @csrf_exempt
 @user_passes_test(check_admin)
