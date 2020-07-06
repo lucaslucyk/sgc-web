@@ -1,6 +1,7 @@
 django==2.2
 zeep
 django-multiselectfield
+django-autocomplete-light
 django-report-builder
 pywin32
 django-ckeditor
@@ -10,5 +11,6 @@ django-filter
 pandas
 django-extensions
 selenium
+django-wysihtml5
 #psycopg2==2.8
 #gunicorn==19.9
