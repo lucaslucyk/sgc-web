@@ -1435,6 +1435,6 @@ class Script(models.Model):
         return self.description
 
 ### user extend ###
-User.add_to_class('sedes', models.ManyToManyField(Sede))
+User.add_to_class('sedes', models.ManyToManyField(Sede, null=True, blank=True))
 User.has_sede_permission = utils.has_sede_permission
 User.sedes_available = utils.sedes_available
