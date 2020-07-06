@@ -3,7 +3,6 @@ zeep
 django-multiselectfield
 django-report-builder
 pywin32
-pythoncom
 django-ckeditor
 djangorestframework
 markdown
