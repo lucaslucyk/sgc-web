@@ -3,18 +3,18 @@
 __pycache__/
 *.py[cod]
 *$py.class
-migrations
+#migrations
 
 # migrations
-!scg/apps/scg_app/migrations/
-!scg/apps/api/migrations/
-!scg/apps/help/migrations/
-scg/apps/scg_app/migrations/*
-scg/apps/api/migrations/*
-scg/apps/help/migrations/*
-!scg/apps/scg_app/migrations/__init__.py
-!scg/apps/api/migrations/__init__.py
-!scg/apps/help/migrations/__init__.py
+# !scg/apps/scg_app/migrations/
+# !scg/apps/api/migrations/
+# !scg/apps/help/migrations/
+# scg/apps/scg_app/migrations/*
+# scg/apps/api/migrations/*
+# scg/apps/help/migrations/*
+# !scg/apps/scg_app/migrations/__init__.py
+# !scg/apps/api/migrations/__init__.py
+# !scg/apps/help/migrations/__init__.py
 
 # tmp dir
 tmp/
