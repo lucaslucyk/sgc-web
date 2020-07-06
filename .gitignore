@@ -28,9 +28,6 @@ scg/db.sqlite3
 scg/db.sqlite3-journal
 scg/db.sqlite3.old
 
-# MEDIA
-# media_uploads/certificados/
-
 # IDE
 .vscode/
 
