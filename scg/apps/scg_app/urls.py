@@ -95,7 +95,7 @@ urlpatterns = [
     path('calendario-sede/', views.sede_calendar, name='sede_calendar'),
 
     ### schedule tasks ###
-    path('tasks/', views.index, name='tasks_management'),
+    path('tasks/', views.tasks_management, name='tasks_management'),
 
     #delete view ###
     path('delete/<str:model>/<int:pk>',
