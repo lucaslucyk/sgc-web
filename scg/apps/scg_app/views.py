@@ -28,7 +28,7 @@ from django.apps import apps
 from django.conf import settings
 from apps.scg_app.forms import *
 from apps.scg_app.models import *
-import apps.scg_app.tasks as task_mgmt
+#import apps.scg_app.tasks as task_mgmt
 
 def check_admin(user):
     return user.is_superuser
@@ -1821,51 +1821,51 @@ def get_nt_marcajes(request, context=None):
 ###################### tasks  mgmt ######################
 #########################################################
 
-@csrf_exempt
-@user_passes_test(check_admin)
-def tasks_management(request, context=None):
-    """ list and manage import tasks """
-    context = context or {'tasks': []}
+# @csrf_exempt
+# @user_passes_test(check_admin)
+# def tasks_management(request, context=None):
+#     """ list and manage import tasks """
+#     context = context or {'tasks': []}
 
-    tasks = [
-        {
-            'name': 'SGC - NetTime Sync',
-            'task_name': 'sgc_nettime_sync',
-            'installed': False,
-            'Path': '',
-            'State': '',
-            'LastRunTime':'',
-        },
-    ]
+#     tasks = [
+#         {
+#             'name': 'SGC - NetTime Sync',
+#             'task_name': 'sgc_nettime_sync',
+#             'installed': False,
+#             'Path': '',
+#             'State': '',
+#             'LastRunTime':'',
+#         },
+#     ]
 
-    for task in tasks:
-        task_def = task_mgmt.task_get_data(task.get('task_name'))
+#     for task in tasks:
+#         task_def = task_mgmt.task_get_data(task.get('task_name'))
         
-        if task_def:
-            task['installed'] = True
-            task.update(task_def)
+#         if task_def:
+#             task['installed'] = True
+#             task.update(task_def)
 
-    if request.method == 'POST':
-        actions = {
-            'task_enable': task_mgmt.task_enable,
-            'task_disable': task_mgmt.task_disable,
-            'task_run': task_mgmt.task_run,
-            'task_delete': task_mgmt.task_delete,
-            'task_create': task_mgmt.task_create,
-        }
+#     if request.method == 'POST':
+#         actions = {
+#             'task_enable': task_mgmt.task_enable,
+#             'task_disable': task_mgmt.task_disable,
+#             'task_run': task_mgmt.task_run,
+#             'task_delete': task_mgmt.task_delete,
+#             'task_create': task_mgmt.task_create,
+#         }
         
-        try:
-            actions.get(request.POST.get('command'))(
-                request.POST.get('task_name')
-            )
-            return JsonResponse({"success": True})
+#         try:
+#             actions.get(request.POST.get('command'))(
+#                 request.POST.get('task_name')
+#             )
+#             return JsonResponse({"success": True})
 
-        except Exception as error:
-            return JsonResponse({"error": str(error)})
+#         except Exception as error:
+#             return JsonResponse({"error": str(error)})
 
-    context['tasks'] = tasks
+#     context['tasks'] = tasks
 
-    return render(request, "tasks/tasks_management.html", context)
+#     return render(request, "tasks/tasks_management.html", context)
 
 ### error pages ###
 def handler404(request, exception, template_name="error/404.html"):
