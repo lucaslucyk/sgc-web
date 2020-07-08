@@ -13,7 +13,7 @@
   </system.webServer>
 
   <appSettings>
-    <add key="PYTHONPATH" value="C:\inetpub\wwwroot\sgc-web\sgc" />
+    <add key="PYTHONPATH" value="C:\inetpub\wwwroot\sgc-web\scg" />
     <add key="WSGI_HANDLER" value="scg.wsgi.application" />
     <add key="DJANGO_SETTINGS_MODULE" value="scg.settings" />
   </appSettings>

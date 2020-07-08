@@ -184,7 +184,7 @@ REPORT_BUILDER_INCLUDE = [
     'scg_app.tipocontrato', 'scg_app.tipoliquidacion',
     'scg_app.bloquedepresencia', 'scg_app.certificado',
 ] # Allow only the model user to be accessed
-REPORT_BUILDER_FRONTEND = False
+REPORT_BUILDER_FRONTEND = True
 
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/accounts/logout/?next=/'
