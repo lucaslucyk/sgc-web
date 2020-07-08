@@ -62,7 +62,7 @@
 
     - [CGI](https://docs.microsoft.com/en-us/iis/configuration/system.webserver/cgi)
 
-2. Clone repository in `C:/inetpub/wwwroot/webproject`
+2. Clone repository in `C:/inetpub/wwwroot/`
 
 3. Install Python 3.8 in `C:/Python38`, and install dependences with `requirements.txt`.
 
