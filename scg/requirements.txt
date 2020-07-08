@@ -11,8 +11,8 @@ pandas
 django-extensions
 selenium
 django-wysihtml5
-#psycopg2==2.8
-#gunicorn==19.9
+psycopg2==2.8
+gunicorn==19.9
 #####
 ##### for migrations only
 django-simple-history==2.10.0
