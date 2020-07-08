@@ -68,7 +68,7 @@
 
 4. Navigate to `C:/`, right-click on `Python38`, and edit `Properties`.
 Under Security, add `IIS AppPool\DefaultAppPool`. `DefaultAppPool` is the default app pool.
-** Ensure the location is local.
+** Ensure the location is local and replicate this for `C:/inetpub/wwwroot/sgc-web/` directory.
 
 5. Enable wfastcgi
 
