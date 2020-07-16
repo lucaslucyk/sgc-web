@@ -827,9 +827,9 @@ class Recurrencia(models.Model):
             f'fecha_hasta={self.fecha_hasta}',
             f'horario_desde={self.horario_desde}',
             f'horario_hasta={self.horario_hasta}',
-            f'empleado={self.empleado.pk}',
-            f'actividad={self.actividad.pk}',
-            f'sede={self.sede.pk}',
+            f'empleado={self.empleado.pk if self.empleado else "None"}',
+            f'actividad={self.actividad.pk if self.actividad else "None"}',
+            f'sede={self.sede.pk if self.sede else "None"}',
             f'lugar={self.lugar.pk if self.lugar else "None"}',
             f'weekdays={self.weekdays}',
             f'locked={self.locked}',
@@ -924,8 +924,8 @@ class Clase(models.Model):
     @property
     def user_comments(self):
         return ['[{}, {} ({})]: {}'.format(
-            comment.comentario.usuario.last_name,
-            comment.comentario.usuario.first_name,
+            getattr(comment.comentario.usuario, "last_name", ""),
+            getattr(comment.comentario.usuario, "first_name", ""),
             comment.comentario.fecha.strftime("%d/%m/%Y"),
             comment.comentario.contenido,
         ) for comment in self.comentarios.all()]
@@ -945,6 +945,14 @@ class Clase(models.Model):
 
     @property
     def monto(self):
+        """
+        Informs the amount based on the employee scale for the activity group \
+            of the class.
+        If you have multiple scales from the same group, consider the first.
+        """
+        if not self.empleado:
+            return 0.0
+
         #set mount of class
         ejecutor = self.reemplazo if self.reemplazo else self.empleado
         escala = ejecutor.escala.filter(grupo=self.actividad.grupo)
@@ -964,18 +972,30 @@ class Clase(models.Model):
 
     @property
     def was_made(self):
+        """ Informs if the class was maded consulting presence blocks. """
+
+        fecha = self.fecha
+        desde = self.horario_desde
+        hasta = self.horario_hasta
+        if isinstance(fecha, str):
+            fecha = datetime.date.fromisoformat(fecha)
+        if isinstance(desde, str):
+            desde = datetime.datetime.fromisoformat(f'{fecha} {desde}').time()
+        if isinstance(hasta, str):
+            hasta = datetime.datetime.fromisoformat(f'{fecha} {hasta}').time()
+
         blocks = BloqueDePresencia.objects.filter(
             empleado=self.empleado,
-            fecha=self.fecha,
+            fecha=fecha,
             inicio__hora__lte=utils.get_min_offset(
-                _time=self.horario_desde, 
+                _time=desde, 
                 _mins=settings.MINS_TOLERACIA),
             fin__hora__gte=utils.get_min_offset(
-                _time=self.horario_hasta,
+                _time=hasta,
                 _mins=settings.MINS_TOLERACIA,
                 _sub=True),
         )
-        #
+
         return bool(blocks)
 
     def get_hours(self):
@@ -1091,7 +1111,11 @@ class Clase(models.Model):
     def update_status(self):
         """ update the class status according to all its variables  """
 
-        if self.fecha > datetime.date.today():
+        fecha = self.fecha
+        if isinstance(fecha, str):
+            fecha = datetime.date.fromisoformat(fecha)
+
+        if fecha > datetime.date.today():
             self.estado = settings.ESTADOS_CHOICES[0][0]    #pendiente
 
         if self.was_made:
@@ -1106,6 +1130,12 @@ class Clase(models.Model):
 
         if self.reemplazo:
             self.estado = settings.ESTADOS_CHOICES[2][0]    #reemplazo
+
+        if self.horario_desde != self.recurrencia.horario_desde or \
+                self.horario_hasta != self.recurrencia.horario_hasta:
+            self.modificada = True
+        else:
+            self.modificada = False
 
         self.save()
         return self.estado
@@ -1325,8 +1355,10 @@ class BloqueDePresencia(models.Model):
             self.fin.hora.strftime("%H:%M") if self.fin else '-')
 
 class Certificado(models.Model):
-    """ Can contain an attachment for one or more classes.
-        Keep the original motif. """
+    """
+    Can contain an attachment for one or more classes.
+    Keep the original motif.
+    """
 
     clases = models.ManyToManyField('Clase')
     file = models.FileField(
@@ -1348,6 +1380,9 @@ class Certificado(models.Model):
 
     @property
     def complete_file_url(self):
+        if not self.file:
+            return "#"
+            
         return '{}://{}{}'.format(
             settings.PROTOCOL,
             settings.BASE_URL,
@@ -1435,6 +1470,6 @@ class Script(models.Model):
         return self.description
 
 ### user extend ###
-User.add_to_class('sedes', models.ManyToManyField(Sede, null=True, blank=True))
+User.add_to_class('sedes', models.ManyToManyField(Sede))
 User.has_sede_permission = utils.has_sede_permission
 User.sedes_available = utils.sedes_available

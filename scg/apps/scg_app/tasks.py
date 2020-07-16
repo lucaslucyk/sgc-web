@@ -1,3 +1,10 @@
+"""
+Task management. For create, run command in Administrator CMD:
+> shtasks /create /tn sgc_nettime_sync /sc daily /st 00:00 /tr "PATH_TO_VBS" /ru System
+
+Previous to command, use install button from page for create VBS file.
+"""
+
 ### built-in
 import pythoncom
 import win32com.client as wc

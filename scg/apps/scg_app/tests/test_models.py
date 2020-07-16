@@ -1,6 +1,8 @@
 from django.test import Client, RequestFactory, TestCase
 from django.contrib.auth.models import AnonymousUser, User
 from django.urls import reverse
+from django.conf import settings
+from django.core.files import File
 
 from apps.scg_app import models
 
@@ -114,13 +116,13 @@ class PeriodosTest(TestCase):
         periodo = models.Periodo.get_date_period('2020-01-01')
         self.assertFalse(periodo)
 
-    def get_url_from_date(self):
+    def test_get_url_from_date(self):
         """ Test get a url from date period. """
 
         url = models.Periodo.get_url_date_period(self.period_free.desde)
         self.assertEqual(self.period_free.get_edit_url(), url)
 
-        url = models.Periodo.get_date_period('2020-01-01')
+        url = models.Periodo.get_url_date_period('2020-01-01')
         self.assertEqual(url, '#')
 
 class EmpleadosTest(TestCase):
@@ -323,10 +325,401 @@ class SaldosTest(TestCase):
 
             self.assertEqual(checked, test)
 
+class RecurrenciasTest(TestCase):
+    def setUp(self):
+        self.weekdays = ["0", "2"]
+        self.days_not_included = ["3", "4"]
+        self.lugar = models.Lugar.objects.create(
+            nombre="Testing Place",
+            codigo="TP01",
+        )
+        self.rec = models.Recurrencia.objects.create(
+            fecha_desde="2020-06-01",
+            fecha_hasta="2020-06-30",
+            horario_desde="05:00",
+            horario_hasta="07:00",
+            empleado=models.Empleado.objects.first(),
+            actividad=models.Actividad.objects.first(),
+            sede=models.Sede.objects.first(),
+            lugar=self.lugar,
+            weekdays=self.weekdays,
+        )
+
+        self.test_no_overlap = (
+            {"_desde": "2020-05-01", "_hasta": "2020-05-31"},
+            {"_desde": "2020-07-01", "_hasta": "2020-07-31"},
+        )
+        self.test_overlap = (
+            {
+                "_desde": "2020-05-01",
+                "_hasta": [
+                    "2020-06-01", "2020-06-15", "2020-06-30", "2020-07-01",
+                ]
+            },
+            {
+                "_desde": "2020-06-01",
+                "_hasta": [
+                    "2020-06-01", "2020-06-15", "2020-06-30", "2020-07-01",
+                ]
+            },
+            {
+                "_desde": "2020-06-15",
+                "_hasta": [
+                    "2020-06-15", "2020-06-30", "2020-07-01",
+                ]
+            },
+            {
+                "_desde": "2020-06-30",
+                "_hasta": [
+                    "2020-06-30", "2020-07-01",
+                ]
+            },
+        )
+
+    def test_get_dias_str(self):
+        """ Test if value of get_dias_str is right according to settings. """
+        dias_dict = dict(settings.DIA_SEMANA_CHOICES)
+        days = ', '.join([dias_dict.get(_) for _ in self.rec.weekdays])
+
+        self.assertEqual(self.rec.get_dias_str(), days)
+
+    def test_get_dias_list(self):
+        """ Test if value of get_dias_list is right according to settings. """
+
+        dias_dict = dict(settings.DIA_SEMANA_CHOICES)
+        days = [dias_dict.get(_) for _ in self.rec.weekdays]
+
+        self.assertEqual(self.rec.get_dias_list(), days)
+
+    def test_no_overlaps(self):
+        """
+        Test differents dates and times that should not generate overlap.
+        """
+
+        for to_test in self.test_no_overlap:
+            value = models.Recurrencia.check_overlap(
+                employee=self.rec.empleado,
+                weekdays=[self.weekdays[0], ],
+                desde=to_test.get("_desde"),
+                hasta=to_test.get("_hasta"),
+                hora_ini=self.rec.horario_desde,
+                hora_end=self.rec.horario_hasta,
+            )
+            self.assertFalse(value)
+
+        for to_test in self.test_overlap:
+            for hasta in to_test.get("_hasta"):
+                value = models.Recurrencia.check_overlap(
+                    employee=self.rec.empleado,
+                    weekdays=[self.weekdays[0],],
+                    desde=to_test.get("_desde"),
+                    hasta=hasta,
+                    hora_ini="10:00",
+                    hora_end="11:00",
+                )
+                self.assertFalse(value)
+            
+                value = models.Recurrencia.check_overlap(
+                    employee=self.rec.empleado,
+                    weekdays=[self.days_not_included[0], ],
+                    desde=to_test.get("_desde"),
+                    hasta=hasta,
+                    hora_ini=self.rec.horario_desde,
+                    hora_end=self.rec.horario_hasta,
+                )
+                self.assertFalse(value)
+
+                value = models.Recurrencia.check_overlap(
+                    employee=self.rec.empleado,
+                    weekdays=[self.weekdays[0], ],
+                    desde=to_test.get("_desde"),
+                    hasta=hasta,
+                    hora_ini=self.rec.horario_desde,
+                    hora_end=self.rec.horario_hasta,
+                    ignore=self.rec.pk
+                )
+                self.assertFalse(value)
+    
+    def test_overlaps(self):
+        """
+        Test differents dates and times that should generate overlap.
+        """
+
+        for to_test in self.test_overlap:
+            for hasta in to_test.get("_hasta"):
+                value = models.Recurrencia.check_overlap(
+                    employee=self.rec.empleado,
+                    weekdays=[self.weekdays[0], ],
+                    desde=to_test.get("_desde"),
+                    hasta=hasta,
+                    hora_ini=self.rec.horario_desde,
+                    hora_end=self.rec.horario_hasta,
+                )
+                self.assertTrue(value)
+
+# class MarcajeTest(TestCase):
+#     def setUp(self):
+#         self.marc = models.Marcaje.objects.create(
+#             empleado=models.Empleado.objects.first(),
+#             usuario=User.objects.first(),
+#             fecha=,
+#             hora=,
+#             from_nettime=,
+#             locked=,
+#         )
+
+#     def test_user_can_delete(self):
+#         pass
+
+
+class BloqueDePresenciaTest(TestCase):
+    def setUp(self):
+        self.entrada = models.Marcaje.objects.create(
+            empleado=models.Empleado.objects.first(),
+            fecha="2020-06-01",
+            hora="05:05",
+        )
+        self.salida = models.Marcaje.objects.create(
+            empleado=models.Empleado.objects.first(),
+            fecha="2020-06-01",
+            hora="07:10",
+        )
+    
+    def test_no_bloques(self):
+        """ Test that there are no blocks. """
+
+        self.assertFalse(models.BloqueDePresencia.objects.all())
+
+    def test_recalculate(self):
+        """ Recalculates to test that there are now blocks """
+
+        recalculated = models.BloqueDePresencia.recalcular_bloques(
+            empleado=self.entrada.empleado,
+            fecha=self.entrada.fecha,
+        )
+        self.assertTrue(recalculated)
+        self.assertTrue(models.BloqueDePresencia.objects.all())
 
 class ClasesTest(TestCase):
-    pass
+    def setUp(self):
+        self.VALUES = {
+            "HORAS": 2,
+            "HORAS_NOC": 1,
+            "HORAS_DIUR": 1,
+        }
+        self.weekdays = ["0", "2"]
+        self.lugar = models.Lugar.objects.create(
+            nombre="Testing Place",
+            codigo="TP01",
+        )
+        self.empleado = models.Empleado.objects.create(
+            apellido='Lucyk',
+            nombre='Lucas',
+            dni='12345678',
+            id_netTime=1,
+        )
+        self.reemplazo = models.Empleado.objects.create(
+            apellido='Test',
+            nombre='Test',
+            dni='87654321',
+            id_netTime=2,
+        )
+        self.activity_group = models.GrupoActividad.objects.create(
+            nombre="G_1"
+        )
+        self.activity = models.Actividad.objects.create(
+            nombre="T_1",
+            grupo=self.activity_group,
+        )
+        self.sede = models.Sede.objects.create(nombre="T_1", id_netTime=1)
+        self.rec = models.Recurrencia.objects.create(
+            fecha_desde="2020-06-01",
+            fecha_hasta="2020-06-30",
+            horario_desde="05:00",
+            horario_hasta="07:00",
+            empleado=self.empleado,
+            actividad=self.activity,
+            sede=self.sede,
+            lugar=self.lugar,
+            weekdays=self.weekdays,
+        )
+        self.clase = models.Clase.objects.create(
+            recurrencia=self.rec,
+            dia_semana="0",
+            fecha="2020-06-01",
+            horario_desde=self.rec.horario_desde,
+            horario_hasta=self.rec.horario_hasta,
+            actividad=self.activity,
+            sede=self.sede,
+            empleado=self.empleado,
+        )
+        # creating clockings and presence blocks for recalculate
+        self.entrada = models.Marcaje.objects.create(
+            empleado=self.empleado,
+            fecha="2020-06-01",
+            hora="05:05",
+        )
+        self.salida = models.Marcaje.objects.create(
+            empleado=self.empleado,
+            fecha="2020-06-01",
+            hora="07:10",
+        )
+        self.no_intersections = (
+            ('03:00', '04:00'),
+            ('08:00', '09:00'),
+        )
 
-    
+        self.intersections = ({
+            "range": ('03:00', '05:01'),
+            "time": 0.02,
+        }, {
+            "range": ('03:00', '05:30'),
+            "time": 0.5,
+        }, {
+            "range": ('03:00', '06:00'),
+            "time": 1.0,
+        }, {
+            "range": ('03:00', '07:30'),
+            "time": 2.0,
+        }, {
+            "range": ('06:45', '07:30'),
+            "time": 0.25,
+        },
+        )
+
+    def test_lugar(self):
+        """ Test the property to validate the place name. """
+
+        place = self.clase.recurrencia.lugar
+        self.assertEqual(self.clase.lugar, place.nombre)
+
+    def test_hours(self):
+        """ Test get_hours method and hours attributes. """
+
+        self.assertEqual(self.clase.get_hours(), 2)
+
+        self.assertEqual(self.clase.horas, self.VALUES["HORAS"])
+        self.assertEqual(self.clase.horas_nocturnas, self.VALUES["HORAS_NOC"])
+        self.assertEqual(self.clase.horas_diurnas, self.VALUES["HORAS_DIUR"])
+
+    def test_ejecutor(self):
+        """ Tests that executor considers the replacementt. """
+
+        self.assertEqual(self.clase.ejecutor, self.empleado)
+
+        # update and try again
+        self.clase.reemplazo = self.reemplazo
+        self.assertEqual(self.clase.ejecutor, self.reemplazo)
+
+        # rollback
+        self.clase.reemplazo = None
+
+    def test_is_cancelled(self):
+        """ Test the property is_cancelled, force value and trying again. """
+
+        self.assertFalse(self.clase.is_cancelled)
+
+        # update and try again
+        self.clase.estado = settings.ESTADOS_CHOICES[-1][0]
+        self.assertTrue(self.clase.is_cancelled)
+        
+        # rollback
+        self.estado = settings.ESTADOS_CHOICES[0][0]
+
+    def test_was_made(self):
+        """ 
+        Test the property was_made, create clockings and presence blocks and \
+            try again.
+        """
+
+        self.assertFalse(self.clase.was_made)
+        models.BloqueDePresencia.recalcular_bloques(
+            empleado=self.entrada.empleado,
+            fecha=self.entrada.fecha,
+        )
+
+        self.assertTrue(self.clase.was_made)
+
+    def test_is_present(self):
+        """ Test the property is_cancelled recalculating and trying again. """
+
+        self.assertFalse(self.clase.is_present)
+        
+        #create clocking and presence block
+        models.BloqueDePresencia.recalcular_bloques(
+            empleado=self.entrada.empleado,
+            fecha=self.entrada.fecha,
+        )
+
+        # update status and try again
+        self.clase.update_status()
+        self.assertTrue(self.clase.is_present)
+
+    def test_is_time_intersection(self):
+        """ Test what does not exist intersection between bad times. """
+
+        #for time_range in self.no_intersections:
+        self.assertFalse(self.clase.is_time_intersection(self.no_intersections))
+
+    def test_get_time_intersection(self):
+        """ Test values returned with bad and right time ranges. """
+        
+        # no intersections
+        time_intersect = self.clase.get_time_intersection(self.no_intersections)
+        self.assertEqual(time_intersect, 0.0)
+
+        # intersections
+        for values in self.intersections:
+            time = self.clase.get_time_intersection([values.get("range"), ])
+            self.assertEqual(time, values.get("time"))
+        
+    def test_monto(self):
+        """ Test ammount with and without activity scale. """
+
+        self.assertEqual(self.clase.monto, 0.0)
+
+        # create and assign scale
+        self.empleado.escala.create(
+            nombre="E_1",
+            grupo=self.activity_group,
+            monto_hora=50.0,
+        )
+        self.assertEqual(self.clase.monto, self.clase.horas * 50.0)
+
+    def test_user_comments(self):
+        """
+        Test returns of user_comments and format_user_comments properties.
+        """
+        
+        # no comments
+        self.assertFalse(self.clase.user_comments)
+        self.assertFalse(self.clase.format_user_comments)
+
+        # create test comment and try again
+        new_comment = models.Comentario.objects.create(
+            usuario=User.objects.first(),
+            accion=settings.ACCIONES_CHOICES[-1][0],
+            contenido="Testing comment")
+
+        #assign comment
+        self.clase.comentarios.create(comentario=new_comment)
+
+        self.assertTrue(self.clase.user_comments)
+        self.assertTrue(self.clase.format_user_comments)
+
+    def test_url_certificados(self):
+        """
+        Test return of url_certificados property with and without associated \
+            certificates.
+        """
+        self.assertFalse(self.clase.url_certificados)
+
+        certif = models.Certificado.objects.create(
+            #file=File(open('test_login.py', 'r')),
+            motivo=models.MotivoAusencia.objects.create(nombre="MA_1")
+        )
+        certif.clases.add(self.clase)
+
+        self.assertTrue(self.clase.url_certificados)
 
         
