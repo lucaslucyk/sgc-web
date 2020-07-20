@@ -1,4 +1,3 @@
-
 function get_labels(datalist) {
   var labels = [];
   $.each(datalist, function (i, month_data) {
