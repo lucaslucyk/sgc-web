@@ -2,7 +2,9 @@
 
 ### built-in ###
 import datetime
+import json
 from collections import defaultdict
+from dateutil.relativedelta import relativedelta
 
 ### third ###
 from rest_framework import viewsets
@@ -13,9 +15,12 @@ from rest_framework.response import Response
 ### django ###
 from django.shortcuts import render
 from django.http import JsonResponse
+from django.core.serializers.json import DjangoJSONEncoder
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.contrib.auth.models import User, Group
+from django.db.models.functions import TruncDay, Trunc, TruncMonth
+from django.db.models import Count
 
 ### own ###
 from django.conf import settings
@@ -161,8 +166,9 @@ class ComentarioViewSet(BaseViewSet, viewsets.ModelViewSet):
             return Response(serializer.data)
         
         return Response(self.get_serializer(instance).data)
-
+########################
 ### v1.0 OR internal ###
+########################
 
 # class EmployeeAutocomplete(autocomplete.Select2QuerySetView):
 #     def get_queryset(self):
@@ -180,6 +186,67 @@ class ComentarioViewSet(BaseViewSet, viewsets.ModelViewSet):
 @login_required
 def get_current_version(request):
     return JsonResponse({"version": settings.CURRENT_VERSION })
+
+@login_required
+def get_months_chart(request):
+    
+    today = datetime.date.today()
+    date_ini = today - relativedelta(months=+6, days=+today.day-1)
+    date_end = today - relativedelta(days=+today.day)
+
+    filtered_classes = Clase.objects.filter(
+        fecha__gte=date_ini,
+        fecha__lte=date_end
+    )
+
+    types_configs = ({
+        "label": "Total",
+        "color": "rgba(168, 168, 168, 0.9)",
+        "bgcolor": "rgba(168, 168, 168, 0.05)",
+    }, {
+        "label": "Pendientes",
+        "color": "rgba(0, 123, 255, 0.9)",
+        "bgcolor": "rgba(0, 123, 255, 0.05)",
+        "filter": {"estado": "0"},
+    }, {
+        "label": "Realizadas",
+        "color": "rgba(0, 255, 0, 0.9)",
+        "bgcolor": "rgba(0, 255, 0, 0.05)",
+        "filter": {"presencia": "Realizada"},
+    }, {
+        "label": "Reemplazos",
+        "color": "rgba(255, 193, 7, 0.9)",
+        "bgcolor": "rgba(255, 193, 7, 0.05)",
+        "filter": {"reemplazo__isnull": False},
+    }, {
+        "label": "Ausencias",
+        "color": "rgba(255, 0, 0, 0.9)",
+        "bgcolor": "rgba(255, 0, 0, 0.05)",
+        "filter": {"ausencia__isnull": False},
+    })
+
+    chart_results = []
+    for type_config in types_configs:
+        work_classes = filtered_classes
+        if type_config.get("filter", None):
+            work_classes = filtered_classes.filter(**type_config.get("filter"))
+
+        chart_data = work_classes.annotate(
+            date=TruncMonth("fecha")
+        ).values(
+            "date"
+        ).annotate(
+            quantity=Count("id")
+        ).order_by("date")
+
+        chart_results.append({
+            "label": type_config.get("label"),
+            "color": type_config.get("color"),
+            "bgcolor": type_config.get("bgcolor"),
+            "results": list(chart_data),
+        })
+
+    return JsonResponse({"results": chart_results})
 
 @login_required
 def get_clases_from_certificado(request, certificado_id:int, context=None):

@@ -1,9 +1,13 @@
+# -*- coding: utf-8 -*-
+
+### django ###
 from django.test import Client, RequestFactory, TestCase
 from django.contrib.auth.models import AnonymousUser, User
 from django.urls import reverse
 from django.conf import settings
 from django.core.files import File
 
+### own ###
 from apps.scg_app import models
 
 class PeriodosTest(TestCase):
@@ -457,20 +461,6 @@ class RecurrenciasTest(TestCase):
                 )
                 self.assertTrue(value)
 
-# class MarcajeTest(TestCase):
-#     def setUp(self):
-#         self.marc = models.Marcaje.objects.create(
-#             empleado=models.Empleado.objects.first(),
-#             usuario=User.objects.first(),
-#             fecha=,
-#             hora=,
-#             from_nettime=,
-#             locked=,
-#         )
-
-#     def test_user_can_delete(self):
-#         pass
-
 
 class BloqueDePresenciaTest(TestCase):
     def setUp(self):
@@ -722,4 +712,3 @@ class ClasesTest(TestCase):
 
         self.assertTrue(self.clase.url_certificados)
 
-        

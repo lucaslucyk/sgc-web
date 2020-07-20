@@ -38,6 +38,8 @@ get_urls = [
 		views.get_clases_from_certificado, name='clases_from_certificado'),
 	path('comment/<int:comment>',views.get_comment_data, name='get_comment'),
 	path('current-version/', views.get_current_version, name='current_version'),
+
+	path('months-chart/', views.get_months_chart, name='get_months_chart'),
 ]
 
 urlpatterns = [
