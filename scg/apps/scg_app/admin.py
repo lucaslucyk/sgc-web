@@ -71,7 +71,7 @@ class EmpleadoAdmin(admin.ModelAdmin):
 @admin.register(models.Sede)
 class SedeAdmin(admin.ModelAdmin):
     list_display = ('nombre', 'tipo', 'codigo' )
-    readonly_fields = ('nombre', 'tipo', 'id' )
+    # readonly_fields = ('nombre', 'tipo', 'id' )
     search_fields = ['nombre', 'codigo']
     # def has_delete_permission(self, request, obj=None):
     #     return False
@@ -134,12 +134,12 @@ class ClaseAdmin(admin.ModelAdmin):
         'actividad', 'dia_semana', 'fecha', 'horario_desde', 'horario_hasta',
         'modificada', 'ausencia', 'confirmada', 'locked', 'horas')
 
-    readonly_fields = (
-        'recurrencia', 'creacion', 'dia_semana', 'fecha',
-        'horario_desde', 'horario_hasta', 
-        'actividad', 'sede', 'empleado',
-        'modificada', 'presencia', 'ausencia', 'reemplazo', 'estado',
-        'horas', 'horas_nocturnas', 'horas_diurnas')
+    # readonly_fields = (
+    #     'recurrencia', 'creacion', 'dia_semana', 'fecha',
+    #     'horario_desde', 'horario_hasta', 
+    #     'actividad', 'sede', 'empleado',
+    #     'modificada', 'presencia', 'ausencia', 'reemplazo', 'estado',
+    #     'horas', 'horas_nocturnas', 'horas_diurnas')
 
     search_fields = [
         'empleado__nombre','empleado__apellido', 'empleado__dni',
@@ -161,6 +161,12 @@ class ClaseAdmin(admin.ModelAdmin):
 class MarcajeAdmin(admin.ModelAdmin):
     list_display = ('id', 'empleado', 'fecha', 'hora', 'usuario', 'locked')
 
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def has_add_permission(self, request):
+        return False
+
 
 @admin.register(models.Escala)
 class EscalaAdmin(admin.ModelAdmin):
@@ -176,6 +182,12 @@ class GrupoActividadAdmin(admin.ModelAdmin):
 @admin.register(models.Certificado)
 class CertificadoAdmin(admin.ModelAdmin):
     autocomplete_fields = ('clases',)
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def has_add_permission(self, request):
+        return False
 
 @admin.register(models.Periodo)
 class PeriodoAdmin(admin.ModelAdmin):

@@ -1070,12 +1070,12 @@ class ClasesView(LoginRequiredMixin, ListView):
                 #if data_emple:
                 for data in data_emple.split():
                     querys["empleado"].add(Q(**{
-                        f'empleado__{field.name}__icontains': data
+                        f'empleado__{field}__icontains': data
                     }), Q.OR)
                 #if data_reemplazo:
                 for data in data_reemplazo.split():
                     querys["reemplazo"].add(Q(**{
-                        f'reemplazo__{field.name}__icontains': data
+                        f'reemplazo__{field}__icontains': data
                     }), Q.OR)
 
         #if data_actividad:

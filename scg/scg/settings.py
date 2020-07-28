@@ -174,7 +174,7 @@ else:
 TMP_DIR = os.path.join(os.path.dirname(BASE_DIR), 'tmp')
 
 ### reporting ###
-REPORT_BUILDER_ASYNC_REPORT = True
+REPORT_BUILDER_ASYNC_REPORT = False
 REPORT_BUILDER_INCLUDE = [
     'user',
     'scg_app.clase', 'scg_app.empleado', 'scg_app.actividad', 
