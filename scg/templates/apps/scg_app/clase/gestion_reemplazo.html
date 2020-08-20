@@ -23,20 +23,26 @@
 			<div class="row">
       	<div class="col-md-1 col-xs-0 col-sm-0"></div>
       		<div class="col-md-10 col-xs-12 col-sm-12">
-						{% if clase_to_edit %}
-							{% comment %} <p> Se asignar&aacute; un reemplazo a la clase: {{ clase_to_edit }}</p> {% endcomment %}
-							<div class="card card-info">
+					
+						{% if clases_ignoradas %}
+							<div class="card card-danger collapsed-card">
 								<div class="card-header">
-									<h3 class="card-title">Clase a gestionar</h3>
+									<h3 class="card-title">
+										{% if not process_result %}
+											Clase(s) ignorada(s)
+										{% else %}
+											Reemplazo(s) no asignado(s)
+										{% endif %}
+									</h3>
 									<div class="card-tools">
 										<button type="button" class="btn btn-tool" data-card-widget="collapse">
-											<i class="fas fa-minus"></i>
+											<i class="fas fa-plus"></i>
 										</button>
 									</div>
 								</div>
 								<div class="card-body">
 									
-									<table class="table table-sm">
+									<table class="table table-sm table-responsive-sm">
 										<thead>
 											<tr>
 												<th>Actividad</th>
@@ -45,25 +51,21 @@
 												<th>Inicio</th>
 												<th>Fin</th>
 												<th>Empleado</th>
-												<th>Ejecutor</th>
+												<th>Reemplazo</th>
 											</tr>
 										</thead>
 										<tbody>
+											{% for clase in clases_ignoradas %}
 												<tr>
-													<td>{{ clase_to_edit.actividad.nombre }}</td>
-													<td>{{ clase_to_edit.get_dia_semana_display }}</td>
-													<td>{{ clase_to_edit.fecha }}</td>
-													<td>{{ clase_to_edit.horario_desde }}</td>
-													<td>{{ clase_to_edit.horario_hasta }}</td>
-													<td>{{ clase_to_edit.empleado }}</td>
-													<td>
-														{% if clase_to_edit.reemplazo %}
-															<strong>{{ clase_to_edit.reemplazo }}</strong>
-														{% else %}
-															{{clase_to_edit.empleado}}
-														{% endif %} 
-													</td>
+													<td>{{ clase.actividad.nombre }}</td>
+													<td>{{ clase.get_dia_semana_display }}</td>
+													<td>{{ clase.fecha }}</td>
+													<td>{{ clase.horario_desde }}</td>
+													<td>{{ clase.horario_hasta }}</td>
+													<td>{{ clase.empleado }}</td>
+													<td>{% if clase.reemplazo %}{{ clase.reemplazo }}{% endif %}</td>
 												</tr>
+											{% endfor %}
 										</tbody>
 									</table>
 
@@ -71,53 +73,102 @@
 							</div><!-- /.card -->
 						{% endif %}
 
-						{% comment %} {% if form %} {% endcomment %}
-							<form method="POST" class="needs-validation" novalidate> 
-								{% csrf_token %}
-								<div class="card card-info">
-									<div class="card-header">
-										<h3 class="card-title">Reemplazo</h3>
+						{% if clases_to_edit or classes_error %}
+							<div class="card card-info collapsed-card">
+								<div class="card-header">
+									<h3 class="card-title">
+										{% if not process_result %}
+											Clase/s a gestionar
+										{% else %}
+											Reemplazo(s) asignado(s) correctamente
+										{% endif %}
+									</h3>
+									<div class="card-tools">
+										<button type="button" class="btn btn-tool" data-card-widget="collapse">
+											<i class="fas fa-plus"></i>
+										</button>
 									</div>
-									<div class="card-body">
-										{% if clase_to_edit.locked or locked %}<fieldset disabled>{% endif %}
-										<div class="form-row mt-3">
-											<div class="form-group col-6">
-														<div class="input-group">
-													<div class="input-group-prepend">
-													<span class="input-group-text" id="basic-addon1">@</span>
-													</div>
-													<input id="empleados-search" type="text" name="empleados-search" value="{{search_data.empleado}}" 
-														api-model-search="true" model-search="empleados" put-in="empleados-results"
-														class="form-control" placeholder="Algún dato del empleado" 
-														aria-label="Algún dato del empleado" aria-describedby="basic-addon1">
+								</div>
+								<div class="card-body">
+									
+									<table class="table table-sm table-responsive-sm">
+										<thead>
+											<tr>
+												<th>Actividad</th>
+												<th>D&iacute;a</th>
+												<th>Fecha</th>
+												<th>Inicio</th>
+												<th>Fin</th>
+												<th>Empleado</th>
+												<th>Reemplazo</th>
+											</tr>
+										</thead>
+										<tbody>
+											{% for clase_to_edit in clases_to_edit %}
+												<tr>
+													<td>{{ clase_to_edit.actividad.nombre }}</td>
+													<td>{{ clase_to_edit.get_dia_semana_display }}</td>
+													<td>{{ clase_to_edit.fecha }}</td>
+													<td>{{ clase_to_edit.horario_desde }}</td>
+													<td>{{ clase_to_edit.horario_hasta }}</td>
+													<td>{{ clase_to_edit.empleado }}</td>
+													<td>{% if clase_to_edit.reemplazo %}{{ clase_to_edit.reemplazo }}{% endif %}</td>
+												</tr>
+											{% endfor %}
+										</tbody>
+									</table>
+
+								</div><!-- /.card-body -->
+							</div><!-- /.card -->
+						{% endif %}
+
+						{% if form %}
+						<form method="POST" class="needs-validation" novalidate> 
+							{% csrf_token %}
+							<div class="card card-info">
+								<div class="card-header">
+									<h3 class="card-title">Reemplazo</h3>
+								</div>
+								<div class="card-body">
+									{% if clase_to_edit.locked or locked %}<fieldset disabled>{% endif %}
+									<div class="form-row mt-3">
+										<div class="form-group col-6">
+													<div class="input-group">
+												<div class="input-group-prepend">
+												<span class="input-group-text" id="basic-addon1">@</span>
 												</div>
-											</div>
-											<div class="form-group col-6">
-												<div class="input-group">
-													<select id="empleados-results" class="custom-select" name="empleados-results">
-														{% if reemplazo_selected %}
-															<option value="{{reemplazo_selected.pk}}" selected="">{{reemplazo_selected.get_str}}</option>
-														{% else %}
-															<option value="" selected="">Ninguno</option>
-														{% endif %}
-													</select>
-												</div>
-											</div>
-											<div class="form-group col-12">
-												<label for="comentario">Comentario</label>
-												{{ form.comentario }}
+												<input id="empleados-search" type="text" name="empleados-search" value="{{search_data.empleado}}" 
+													api-model-search="true" model-search="empleados" put-in="empleados-results"
+													class="form-control" placeholder="Algún dato del empleado" 
+													aria-label="Algún dato del empleado" aria-describedby="basic-addon1">
 											</div>
 										</div>
-										{% if clase_to_edit.locked or locked %}</fieldset>{% endif %}
-									</div><!-- /.card-body -->
-									<div class="card-footer text-center">
-										<button type="submit" class="btn btn-info" {% if clase_to_edit.locked or locked %}disabled{% endif %} >Confirmar</button>
-										<a class="btn btn-secondary" href="javascript: window.history.back();" role="button">Volver</a>
+										<div class="form-group col-6">
+											<div class="input-group">
+												<select id="empleados-results" class="custom-select" name="empleados-results">
+													{% if reemplazo_selected %}
+														<option value="{{reemplazo_selected.pk}}" selected="">{{reemplazo_selected.get_str}}</option>
+													{% else %}
+														<option value="" selected="">Ninguno</option>
+													{% endif %}
+												</select>
+											</div>
+										</div>
+										<div class="form-group col-12">
+											<label for="comentario">Comentario</label>
+											{{ form.comentario }}
+										</div>
 									</div>
-									<!-- /.card-footer -->
-								</div><!-- /.card -->
-							</form>
-						{% comment %} {% endif %} {% endcomment %}
+									{% if clase_to_edit.locked or locked %}</fieldset>{% endif %}
+								</div><!-- /.card-body -->
+								<div class="card-footer text-center">
+									<button type="submit" class="btn btn-info" {% if clase_to_edit.locked or locked %}disabled{% endif %} >Confirmar</button>
+									<a class="btn btn-secondary" href="javascript: window.history.back();" role="button">Volver</a>
+								</div>
+								<!-- /.card-footer -->
+							</div><!-- /.card -->
+						</form>
+						{% endif %}
 					</div><!-- /.col -->
       <div class="col-md-1 col-xs-0 col-sm-0"></div>
     </div><!-- /.row -->

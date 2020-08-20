@@ -835,6 +835,20 @@ class Recurrencia(models.Model):
             f'locked={self.locked}',
         )
 
+class ClaseManager(models.Manager):
+
+    def update_status(self, classes):
+        """ Take a list of classes and update their status. """
+
+        for clase in classes:
+            clase.update_status()
+
+    def create_comment(self, classes, comment):
+        """ Take a list of classes and assign a comment. """
+
+        for clase in classes:
+            clase.comentarios.create(comentario=comment)
+
 class Clase(models.Model):
     recurrencia = models.ForeignKey(
         'Recurrencia', on_delete=models.CASCADE, null=True)

@@ -18,7 +18,7 @@ try:
 except:
     pass
 
-CURRENT_VERSION = '0.9.8-Alpha'
+CURRENT_VERSION = '0.10.1-Alpha'
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

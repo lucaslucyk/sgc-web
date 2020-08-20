@@ -1218,12 +1218,8 @@ def action_process(request, context=None):
             return redirect('gestion_ausencia')#, ids_clases='-'.join(ids))
 
         if _accion == 'asignar_reemplazo':
-            if len(ids) != 1:
-                msgs.error(
-                    request,
-                    "Seleccione solo un registro para asignar un reemplazo.")
-                return redirect('show_message', _type='error')
-            return redirect('asignar_reemplazo', id_clase=ids[0])
+            request.session['ids_clases'] = ids
+            return redirect('asignar_reemplazo')
 
         if _accion == 'confirmar_clases':
             request.session['ids_clases'] = ids
@@ -1345,9 +1341,9 @@ def confirmar_clases(request, context=None):
 @login_required
 def gestion_ausencia(request, context=None):
     """
-        Permite asignar un motivo, adjunto y un comentario para una clase.
-        Si éste recibe un adjunto, crea un Certificado con el archivo y motivo \
-        seleccionado.
+    Permite asignar un motivo, adjunto y un comentario para una clase.
+    Si éste recibe un adjunto, crea un Certificado con el archivo y motivo \
+    seleccionado.
     """
 
     template = "apps/scg_app/clase/gestion_ausencia.html"
@@ -1358,8 +1354,6 @@ def gestion_ausencia(request, context=None):
     if not ids_clases:
         msgs.error(request, "No se ha seleccionado ninguna clase.")
         return render(request, template, context)
-
-    #print(ids)
 
     #form context
     if request.method == 'POST':
@@ -1440,11 +1434,17 @@ def gestion_ausencia(request, context=None):
         #assign absence for each class
         for clase in clases_to_edit:
             clase.ausencia = ausencia
+            clase.save()
+            clase.update_status()
+
             #only if was added comment
             if new_comment:
                 clase.comentarios.create(comentario=new_comment)
-            clase.save()
-            clase.update_status()
+
+        # # assign absence, comment and update status
+        # clases_to_edit.update(ausencia=ausencia)
+        # Clase.objects.create_comment(clases_to_edit, new_comment)
+        # Clase.objects.update_status(clases_to_edit)
 
         msgs.success(request, "Acción finalizada.")
         return render(request, template, context)
@@ -1454,51 +1454,76 @@ def gestion_ausencia(request, context=None):
     return render(request, template, context)
 
 @login_required
-def asignar_reemplazo(request, id_clase=None, context=None):
+def asignar_reemplazo(request, context=None):
     """ Allows assign and delete a replacement to a class. """
 
     template = "apps/scg_app/clase/gestion_reemplazo.html"
 
-    if not id_clase:
+    # get and check ids
+    ids_clases = request.session.get('ids_clases')
+    if not ids_clases:
+        msgs.error(request, "No se ha seleccionado ninguna clase.")
         return render(request, template, context)
 
-    clase_to_edit = get_object_or_404(Clase, pk=id_clase)
+    # form context
+    if request.method == 'POST':
+        form = ComentarioForm(request.POST)
+    else:
+        form = ComentarioForm()
+    
+    context = context or {'form': form, 'search_data': {}}
 
-    context = context or {
-        'search_data': {},
-        'clase_to_edit': clase_to_edit,
-        'form': ComentarioForm(),
-    }
-
-    #context["clase_to_edit"] = clase_to_edit
-
-    #check absence manage permission
+    # check absence manage permission
     if not request.user.has_perm('scg_app.asign_replacement'):
         context["locked"] = True
         msgs.error(request, "No tiene permiso para gestionar reemplazos")
         return render(request, template, context)
 
-    #check sede permission
-    if not request.user.has_sede_permission(clase_to_edit.sede):
-        context["locked"] = True
-        msgs.error(request, "No tiene permiso sobre esta sede")
-        return render(request, template, context)
+    # get classes
+    clases_to_edit = Clase.objects.filter(pk__in=ids_clases)
 
-    if clase_to_edit.locked:
-        msgs.error(
+    # lockeds an unavailable sedes ignore
+    lockeds = clases_to_edit.filter(
+        Q(locked=True) | ~Q(sede__in=request.user.sedes_available()))
+    lockeds_count = lockeds.count() if lockeds else 0
+
+    if lockeds:
+        msgs.warning(
             request,
-            'El <a href="{}" class="no-decore">periodo</a> esta bloqueado y la \
-            clase no puede ser editada.'.format(
-                Periodo.get_url_date_period(clase_to_edit.fecha)
-            ))
-        return render(request, template, context)
+            "No tiene permiso para la sede de {} {} o {} {} y {} {}.".format(
+                lockeds_count,
+                "clases" if lockeds_count > 1 else "clase",
+                "estan" if lockeds_count > 1 else "esta",
+                "bloqueadas" if lockeds_count > 1 else "bloqueada",
+                "fueron" if lockeds_count > 1 else "fue",
+                "ignoradas" if lockeds_count > 1 else "ignorada",
+            )
+        )
+        #put ignore in context
+        context["clases_ignoradas"] = lockeds
 
+        #exclude lockeds and unavailable sedes
+        clases_to_edit = clases_to_edit.exclude(
+            Q(locked=True) | ~Q(sede__in=request.user.sedes_available()))
+
+    #if not exists classes to apply
+    if not clases_to_edit:
+        context["locked"] = True
+        msgs.error(request, "No hay clases para gestionar.")
+        return render(request, template, context)
+    
+    # assign classes to context
+    context["clases_to_edit"] = clases_to_edit
+
+    # post process
     if request.method == 'POST':
+        # re-saving classes ids on session
+        request.session['ids_clases'] = ids_clases
         
+        # get input and search employee
         context["search_data"] = {
             "empleado": request.POST.get('empleados-search'),
         }
-
         if request.POST.get("empleados-results"):
             try:
                 reemplazante = get_object_or_404(
@@ -1511,34 +1536,12 @@ def asignar_reemplazo(request, id_clase=None, context=None):
         else:
             reemplazante = None
 
-        #check comment form
-        form = ComentarioForm(request.POST)
+        # check comment form
         if not form.is_valid():
             msgs.error(request, "Error en el comentario.")
             return render(request, template, context)
 
-        if not reemplazante:
-            clase_to_edit.reemplazo = None
-            clase_to_edit.save()
-            clase_to_edit.update_status()
-            msgs.success(request, "Se ha borrado el reemplazo.")
-            return render(request, template, context)
-
-        if clase_to_edit.empleado == reemplazante:
-            msgs.error(
-                request, "El reemplazante no puede ser el empleado asignado.")
-            return render(request, template, context)
-
-        if reemplazante.is_busy(
-                fecha=clase_to_edit.fecha,
-                inicio=clase_to_edit.horario_desde,
-                fin=clase_to_edit.horario_hasta):
-            msgs.error(
-                request,
-                "El reemplazante no está disponible en este rango horario")
-            return render(request, template, context)
-        
-        #create comment
+        # create comment
         new_comment = None
         if form.cleaned_data["comentario"]:
             new_comment = Comentario.objects.create(
@@ -1546,17 +1549,78 @@ def asignar_reemplazo(request, id_clase=None, context=None):
                 accion='gestion_reemplazo',
                 contenido=form.cleaned_data["comentario"])
 
-        #assign comment to class
-        if new_comment:
-            clase_to_edit.comentarios.create(comentario=new_comment)
+        # delete replacements
+        if not reemplazante:
+            # delete replacement and update status
+            clases_to_edit.update(reemplazo=None)
+            Clase.objects.update_status(clases_to_edit)
 
-        #replace assign
-        clase_to_edit.reemplazo = reemplazante
-        clase_to_edit.save()
-        clase_to_edit.update_status()
+            # comment assign
+            if new_comment:
+                Clase.objects.create_comment(clases_to_edit, new_comment)
 
-        msgs.success(request, "Reemplazo cargado con éxito!")
+            msgs.success(request, "Se ha borrado el reemplazo de las clases.")
+            return render(request, template, context)
 
+        # classes process
+        _success, _error = ([], [])
+        for clase in clases_to_edit:
+
+            # same employee
+            if clase.empleado == reemplazante:
+                clase.reemplazo = None
+                clase.save()
+                _success.append(clase)
+
+                #assign comment to class
+                if new_comment:
+                    clase.comentarios.create(comentario=new_comment)
+            
+            if clase.empleado != reemplazante:
+                # check if employee is busy
+                is_busy = reemplazante.is_busy(
+                    fecha=clase.fecha,
+                    inicio=clase.horario_desde,
+                    fin=clase.horario_hasta
+                )
+                if is_busy:
+                    _error.append(clase)
+                else:
+                    clase.reemplazo = reemplazante
+                    clase.save()
+                    _success.append(clase)
+
+                    #assign comment to class
+                    if new_comment:
+                        clase.comentarios.create(comentario=new_comment)
+
+            # update status even if the process was wrong
+            clase.update_status()
+        
+        # msg if success
+        # if _success:
+        #     msgs.success(
+        #         request,
+        #         f"{len(_success)} reemplazo(s) procesado(s) correctamente."
+        #     )
+        
+        # msg if error
+        if _error:
+            msgs.error(
+                request,
+                f"Reemplazo no disponible para {len(_error)} clase(s)."
+            )
+        
+        # update context for show results only
+        context.update({
+            "process_result": True,
+
+            "locked": True,
+            "clases_ignoradas": _error,
+            "clases_to_edit": _success,
+        })
+
+    # render context
     return render(request, template, context)
 
 @login_required

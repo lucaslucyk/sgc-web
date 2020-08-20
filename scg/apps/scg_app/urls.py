@@ -28,7 +28,7 @@ clases_urls = [
     path('<int:pk>/edit/', views.clase_edit, name='clase_update'),
     path('gestion_ausencia/',
         views.gestion_ausencia, name="gestion_ausencia"),
-    path('<str:id_clase>/asignar_reemplazo/',
+    path('asignar_reemplazo/',
         views.asignar_reemplazo, name="asignar_reemplazo"),
     path('gestion_marcajes/<str:id_empleado>/<str:fecha>',
         views.gestion_marcajes, name="gestion_marcajes"),
