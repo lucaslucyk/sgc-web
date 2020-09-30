@@ -13,12 +13,20 @@ https://docs.djangoproject.com/en/3.0/ref/settings/
 import os
 from datetime import datetime
 from django.contrib.messages import constants as message_constants
-try:
-    from . import credentials
-except:
-    pass
+# try:
+#     from . import credentials
+# except:
+#     pass
 
 CURRENT_VERSION = '0.10.1-Alpha'
+
+# try get custom settings
+try:
+    json_file = os.path.join(BASE_DIR, "scg", "mysettings.json")
+    with open(json_file, encoding='utf-8') as f:
+        USER_SETTINGS = json.load(f)
+except:
+    USER_SETTINGS = {}
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -30,12 +38,12 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = 'y=yxaf=l5p)+ogu1d3n2tn59$z(+%z)##uql@*pe5i^dhzmc7%'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-PRODUCTION = False
+DEBUG = USER_SETTINGS.get('DEBUG', True)
+PRODUCTION = USER_SETTINGS.get('PRODUCTION', False)
 
-ALLOWED_HOSTS = ['*']
-PROTOCOL = 'http'
-BASE_URL = 'localhost:8000'
+ALLOWED_HOSTS = USER_SETTINGS.get('ALLOWED_HOSTS', ['*'])
+PROTOCOL = USER_SETTINGS.get('PROTOCOL', 'http')
+BASE_URL = USER_SETTINGS.get('BASE_URL', 'localhost:8000')
 
 # Application definition
 INSTALLED_APPS = [
@@ -78,7 +86,7 @@ SHELL_PLUS = 'notebook'
 
 #for user messages
 MESSAGE_STORAGE = 'django.contrib.messages.storage.cookie.CookieStorage'
-MESSAGE_TAGS = {message_constants.ERROR: 'danger'}  #fpr bootstrap style
+MESSAGE_TAGS = {message_constants.ERROR: 'danger'}  #for bootstrap style
 
 ROOT_URLCONF = 'scg.urls'
 
@@ -106,24 +114,12 @@ WSGI_APPLICATION = 'scg.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/3.0/ref/settings/#databases
-if not PRODUCTION:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
-        }
+DATABASES = USER_SETTINGS.get('DATABASES') or {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
     }
-else:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': 'postgres',
-            'USER': 'postgres',
-            'HOST': 'db_postgres',
-            'PORT': 5432,
-        }
-    }
-
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/3.0/ref/settings/#auth-password-validators
@@ -146,21 +142,22 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/3.0/topics/i18n/
 
-LANGUAGE_CODE = 'es-ar'
-TIME_ZONE = 'America/Argentina/Buenos_Aires'    #'UTC'
+LANGUAGE_CODE = USER_SETTINGS.get('LANGUAGE_CODE', 'es-ar')
+TIME_ZONE = USER_SETTINGS.get('TIME_ZONE', 'America/Argentina/Buenos_Aires')
 USE_I18N = True
 USE_L10N = True
 USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.0/howto/static-files/
-STATIC_URL = '/static/'
-MEDIA_URL = '/media/'
+STATIC_URL = USER_SETTINGS.get('STATIC_URL', '/static/')
+MEDIA_URL = USER_SETTINGS.get('MEDIA_URL', '/media/')
+
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, "static"),
     #'/var/www/static/',
 ]
-CKEDITOR_UPLOAD_PATH = "help/"
+CKEDITOR_UPLOAD_PATH = USER_SETTINGS.get('CKEDITOR_UPLOAD_PATH', 'help/')
 
 # publish directories
 if not PRODUCTION:
@@ -175,6 +172,7 @@ TMP_DIR = os.path.join(os.path.dirname(BASE_DIR), 'tmp')
 
 ### reporting ###
 REPORT_BUILDER_ASYNC_REPORT = False
+REPORT_BUILDER_FRONTEND = True
 REPORT_BUILDER_INCLUDE = [
     'user',
     'scg_app.clase', 'scg_app.empleado', 'scg_app.actividad', 
@@ -184,13 +182,12 @@ REPORT_BUILDER_INCLUDE = [
     'scg_app.tipocontrato', 'scg_app.tipoliquidacion',
     'scg_app.bloquedepresencia', 'scg_app.certificado',
 ] # Allow only the model user to be accessed
-REPORT_BUILDER_FRONTEND = True
 
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/accounts/logout/?next=/'
 
 #DRF
-REST_FRAMEWORK = {
+REST_FRAMEWORK = USER_SETTINGS.get('REST_FRAMEWORK') or {
     # Use Django's standard `django.contrib.auth` permissions,
     # or allow read-only access for unauthenticated users.
     'DEFAULT_PERMISSION_CLASSES': [
@@ -202,24 +199,30 @@ REST_FRAMEWORK = {
 }
 
 ### password recovery ###
-if 'credentials' in dir():
-    EMAIL_USE_TLS = credentials.EMAIL_USE_TLS
-    EMAIL_HOST = credentials.EMAIL_HOST
-    EMAIL_PORT = credentials.EMAIL_PORT
-    EMAIL_HOST_USER = credentials.EMAIL_HOST_USER
-    EMAIL_HOST_PASSWORD = credentials.EMAIL_HOST_PASSWORD
-    DEFAULT_FROM_EMAIL = credentials.DEFAULT_FROM_EMAIL
+_credentials = USER_SETTINGS.get('CREDENTIALS')
+if _credentials:
+    EMAIL_USE_TLS = _credentials..get('EMAIL_USE_TLS')
+    EMAIL_HOST = _credentials..get('EMAIL_HOST')
+    EMAIL_PORT = _credentials..get('EMAIL_PORT')
+    EMAIL_HOST_USER = _credentials..get('EMAIL_HOST_USER')
+    EMAIL_HOST_PASSWORD = _credentials..get('EMAIL_HOST_PASSWORD')
+    DEFAULT_FROM_EMAIL = _credentials..get('DEFAULT_FROM_EMAIL')
     EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 else:
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 ### SCG_APP specifics ###
-SERVER_URL = "http://192.168.1.104:8091/webservice?"
+SERVER_URL = USER_SETTINGS.get(
+    'SERVER_URL',
+    'http://localhost:8091/webservice?'
+)
+# no absence minutes
+MINS_TOLERACIA = USER_SETTINGS.get('MINS_TOLERACIA', 15)
+# minutes between clockings
+MINS_BTW_CLOCKS = USER_SETTINGS.get('MINS_BTW_CLOCKS', 5)
 
-MINS_TOLERACIA = 15
-MINS_BTW_CLOCKS = 5 #minutes between clockings
 
-HORARIOS_NOCTURNOS = (
+HORARIOS_NOCTURNOS = USER_SETTINGS.get('HORARIOS_NOCTURNOS') or (
     ('21:00', '23:59'),
     ('00:00', '06:00'),
 )

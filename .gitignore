@@ -16,6 +16,9 @@ __pycache__/
 # !scg/apps/api/migrations/__init__.py
 # !scg/apps/help/migrations/__init__.py
 
+# custom settings
+scg/mysettings.json
+
 # tmp dir
 tmp/
 
