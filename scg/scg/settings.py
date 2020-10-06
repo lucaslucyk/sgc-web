@@ -201,12 +201,12 @@ REST_FRAMEWORK = USER_SETTINGS.get('REST_FRAMEWORK') or {
 ### password recovery ###
 _credentials = USER_SETTINGS.get('CREDENTIALS')
 if _credentials:
-    EMAIL_USE_TLS = _credentials..get('EMAIL_USE_TLS')
-    EMAIL_HOST = _credentials..get('EMAIL_HOST')
-    EMAIL_PORT = _credentials..get('EMAIL_PORT')
-    EMAIL_HOST_USER = _credentials..get('EMAIL_HOST_USER')
-    EMAIL_HOST_PASSWORD = _credentials..get('EMAIL_HOST_PASSWORD')
-    DEFAULT_FROM_EMAIL = _credentials..get('DEFAULT_FROM_EMAIL')
+    EMAIL_USE_TLS = _credentials.get('EMAIL_USE_TLS')
+    EMAIL_HOST = _credentials.get('EMAIL_HOST')
+    EMAIL_PORT = _credentials.get('EMAIL_PORT')
+    EMAIL_HOST_USER = _credentials.get('EMAIL_HOST_USER')
+    EMAIL_HOST_PASSWORD = _credentials.get('EMAIL_HOST_PASSWORD')
+    DEFAULT_FROM_EMAIL = _credentials.get('DEFAULT_FROM_EMAIL')
     EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 else:
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
