@@ -27,6 +27,7 @@
 ```bash
 > python manage.py makemigrations
 > python manage.py migrate
+> python manage.py migrate --database=help
 ```
 
 - (ERROR ONLY) Repare conection between poroject and database:

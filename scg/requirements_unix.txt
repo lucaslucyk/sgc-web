@@ -1,0 +1,19 @@
+django==2.2.13
+zeep
+django-multiselectfield
+django-autocomplete-light
+django-report-builder
+django-ckeditor
+djangorestframework
+markdown
+django-filter
+pandas
+django-extensions
+selenium
+django-wysihtml5
+#psycopg2==2.8
+#gunicorn==19.9
+#####
+##### for migrations only
+django-simple-history==2.10.0
+django-python-code-field==1.0.0
