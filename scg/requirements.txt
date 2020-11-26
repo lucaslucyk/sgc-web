@@ -21,3 +21,4 @@ django-python-code-field==1.0.0
 ##### windows only
 pywin32
 wfastcgi
+XlsxWriter
