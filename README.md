@@ -5,6 +5,9 @@
 ![winx86/64](https://img.shields.io/badge/OS-win%20x86%2Fx64-lightgrey)
 ![winx86/64](https://img.shields.io/badge/license-GPL%20v3-brightgreen)
 
+## IMPORTANT!
+This project has been moved [https://gitlab.com/spec-sa-ar/sgc-web](https://gitlab.com/spec-sa-ar/sgc-web).
+
 ## Project install
 
 - Install python 3.8 (or high) x64 adding to PATH
